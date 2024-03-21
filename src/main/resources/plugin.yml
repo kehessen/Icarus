@@ -1,0 +1,39 @@
+name: CustomPlugin
+version: '${project.version}'
+main: me.kehessen.customplugin.CustomPlugin
+api-version: '1.20'
+authors: [ Kenny ]
+commands:
+  announce:
+    description: Announce a message
+    usage: /announce <message>
+    permission: op
+  tpa:
+    description: Teleport to a player
+    usage: /tpa <player>
+  tpaccept:
+    description: Accept a teleport request
+    usage: /tpaaccept <player>
+  spawn:
+    description: Teleport to the spawn
+    usage: /spawn
+  combattime:
+    description: Check someone's combat time
+    usage: /combattime
+    permission: op
+
+  spawnturret:
+    description: Spawn a turret
+    usage: /spawnturret
+    permission: op
+  removeallturrets:
+    description: Remove all turrets
+    usage: /removeallturrets
+    permission: op
+  spawnparticleturret:
+    description: Spawn a turret shooting particles
+    usage: /spawnparticleturret
+    permission: op
+  removeallparticleturrets:
+    description: Remove all particle turrets
+    usage: /removeallparticleturrets
