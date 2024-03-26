@@ -23,6 +23,8 @@ class ParticleTurretHandler(private val plugin: JavaPlugin) : CommandExecutor, L
 
     private val turretReach = 500
 
+    private val speedMultiplier: Float = 2f
+
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         // /removeallturrets
         if (command.name == "removeallparticleturrets") {
@@ -83,12 +85,11 @@ class ParticleTurretHandler(private val plugin: JavaPlugin) : CommandExecutor, L
                 if (turret.location.distance(player.location) <= turretReach && turret.hasLineOfSight(player)
                     && turret.location.x != player.location.x
                 ) {
-
-                    player.spawnParticle(
+                    Bukkit.getWorld("world")!!.spawnParticle(
                         Particle.FLAME, turret.eyeLocation, 0,
                         (player.eyeLocation.x - turret.eyeLocation.x) / 2,
                         (player.eyeLocation.y - turret.eyeLocation.y) / 2,
-                        (player.eyeLocation.z - turret.eyeLocation.z) / 2
+                        (player.eyeLocation.z - turret.eyeLocation.z) / 2,
                     )
                 }
             }

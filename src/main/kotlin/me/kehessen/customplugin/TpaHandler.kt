@@ -9,6 +9,7 @@ import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
+import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.player.PlayerQuitEvent
@@ -16,26 +17,26 @@ import java.sql.Time
 import java.util.*
 
 @Suppress("unused")
-class TpaHandler(private val combatTime: CombatTime) : CommandExecutor, TabCompleter {
+class TpaHandler(private val combatTime: CombatTime, config: FileConfiguration) : CommandExecutor, TabCompleter {
     private var map = hashMapOf<UUID, UUID>()
+    private val canTeleportInCombat = config.getBoolean("Combat.can-teleport-in-combat")
 
     // uses the creator as "owner" of the tpa request
     private var creationTime = hashMapOf<UUID, Time>()
-    var scheduler =
-        Bukkit.getPluginManager().getPlugin("CustomPlugin")?.let {
-            Bukkit.getScheduler().scheduleSyncDelayedTask(it, {
-                map.forEach { (key, value) ->
-                    // 20*60?
-                    if (creationTime[key]?.time!! + 2 < System.currentTimeMillis()) {
-                        Bukkit.getPlayer(key)
-                            ?.sendMessage("§cYour teleport request to ${Bukkit.getPlayer(value)?.name} has expired")
-                        Bukkit.getPlayer(value)
-                            ?.sendMessage("§cThe teleport request from ${Bukkit.getPlayer(key)?.name} has expired")
-                        map.remove(key)
-                    }
+    var scheduler = Bukkit.getPluginManager().getPlugin("CustomPlugin")?.let {
+        Bukkit.getScheduler().scheduleSyncDelayedTask(it, {
+            map.forEach { (key, value) ->
+                // 20*60?
+                if (creationTime[key]?.time!! + 2 < System.currentTimeMillis()) {
+                    Bukkit.getPlayer(key)
+                        ?.sendMessage("§cYour teleport request to ${Bukkit.getPlayer(value)?.name} has expired")
+                    Bukkit.getPlayer(value)
+                        ?.sendMessage("§cThe teleport request from ${Bukkit.getPlayer(key)?.name} has expired")
+                    map.remove(key)
                 }
-            }, 20 * 1)
-        }
+            }
+        }, 20 * 1)
+    }
 
     // combat check in CombatTime
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
@@ -64,7 +65,7 @@ class TpaHandler(private val combatTime: CombatTime) : CommandExecutor, TabCompl
             sender.sendMessage("§cPlayer not found")
             return false
         }
-        if (combatTime.getCombatTime(sender.uniqueId) != 0) {
+        if (combatTime.getCombatTime(sender.uniqueId) != 0 || canTeleportInCombat) {
             sender.sendMessage("§cYou can't use this command while in combat")
             return false
         }
@@ -123,10 +124,7 @@ class TpaHandler(private val combatTime: CombatTime) : CommandExecutor, TabCompl
     }
 
     override fun onTabComplete(
-        sender: CommandSender,
-        command: Command,
-        label: String,
-        args: Array<out String>
+        sender: CommandSender, command: Command, label: String, args: Array<out String>
     ): MutableList<String>? {
         when (command.name) {
             "tpa" -> {

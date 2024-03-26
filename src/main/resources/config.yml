@@ -1,3 +1,13 @@
 Combat:
+  # only whole seconds
   combat-time: 5
   can-teleport-in-combat: false
+
+Turret:
+  shoot-delay: 3
+  particle-delay: 0
+  particle-amount: 10
+  particle-spread: 0.1
+  reach: 500
+  damage: 0.5
+  arrow-speed-multiplier: 5

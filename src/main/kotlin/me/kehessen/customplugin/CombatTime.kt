@@ -13,8 +13,8 @@ import org.bukkit.plugin.java.JavaPlugin
 import java.util.*
 
 @Suppress("unused")
-class CombatTime(private val plugin: JavaPlugin, private val config: FileConfiguration) : Listener, CommandExecutor {
-    private var combatTime = config.getInt("Combat.combat-time")
+class CombatTime(private val plugin: JavaPlugin, config: FileConfiguration) : Listener, CommandExecutor {
+    private val combatTime = config.getInt("Combat.combat-time")
     private var combatTimeMap = hashMapOf<UUID, Int>()
     private var currentlyInCombat = hashMapOf<UUID, UUID>()
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {

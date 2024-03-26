@@ -1,32 +1,43 @@
 package me.kehessen.customplugin.turret
 
 import org.bukkit.Bukkit
+import org.bukkit.Location
 import org.bukkit.Particle
+import org.bukkit.Sound
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
+import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.entity.ArmorStand
 import org.bukkit.entity.Arrow
 import org.bukkit.entity.Player
+import org.bukkit.event.EventHandler
+import org.bukkit.event.entity.ProjectileHitEvent
 import org.bukkit.plugin.java.JavaPlugin
 
 @Suppress("unused", "DuplicatedCode")
-class TurretHandler(private val plugin: JavaPlugin) : CommandExecutor {
+class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) : CommandExecutor {
 
-    private val shootDelay = 3L
-    private val particleDelay = 0L
-    private val particleAmount = 15
+    private val shootDelay: Long = 3 //config.getLong("Turret.shoot-delay")
+    private val particleDelay: Long = 2 //config.getLong("Turret.particle-delay")
+    private val particleAmount = 20 //config.getInt("Turret.particle-amount")
     private val particleType = Particle.FLAME
-    private val particleSpread = 0.1
+    private val particleSpread = 0.2 //config.getDouble("Turret.particle-spread")
 
     private var activeTurrets = arrayListOf<ArmorStand>()
 
-    private val turretReach = 500
-    private val damagePerSecond = 0.5
-    private val speedMultiplier = 5
+    private val turretReach = 500 //config.getInt("Turret.reach")
+    private val arrowDamage = 0.5 //config.getDouble("Turret.damage")
+
+    // blocks per tick
+    private val speedMultiplier: Float = 5f //config.getInt("Turret.arrow-speed-multiplier")
 
     private var activeArrows = hashMapOf<Arrow, Int>()
     private val arrowLifeTime = 20 / shootDelay.toInt() * 3
+
+    private val onlinePlayers = Bukkit.getOnlinePlayers()
+    private val targets = mutableSetOf<Player>()
+    private val arrowsToRemove = mutableListOf<Arrow>()
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         // /removeallturrets
@@ -44,7 +55,6 @@ class TurretHandler(private val plugin: JavaPlugin) : CommandExecutor {
             activeTurrets.clear()
             return true
         }
-
 
         // /spawnturret
         if (Bukkit.getPlayer(sender.name) !is Player) return false
@@ -64,24 +74,28 @@ class TurretHandler(private val plugin: JavaPlugin) : CommandExecutor {
         return true
     }
 
-
     fun startTask() {
         Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, {
             onInterval()
         }, 0, shootDelay)
+        // particles
         Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, {
-            activeArrows.forEach { (arrow, _) ->
-                arrow.world.spawnParticle(
-                    particleType,
-                    arrow.location,
-                    particleAmount,
-                    particleSpread,
-                    particleSpread,
-                    particleSpread,
-                    particleSpread
-                )
-            }
+            spawnParticles()
         }, 0, particleDelay)
+    }
+
+    private fun spawnParticles() {
+        activeArrows.forEach { (arrow, _) ->
+            arrow.world.spawnParticle(
+                particleType,
+                arrow.location,
+                particleAmount,
+                particleSpread,
+                particleSpread,
+                particleSpread,
+                particleSpread
+            )
+        }
     }
 
     fun reloadTurrets() {
@@ -103,31 +117,33 @@ class TurretHandler(private val plugin: JavaPlugin) : CommandExecutor {
         // check if turret can see player
         activeTurrets.forEach { turret ->
             Bukkit.getOnlinePlayers().forEach { player ->
-                // + player.isGliding, just removed for testing || turret x can't be player x since it causes exceptions
-                if (turret.hasLineOfSight(player) && turret.location.distance(player.location) <= turretReach
+                if (turret.hasLineOfSight(player) && player.isGliding && turret.location.distance(player.location) <= turretReach
                     && turret.location.x != player.location.x
                 ) {
-
-                    // might use player location prediction
-
                     // shoot arrow in player direction
                     val arrow = turret.world.spawn(turret.eyeLocation, Arrow::class.java)
                     arrow.addScoreboardTag("TurretArrow")
-                    arrow.velocity = player.location.toVector().subtract(turret.location.toVector()).normalize()
+
+                    val predictedLocation = predictLocation(turret.location, player)
+                    arrow.velocity = predictedLocation.toVector().subtract(turret.location.toVector()).normalize()
                         .multiply(speedMultiplier)
                     arrow.isInvulnerable = true
                     arrow.setGravity(false)
-                    arrow.damage = 0.0
+                    arrow.damage = arrowDamage
                     arrow.isSilent = true
                     activeArrows[arrow] = arrowLifeTime
+
+                    player.playSound(
+                        turret.location,
+                        Sound.ENTITY_BLAZE_SHOOT,
+                        turret.location.distance(player.location).div(10).toFloat(),
+                        0.6f
+                    )
                 }
             }
         }
 
-
-        val arrowsToRemove = mutableListOf<Arrow>()
         activeArrows.forEach { (arrow, lifeTime) ->
-            arrow.world.spawnParticle(Particle.FLAME, arrow.location, 20, 0.1, 0.1, 0.1, 0.1)
             if (lifeTime == 0) {
                 arrowsToRemove.add(arrow)
             } else {
@@ -137,6 +153,22 @@ class TurretHandler(private val plugin: JavaPlugin) : CommandExecutor {
         arrowsToRemove.forEach { arrow ->
             arrow.remove()
             activeArrows.remove(arrow)
+        }
+    }
+
+    private fun predictLocation(turretLocation: Location, player: Player): Location {
+        val playerLocation = player.location
+
+        val timeToReach = turretLocation.distance(playerLocation) / speedMultiplier
+
+        return playerLocation.add(player.velocity.multiply(timeToReach))
+    }
+
+    @EventHandler
+    fun onArrowHit(event: ProjectileHitEvent) {
+        if (event.entity.scoreboardTags.contains("TurretArrow")) {
+            activeArrows.remove(event.entity)
+            event.entity.remove()
         }
     }
 }
