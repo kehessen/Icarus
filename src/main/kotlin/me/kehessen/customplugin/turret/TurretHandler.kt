@@ -104,7 +104,7 @@ class TurretHandler(private val plugin: JavaPlugin) : CommandExecutor {
         activeTurrets.forEach { turret ->
             Bukkit.getOnlinePlayers().forEach { player ->
                 // + player.isGliding, just removed for testing || turret x can't be player x since it causes exceptions
-                if (turret.location.distance(player.location) <= turretReach && turret.hasLineOfSight(player)
+                if (turret.hasLineOfSight(player) && turret.location.distance(player.location) <= turretReach
                     && turret.location.x != player.location.x
                 ) {
 

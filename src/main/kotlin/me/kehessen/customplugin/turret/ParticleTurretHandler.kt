@@ -69,10 +69,10 @@ class ParticleTurretHandler(private val plugin: JavaPlugin) : CommandExecutor, L
         }
     }
 
-    // all particles are only for one player wtf
     @EventHandler
     fun playerMove(event: PlayerMoveEvent) {
-        event.player.spawnParticle(Particle.FALLING_LAVA, event.player.location, 10, 0.15, 0.15, 0.15, 0.0)
+        if (event.player.isGliding)
+            event.player.spawnParticle(Particle.WAX_OFF, event.player.location, 2, 0.15, 0.15, 0.15, 0.0)//Falling lava
     }
 
     private fun onInterval() {

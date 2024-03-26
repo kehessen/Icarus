@@ -21,6 +21,10 @@ class CommandHandler(private val combatTime: CombatTime) : CommandExecutor, TabC
                     sender.sendMessage("§cYou can't use this command while in combat")
                     return true
                 }
+                if (args.size > 1) {
+                    sender.sendMessage("§cInvalid arguments")
+                    return false
+                }
                 if (args.size == 1 && args[0].lowercase() == "set") {
                     Bukkit.getWorld("world")?.let {
                         Bukkit.getWorld("world")?.setSpawnLocation(sender.location)
@@ -51,14 +55,12 @@ class CommandHandler(private val combatTime: CombatTime) : CommandExecutor, TabC
     ): MutableList<String>? {
         when (command.name) {
             "spawn" -> if (sender.hasPermission("op")) return mutableListOf("set")
-
         }
         return null
     }
 
     @EventHandler
     fun blockCMDs(event: PlayerCommandPreprocessEvent) {
-        Bukkit.broadcastMessage("abd")
         if (event.message.startsWith("/")) {
             val command = event.message.split(" ")[0].substring(1).lowercase()
             if (forbiddenCombatCommands.contains(command) && combatTime.getCombatTime(event.player.uniqueId) != null) {

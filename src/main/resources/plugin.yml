@@ -10,16 +10,14 @@ commands:
     permission: op
   tpa:
     description: Teleport to a player
-    usage: /tpa <player>
   tpaccept:
     description: Accept a teleport request
-    usage: /tpaaccept <player>
   spawn:
     description: Teleport to the spawn
     usage: /spawn
   combattime:
     description: Check someone's combat time
-    usage: /combattime
+    usage: /combattime <player>
     permission: op
 
   spawnturret:
@@ -37,3 +35,4 @@ commands:
   removeallparticleturrets:
     description: Remove all particle turrets
     usage: /removeallparticleturrets
+    permission: op

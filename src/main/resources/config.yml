@@ -1,0 +1,3 @@
+Combat:
+  combat-time: 5
+  can-teleport-in-combat: false
