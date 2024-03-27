@@ -14,7 +14,10 @@ import org.bukkit.entity.Arrow
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
-import org.bukkit.event.entity.ProjectileHitEvent
+import org.bukkit.event.entity.EntityDamageByEntityEvent
+import org.bukkit.event.entity.EntityDeathEvent
+import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.plugin.java.JavaPlugin
 
 @Suppress("unused", "DuplicatedCode")
@@ -77,6 +80,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
         }
         if (args[0] == "reload") {
             reloadTurrets()
+            sender.sendMessage("§aReloaded ${activeTurrets.size} turrets")
             return true
         }
 
@@ -102,7 +106,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
             }
             activeArrows.clear()
             activeTurrets.clear()
-            Bukkit.getScheduler().cancelTask(reachCheckTaskID!!)
+            stopReachCheckTask()
             Bukkit.getLogger().info("Disabled turret reach checker since all turrets were removed")
             return true
         }
@@ -138,10 +142,17 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
     }
 
     fun startReachCheckTask() {
-        if (reachCheckTaskID != null || activeTurrets.isEmpty()) return
+        if (reachCheckTaskID != null) return
         reachCheckTaskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, {
             reachCheck()
         }, 0, distanceCheckDelay)
+        Bukkit.getLogger().info("Enabled turret reach checker")
+    }
+
+    private fun stopReachCheckTask() {
+        Bukkit.getScheduler().cancelTask(reachCheckTaskID!!)
+        reachCheckTaskID = null
+        Bukkit.getLogger().info("Disabled turret reach checker")
     }
 
     private fun startTasks() {
@@ -159,6 +170,8 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
         Bukkit.getScheduler().cancelTask(particleTaskID!!)
         shootTaskID = null
         particleTaskID = null
+        activeArrows.forEach { (arrow, _) -> arrow.remove() }
+        activeArrows.clear()
     }
 
     private fun spawnParticles() {
@@ -176,6 +189,47 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
     }
 
     private fun reachCheck() {
+
+        // add players in range to target list, start tasks if not already running,
+        activeTurrets.forEach { turret ->
+            onlinePlayers.forEach { player ->
+                if (player.isGliding && turret.hasLineOfSight(player) && turret.location.distance(player.location) <= turretReach) {
+                    targets.add(player)
+                    if (shootTaskID == null) {
+                        Bukkit.getLogger().info("Players in range, starting turret tasks")
+                        startTasks()
+                        return
+                    }
+                } else if (shootTaskID != null) {
+                    Bukkit.getLogger().info("No players in range, stopping turret tasks")
+                    stopTasks()
+                }
+                targets.remove(player)
+            }
+        }
+        // disable hit delay for targeted players
+        onlinePlayers.forEach { player ->
+            if (!targets.contains(player)) {
+                // add hit delay if not targeted
+                if (player.maximumNoDamageTicks != 20) {
+                    player.maximumNoDamageTicks = 20
+                    Bukkit.getLogger().info("Added hit delay to ${player.name}")
+                }
+                // remove hit delay if targeted
+            } else if (player.maximumNoDamageTicks != 0) {
+                player.maximumNoDamageTicks = 0
+                Bukkit.getLogger().info("Removed hit delay from ${player.name}, player is in turret range")
+            }
+
+        }
+    }
+
+    fun otherChecks() {
+        if (onlinePlayers.isEmpty()) {
+            Bukkit.getLogger().info("No players online, stopping tasks")
+            stopReachCheckTask()
+        }
+        // performance: disable tasks if no turrets are found
         if (activeTurrets.isEmpty()) {
             if (shootTaskID != null) {
                 Bukkit.getLogger().info("No turrets found, stopping tasks")
@@ -184,23 +238,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
             }
             return
         }
-        activeTurrets.forEach { turret ->
-            onlinePlayers.forEach { player ->
-                if (turret.location.distance(player.location) <= turretReach && turret.hasLineOfSight(player) && player.isGliding) {
-                    if (shootTaskID == null) {
-                        Bukkit.getLogger().info("Players in range, starting turret tasks")
-                        startTasks()
-                        return
-                    } else {
-                        return
-                    }
-                }
-            }
-        }
-        if (shootTaskID == null) return
-        Bukkit.getLogger().info("No players in range, stopping turret tasks")
-        stopTasks()
-        return
+
     }
 
     fun reloadTurrets() {
@@ -221,7 +259,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
     private fun onInterval() {
         // check if turret can see player
         activeTurrets.forEach { turret ->
-            Bukkit.getOnlinePlayers().forEach { player ->
+            onlinePlayers.forEach { player ->
                 if (turret.hasLineOfSight(player) && player.isGliding && turret.location.distance(player.location) <= turretReach
                     && turret.location.x != player.location.x
                 ) {
@@ -233,20 +271,22 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
                     val predictedLocation = predictLocation(turret.location, player)
                     arrow.velocity = predictedLocation.toVector().subtract(turret.location.toVector()).normalize()
                         .multiply(speedMultiplier)
-                    arrow.isInvulnerable = true
+                    // arrow.isInvulnerable = true
                     arrow.setGravity(false)
                     arrow.damage = arrowDamage
                     arrow.isSilent = true
                     arrow.isVisualFire = burningArrow
                     activeArrows[arrow] = arrowLifeTime
+//                    player.sendHurtAnimation(0f)
 
-                    if (silenced) return
-                    player.playSound(
-                        turret.location,
-                        Sound.ENTITY_BLAZE_SHOOT,
-                        turret.location.distance(player.location).div(10).toFloat(),
-                        0.6f
-                    )
+                    if (!silenced) {
+                        player.playSound(
+                            turret.location,
+                            Sound.ENTITY_BLAZE_SHOOT,
+                            turret.location.distance(player.location).div(10).toFloat(),
+                            0.6f
+                        )
+                    }
                 } else {
                     targets.remove(player)
                 }
@@ -268,18 +308,40 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
 
     private fun predictLocation(turretLocation: Location, player: Player): Location {
         val playerLocation = player.location
+        playerLocation.y -= 2
 
-        val timeToReach = turretLocation.distance(playerLocation) / speedMultiplier
+        // adding some extra time since a lot of arrows fly behind the player
+        val timeToReach = (turretLocation.distance(playerLocation) / speedMultiplier) + 0.7
 
         return playerLocation.add(player.velocity.multiply(timeToReach))
     }
 
     @EventHandler
-    fun onArrowHit(event: ProjectileHitEvent) {
-        if (event.entity.scoreboardTags.contains("TurretArrow")) {
+    fun onArrowHit(event: EntityDamageByEntityEvent) {
+        if (event.damager.scoreboardTags.contains("TurretArrow") && event.entity is Player) {
             activeArrows.remove(event.entity)
-            event.entity.remove()
+            event.damager.remove()
         }
+    }
+
+    @EventHandler
+    fun onDestroy(event: EntityDeathEvent) {
+        if (event.entity.scoreboardTags.contains("Turret")) {
+            activeTurrets.remove(event.entity)
+        }
+    }
+
+    @EventHandler
+    fun onPlayerJoin(event: PlayerJoinEvent) {
+        if (reachCheckTaskID == null)
+            Bukkit.getLogger().info("Starting reach check task")
+        startReachCheckTask()
+    }
+
+    @EventHandler
+    fun playerMove(event: PlayerMoveEvent) {
+        if (event.player.isGliding)
+            event.player.spawnParticle(Particle.WAX_OFF, event.player.location, 2, 0.15, 0.15, 0.15, 0.0)//Falling lava
     }
 
     override fun onTabComplete(

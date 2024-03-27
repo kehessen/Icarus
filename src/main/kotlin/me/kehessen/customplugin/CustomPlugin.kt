@@ -32,15 +32,12 @@ class CustomPlugin : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
         turretHandler.reloadTurrets()
         turretHandler.startReachCheckTask()
 
-        particleTurretHandler.reloadTurrets()
-        particleTurretHandler.startTask()
-
         server.pluginManager.registerEvents(combatTime, this)
         server.pluginManager.registerEvents(turretHandler, this)
 
         getCommand("spawn")?.setExecutor(simpleCommandHandler)
-
         getCommand("announce")?.setExecutor(simpleCommandHandler)
+        getCommand("test")?.setExecutor(simpleCommandHandler)
 
         getCommand("tpa")?.setExecutor(tpaHandler)
         getCommand("tpaccept")?.setExecutor(tpaHandler)
@@ -48,9 +45,6 @@ class CustomPlugin : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
         getCommand("combattime")?.setExecutor(combatTime)
 
         getCommand("turret")?.setExecutor(turretHandler)
-
-        getCommand("spawnparticleturret")?.setExecutor(particleTurretHandler)
-        getCommand("removeallparticleturrets")?.setExecutor(particleTurretHandler)
     }
 
     @EventHandler

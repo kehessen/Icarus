@@ -19,9 +19,13 @@ commands:
     description: Check someone's combat time
     usage: /combattime <player>
     permission: op
+  test:
+    description: Test command
+    usage: /test
+    permission: op
 
   turret:
-    description: Spawn a turret shooting arrows
+    description: turret options
     usage: /turret <spawn/remove/reload/silence/burningArrow>
     permission: op
   spawnparticleturret:
