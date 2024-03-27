@@ -16,7 +16,7 @@ class CustomPlugin : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
 
 
     private val combatTime = CombatTime(this, config)
-    private val commandHandler = CommandHandler(combatTime)
+    private val simpleCommandHandler = SimpleCommandHandler(combatTime)
     private val tpaHandler = TpaHandler(combatTime, config)
     private val turretHandler = TurretHandler(this, config)
     private val particleTurretHandler = ParticleTurretHandler(this)
@@ -30,26 +30,24 @@ class CustomPlugin : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
         reloadConfig()
 
         turretHandler.reloadTurrets()
-        turretHandler.startTask()
+        turretHandler.startReachCheckTask()
 
         particleTurretHandler.reloadTurrets()
         particleTurretHandler.startTask()
 
         server.pluginManager.registerEvents(combatTime, this)
-        server.pluginManager.registerEvents(particleTurretHandler, this)
+        server.pluginManager.registerEvents(turretHandler, this)
 
-        getCommand("spawn")?.setExecutor(commandHandler)
-        getCommand("spawn")?.tabCompleter = commandHandler
+        getCommand("spawn")?.setExecutor(simpleCommandHandler)
 
-        getCommand("announce")?.setExecutor(commandHandler)
+        getCommand("announce")?.setExecutor(simpleCommandHandler)
 
         getCommand("tpa")?.setExecutor(tpaHandler)
         getCommand("tpaccept")?.setExecutor(tpaHandler)
 
         getCommand("combattime")?.setExecutor(combatTime)
 
-        getCommand("spawnturret")?.setExecutor(turretHandler)
-        getCommand("removeallturrets")?.setExecutor(turretHandler)
+        getCommand("turret")?.setExecutor(turretHandler)
 
         getCommand("spawnparticleturret")?.setExecutor(particleTurretHandler)
         getCommand("removeallparticleturrets")?.setExecutor(particleTurretHandler)

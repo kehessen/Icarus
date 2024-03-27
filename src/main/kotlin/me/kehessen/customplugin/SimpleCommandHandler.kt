@@ -10,7 +10,7 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.player.PlayerCommandPreprocessEvent
 
 @Suppress("unused")
-class CommandHandler(private val combatTime: CombatTime) : CommandExecutor, TabCompleter {
+class SimpleCommandHandler(private val combatTime: CombatTime) : CommandExecutor, TabCompleter {
     private var forbiddenCombatCommands = listOf("spawn", "tpa")
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
@@ -54,7 +54,12 @@ class CommandHandler(private val combatTime: CombatTime) : CommandExecutor, TabC
         args: Array<out String>
     ): MutableList<String>? {
         when (command.name) {
-            "spawn" -> if (sender.hasPermission("op")) return mutableListOf("set")
+            "spawn" -> if (sender.hasPermission("op")) return args.size.let {
+                when (it) {
+                    1 -> mutableListOf("set")
+                    else -> mutableListOf("")
+                }
+            }
         }
         return null
     }

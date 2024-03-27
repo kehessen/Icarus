@@ -20,13 +20,9 @@ commands:
     usage: /combattime <player>
     permission: op
 
-  spawnturret:
-    description: Spawn a turret
-    usage: /spawnturret
-    permission: op
-  removeallturrets:
-    description: Remove all turrets
-    usage: /removeallturrets
+  turret:
+    description: Spawn a turret shooting arrows
+    usage: /turret <spawn/remove/reload/silence/burningArrow>
     permission: op
   spawnparticleturret:
     description: Spawn a turret shooting particles
