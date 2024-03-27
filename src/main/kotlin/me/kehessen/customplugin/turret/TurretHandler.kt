@@ -44,6 +44,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
 
     // ticks
     private val distanceCheckDelay: Long = 20
+    private val performanceCheckDelay: Long = 20 * 60
 
     private var silenced = false
 
@@ -54,6 +55,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
     private var shootTaskID: Int? = null
     private var particleTaskID: Int? = null
     private var reachCheckTaskID: Int? = null
+    private var performanceCheckTaskID: Int? = null
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         if (args[0] == "shotDelay") {
@@ -152,7 +154,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
     private fun stopReachCheckTask() {
         Bukkit.getScheduler().cancelTask(reachCheckTaskID!!)
         reachCheckTaskID = null
-        Bukkit.getLogger().info("Disabled turret reach checker")
+        Bukkit.getLogger().info("Disabled turret reach checker since no players are online")
     }
 
     private fun startTasks() {
@@ -174,6 +176,12 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
         activeArrows.clear()
     }
 
+    fun startPerformanceCheckTask() {
+        performanceCheckTaskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, {
+            performanceChecks()
+        }, 0, performanceCheckDelay)
+    }
+
     private fun spawnParticles() {
         activeArrows.forEach { (arrow, _) ->
             arrow.world.spawnParticle(
@@ -189,7 +197,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
     }
 
     private fun reachCheck() {
-
         // add players in range to target list, start tasks if not already running,
         activeTurrets.forEach { turret ->
             onlinePlayers.forEach { player ->
@@ -198,8 +205,8 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
                     if (shootTaskID == null) {
                         Bukkit.getLogger().info("Players in range, starting turret tasks")
                         startTasks()
-                        return
                     }
+                    return
                 } else if (shootTaskID != null) {
                     Bukkit.getLogger().info("No players in range, stopping turret tasks")
                     stopTasks()
@@ -224,21 +231,17 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
         }
     }
 
-    fun otherChecks() {
-        if (onlinePlayers.isEmpty()) {
+    // THIS SHOULD ALWAYS RUN, EVEN IF NO PLAYERS ARE ONLINE
+    private fun performanceChecks() {
+        if (onlinePlayers.isEmpty() && reachCheckTaskID != null) {
             Bukkit.getLogger().info("No players online, stopping tasks")
             stopReachCheckTask()
+            if (shootTaskID != null) stopTasks()
+        } else if (activeTurrets.isEmpty() && shootTaskID != null) {
+            Bukkit.getLogger().info("No turrets found, stopping tasks")
+            stopTasks()
+            stopReachCheckTask()
         }
-        // performance: disable tasks if no turrets are found
-        if (activeTurrets.isEmpty()) {
-            if (shootTaskID != null) {
-                Bukkit.getLogger().info("No turrets found, stopping tasks")
-                stopTasks()
-                return
-            }
-            return
-        }
-
     }
 
     fun reloadTurrets() {
@@ -259,39 +262,41 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
     private fun onInterval() {
         // check if turret can see player
         activeTurrets.forEach { turret ->
-            onlinePlayers.forEach { player ->
-                if (turret.hasLineOfSight(player) && player.isGliding && turret.location.distance(player.location) <= turretReach
-                    && turret.location.x != player.location.x
-                ) {
-                    targets.add(player)
-                    // shoot arrow in player direction
-                    val arrow = turret.world.spawn(turret.eyeLocation, Arrow::class.java)
-                    arrow.addScoreboardTag("TurretArrow")
+            targets.forEach { player ->
 
-                    val predictedLocation = predictLocation(turret.location, player)
-                    arrow.velocity = predictedLocation.toVector().subtract(turret.location.toVector()).normalize()
-                        .multiply(speedMultiplier)
-                    // arrow.isInvulnerable = true
-                    arrow.setGravity(false)
-                    arrow.damage = arrowDamage
-                    arrow.isSilent = true
-                    arrow.isVisualFire = burningArrow
-                    activeArrows[arrow] = arrowLifeTime
+                // shoot arrow in player direction
+                val arrow = turret.world.spawn(turret.eyeLocation, Arrow::class.java)
+                arrow.addScoreboardTag("TurretArrow")
+
+                val predictedLocation = predictLocation(turret.location, player)
+                arrow.velocity = predictedLocation.toVector().subtract(turret.location.toVector()).normalize()
+                    .multiply(speedMultiplier)
+//                arrow.isInvulnerable = true
+                arrow.setGravity(false)
+                arrow.damage = arrowDamage
+                arrow.isSilent = true
+                arrow.isVisualFire = burningArrow
+                activeArrows[arrow] = arrowLifeTime
 //                    player.sendHurtAnimation(0f)
 
-                    if (!silenced) {
-                        player.playSound(
-                            turret.location,
-                            Sound.ENTITY_BLAZE_SHOOT,
-                            turret.location.distance(player.location).div(10).toFloat(),
-                            0.6f
-                        )
-                    }
-                } else {
-                    targets.remove(player)
+                if (!silenced) {
+                    player.playSound(
+                        turret.location,
+                        Sound.ENTITY_BLAZE_SHOOT,
+                        turret.location.distance(player.location).div(10).toFloat(),
+                        0.6f
+                    )
                 }
+
             }
         }
+//        // particle shooting if i ever want to use it
+//        turret.world.spawnParticle(
+//            Particle.FLAME, turret.eyeLocation, 0,
+//            (player.eyeLocation.x - turret.eyeLocation.x) / 2,
+//            (player.eyeLocation.y - turret.eyeLocation.y) / 2,
+//            (player.eyeLocation.z - turret.eyeLocation.z) / 2,
+//        )
 
         activeArrows.forEach { (arrow, lifeTime) ->
             if (lifeTime == 0) {
@@ -317,7 +322,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
     }
 
     @EventHandler
-    fun onArrowHit(event: EntityDamageByEntityEvent) {
+    private fun onArrowHit(event: EntityDamageByEntityEvent) {
         if (event.damager.scoreboardTags.contains("TurretArrow") && event.entity is Player) {
             activeArrows.remove(event.entity)
             event.damager.remove()
@@ -325,21 +330,21 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
     }
 
     @EventHandler
-    fun onDestroy(event: EntityDeathEvent) {
+    private fun onDestroy(event: EntityDeathEvent) {
         if (event.entity.scoreboardTags.contains("Turret")) {
             activeTurrets.remove(event.entity)
         }
     }
 
     @EventHandler
-    fun onPlayerJoin(event: PlayerJoinEvent) {
+    private fun onPlayerJoin(event: PlayerJoinEvent) {
         if (reachCheckTaskID == null)
             Bukkit.getLogger().info("Starting reach check task")
         startReachCheckTask()
     }
 
     @EventHandler
-    fun playerMove(event: PlayerMoveEvent) {
+    private fun playerMove(event: PlayerMoveEvent) {
         if (event.player.isGliding)
             event.player.spawnParticle(Particle.WAX_OFF, event.player.location, 2, 0.15, 0.15, 0.15, 0.0)//Falling lava
     }

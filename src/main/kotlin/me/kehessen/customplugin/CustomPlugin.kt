@@ -1,6 +1,5 @@
 package me.kehessen.customplugin
 
-import me.kehessen.customplugin.turret.ParticleTurretHandler
 import me.kehessen.customplugin.turret.TurretHandler
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.TabCompleter
@@ -19,7 +18,6 @@ class CustomPlugin : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
     private val simpleCommandHandler = SimpleCommandHandler(combatTime)
     private val tpaHandler = TpaHandler(combatTime, config)
     private val turretHandler = TurretHandler(this, config)
-    private val particleTurretHandler = ParticleTurretHandler(this)
 
     override fun onEnable() {
         saveDefaultConfig()
@@ -30,6 +28,7 @@ class CustomPlugin : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
         reloadConfig()
 
         turretHandler.reloadTurrets()
+        turretHandler.startPerformanceCheckTask()
         turretHandler.startReachCheckTask()
 
         server.pluginManager.registerEvents(combatTime, this)
@@ -48,17 +47,17 @@ class CustomPlugin : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
     }
 
     @EventHandler
-    fun onPlayerJoin(event: PlayerJoinEvent) {
+    private fun onPlayerJoin(event: PlayerJoinEvent) {
         event.joinMessage = "§2+ ${event.player.name}"
     }
 
     @EventHandler
-    fun onPlayerChat(event: AsyncPlayerChatEvent) {
+    private fun onPlayerChat(event: AsyncPlayerChatEvent) {
         event.format = "§7" + event.player.name + ":§f " + event.message
     }
 
     @EventHandler
-    fun onPlayerLeave(event: PlayerQuitEvent) {
+    private fun onPlayerLeave(event: PlayerQuitEvent) {
         event.quitMessage = "§7- " + event.player.name
     }
 

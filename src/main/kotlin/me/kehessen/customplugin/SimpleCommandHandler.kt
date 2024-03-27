@@ -43,6 +43,10 @@ class SimpleCommandHandler(private val combatTime: CombatTime) : CommandExecutor
                 Bukkit.broadcastMessage("§4§l${args.joinToString(" ")}")
             }
 
+            "test" -> {
+                sender.sendMessage("§aCurrently not used")
+            }
+
         }
         return true
     }

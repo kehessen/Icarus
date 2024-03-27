@@ -23,16 +23,7 @@ commands:
     description: Test command
     usage: /test
     permission: op
-
   turret:
     description: turret options
     usage: /turret <spawn/remove/reload/silence/burningArrow>
-    permission: op
-  spawnparticleturret:
-    description: Spawn a turret shooting particles
-    usage: /spawnparticleturret
-    permission: op
-  removeallparticleturrets:
-    description: Remove all particle turrets
-    usage: /removeallparticleturrets
     permission: op
