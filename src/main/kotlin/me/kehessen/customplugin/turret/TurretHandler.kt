@@ -17,40 +17,42 @@ import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityDeathEvent
 import org.bukkit.event.player.PlayerJoinEvent
-import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.plugin.java.JavaPlugin
+import java.util.*
 
 @Suppress("unused", "DuplicatedCode")
 class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) : CommandExecutor, TabCompleter,
     Listener {
 
+    // ---config---
     private var shotDelay: Long = 3 //config.getLong("Turret.shoot-delay")
     private val particleDelay: Long = 2 //config.getLong("Turret.particle-delay")
     private val particleAmount = 20 //config.getInt("Turret.particle-amount")
     private val particleType = Particle.FLAME
     private val particleSpread = 0.2 //config.getDouble("Turret.particle-spread")
-
-    private var activeTurrets = arrayListOf<ArmorStand>()
-
     private val turretReach = 500 //config.getInt("Turret.reach")
     private val arrowDamage = 0.5 //config.getDouble("Turret.damage")
-    private var burningArrow: Boolean = true
 
     // blocks per tick
     private val speedMultiplier: Float = 5f //config.getInt("Turret.arrow-speed-multiplier")
-
-    private var activeArrows = hashMapOf<Arrow, Int>()
-    private val arrowLifeTime = 20 / shotDelay.toInt() * 3
 
     // ticks
     private val distanceCheckDelay: Long = 20
     private val performanceCheckDelay: Long = 20 * 60
 
+
+    // ---options---
+    private var burningArrow: Boolean = true
     private var silenced = false
 
-    private val onlinePlayers = Bukkit.getOnlinePlayers()
+
+    // ---backend---
+    // time it takes to reach turret reach + 20 ticks
+    private val arrowLifeTime = (turretReach / speedMultiplier / shotDelay + 20 / shotDelay).toInt()
+    private var activeTurrets = arrayListOf<ArmorStand>()
+    private var activeArrows = hashMapOf<Arrow, Int>()
+    private var onlinePlayers = Bukkit.getOnlinePlayers()
     private val targets = mutableSetOf<Player>()
-    private val arrowsToRemove = mutableListOf<Arrow>()
 
     private var shootTaskID: Int? = null
     private var particleTaskID: Int? = null
@@ -82,6 +84,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
         }
         if (args[0] == "reload") {
             reloadTurrets()
+            onlinePlayers = Bukkit.getOnlinePlayers()
             sender.sendMessage("§aReloaded ${activeTurrets.size} turrets")
             return true
         }
@@ -140,10 +143,16 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
             return true
         }
 
+        if (args[0] == "targets") {
+            sender.sendMessage("§aTargets: ${targets.joinToString { it.name }}")
+            return true
+        }
+
         return false
     }
 
     fun startReachCheckTask() {
+        onlinePlayers = Bukkit.getOnlinePlayers()
         if (reachCheckTaskID != null) return
         reachCheckTaskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, {
             reachCheck()
@@ -172,8 +181,10 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
         Bukkit.getScheduler().cancelTask(particleTaskID!!)
         shootTaskID = null
         particleTaskID = null
-        activeArrows.forEach { (arrow, _) -> arrow.remove() }
-        activeArrows.clear()
+        // remove arrows later, so it looks better when exiting reach distance
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, {
+            removeArrows()
+        }, 40)
     }
 
     fun startPerformanceCheckTask() {
@@ -197,8 +208,8 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
     }
 
     private fun reachCheck() {
-        // add players in range to target list, start tasks if not already running,
-        activeTurrets.forEach { turret ->
+        // add players in range to target list, start tasks if not already running
+        activeTurrets.forEach first@{ turret ->
             onlinePlayers.forEach { player ->
                 if (player.isGliding && turret.hasLineOfSight(player) && turret.location.distance(player.location) <= turretReach) {
                     targets.add(player)
@@ -206,28 +217,29 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
                         Bukkit.getLogger().info("Players in range, starting turret tasks")
                         startTasks()
                     }
-                    return
-                } else if (shootTaskID != null) {
+                    return@first
+                } else if (shootTaskID != null && targets.isEmpty()) {
                     Bukkit.getLogger().info("No players in range, stopping turret tasks")
                     stopTasks()
                 }
                 targets.remove(player)
             }
         }
+        // need to do this to prevent turret from shooting at disconnected player locations
+        targets.forEach { target -> if (!target.isOnline) targets.remove(target) }
         // disable hit delay for targeted players
         onlinePlayers.forEach { player ->
             if (!targets.contains(player)) {
                 // add hit delay if not targeted
                 if (player.maximumNoDamageTicks != 20) {
                     player.maximumNoDamageTicks = 20
-                    Bukkit.getLogger().info("Added hit delay to ${player.name}")
+                    Bukkit.getLogger().info("Added hit delay to ${player.name}, player is not turret target")
                 }
                 // remove hit delay if targeted
             } else if (player.maximumNoDamageTicks != 0) {
                 player.maximumNoDamageTicks = 0
-                Bukkit.getLogger().info("Removed hit delay from ${player.name}, player is in turret range")
+                Bukkit.getLogger().info("Removed hit delay from ${player.name}, player is turret target")
             }
-
         }
     }
 
@@ -260,10 +272,9 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
     }
 
     private fun onInterval() {
-        // check if turret can see player
-        activeTurrets.forEach { turret ->
-            targets.forEach { player ->
-
+        targets.forEach { player ->
+            activeTurrets.forEach inner@{ turret ->
+                if (turret.location.distance(player.location) > turretReach || !player.isOnline) return@inner
                 // shoot arrow in player direction
                 val arrow = turret.world.spawn(turret.eyeLocation, Arrow::class.java)
                 arrow.addScoreboardTag("TurretArrow")
@@ -286,18 +297,18 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
                         turret.location.distance(player.location).div(10).toFloat(),
                         0.6f
                     )
+                    turret.world.playSound(
+                        turret.location,
+                        Sound.ENTITY_BLAZE_SHOOT,
+                        1f,
+                        0.6f
+                    )
                 }
 
             }
         }
-//        // particle shooting if i ever want to use it
-//        turret.world.spawnParticle(
-//            Particle.FLAME, turret.eyeLocation, 0,
-//            (player.eyeLocation.x - turret.eyeLocation.x) / 2,
-//            (player.eyeLocation.y - turret.eyeLocation.y) / 2,
-//            (player.eyeLocation.z - turret.eyeLocation.z) / 2,
-//        )
 
+        val arrowsToRemove = mutableListOf<Arrow>()
         activeArrows.forEach { (arrow, lifeTime) ->
             if (lifeTime == 0) {
                 arrowsToRemove.add(arrow)
@@ -308,7 +319,23 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
         arrowsToRemove.forEach { arrow ->
             arrow.remove()
             activeArrows.remove(arrow)
+
+//        // particle shooting if i ever want to use it
+//        turret.world.spawnParticle(
+//            Particle.FLAME, turret.eyeLocation, 0,
+//            (player.eyeLocation.x - turret.eyeLocation.x) / 2,
+//            (player.eyeLocation.y - turret.eyeLocation.y) / 2,
+//            (player.eyeLocation.z - turret.eyeLocation.z) / 2,
+//        )
         }
+    }
+
+
+    private fun removeArrows() {
+        activeArrows.forEach { (arrow, _) ->
+            arrow.remove()
+        }
+        activeArrows.clear()
     }
 
     private fun predictLocation(turretLocation: Location, player: Player): Location {
@@ -316,7 +343,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
         playerLocation.y -= 2
 
         // adding some extra time since a lot of arrows fly behind the player
-        val timeToReach = (turretLocation.distance(playerLocation) / speedMultiplier) + 0.7
+        val timeToReach = (turretLocation.distance(playerLocation) / speedMultiplier) + Random().nextFloat(0.5f, 0.8f)
 
         return playerLocation.add(player.velocity.multiply(timeToReach))
     }
@@ -324,6 +351,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
     @EventHandler
     private fun onArrowHit(event: EntityDamageByEntityEvent) {
         if (event.damager.scoreboardTags.contains("TurretArrow") && event.entity is Player) {
+            Bukkit.getLogger().info("Turret hit player")
             activeArrows.remove(event.entity)
             event.damager.remove()
         }
@@ -344,16 +372,17 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
     }
 
     @EventHandler
-    private fun playerMove(event: PlayerMoveEvent) {
-        if (event.player.isGliding)
-            event.player.spawnParticle(Particle.WAX_OFF, event.player.location, 2, 0.15, 0.15, 0.15, 0.0)//Falling lava
+    private fun onArmorStandHit(event: EntityDamageByEntityEvent) {
+        if (event.entity.scoreboardTags.contains("Turret")) {
+            event.isCancelled = true
+        }
     }
 
     override fun onTabComplete(
         p0: CommandSender, p1: Command, p2: String, p3: Array<out String>
     ): MutableList<String> {
         if (p3.size == 1) {
-            return mutableListOf("reload", "remove", "spawn", "silence", "burningArrow", "shotDelay")
+            return mutableListOf("reload", "remove", "spawn", "silence", "burningArrow", "shotDelay", "targets")
         }
         return mutableListOf("")
     }
