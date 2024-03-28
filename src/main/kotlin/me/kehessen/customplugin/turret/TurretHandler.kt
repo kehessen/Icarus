@@ -1,9 +1,7 @@
 package me.kehessen.customplugin.turret
 
-import org.bukkit.Bukkit
-import org.bukkit.Location
-import org.bukkit.Particle
-import org.bukkit.Sound
+import me.kehessen.customplugin.MenuHandler
+import org.bukkit.*
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -16,12 +14,15 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityDeathEvent
+import org.bukkit.event.player.PlayerInteractEntityEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.plugin.java.JavaPlugin
 import java.util.*
 
 @Suppress("unused", "DuplicatedCode")
-class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) : CommandExecutor, TabCompleter,
+class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, private val menu: MenuHandler) :
+    CommandExecutor,
+    TabCompleter,
     Listener {
 
     // ---config---
@@ -340,7 +341,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
 
     private fun predictLocation(turretLocation: Location, player: Player): Location {
         val playerLocation = player.location
-        playerLocation.y -= 2
+        playerLocation.y -= 1.5
 
         // adding some extra time since a lot of arrows fly behind the player
         val timeToReach = (turretLocation.distance(playerLocation) / speedMultiplier) + Random().nextFloat(0.5f, 0.8f)
@@ -351,7 +352,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
     @EventHandler
     private fun onArrowHit(event: EntityDamageByEntityEvent) {
         if (event.damager.scoreboardTags.contains("TurretArrow") && event.entity is Player) {
-            Bukkit.getLogger().info("Turret hit player")
             activeArrows.remove(event.entity)
             event.damager.remove()
         }
@@ -375,6 +375,15 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration) :
     private fun onArmorStandHit(event: EntityDamageByEntityEvent) {
         if (event.entity.scoreboardTags.contains("Turret")) {
             event.isCancelled = true
+        }
+    }
+
+    @EventHandler
+    private fun onRightClick(event: PlayerInteractEntityEvent) {
+        if (event.rightClicked.scoreboardTags.contains("Turret")) {
+            val inv = menu.createInventory(3, "Turret")
+            menu.createItem(Material.GREEN_WOOL, inv, 11, "Active", "Turret is active. Click to deactivate")
+            menu.createItem(Material.RED_WOOL, inv, 13, "Ammo", "Turret is inactive. Click to activate")
         }
     }
 

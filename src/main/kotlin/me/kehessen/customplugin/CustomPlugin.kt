@@ -18,6 +18,7 @@ class CustomPlugin : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
     private val simpleCommandHandler = SimpleCommandHandler(combatTime)
     private val tpaHandler = TpaHandler(combatTime, config)
     private val turretHandler = TurretHandler(this, config)
+    private val menuHandler = MenuHandler()
 
     override fun onEnable() {
         saveDefaultConfig()
@@ -33,6 +34,7 @@ class CustomPlugin : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
 
         server.pluginManager.registerEvents(combatTime, this)
         server.pluginManager.registerEvents(turretHandler, this)
+        server.pluginManager.registerEvents(menuHandler, this)
 
         getCommand("spawn")?.setExecutor(simpleCommandHandler)
         getCommand("announce")?.setExecutor(simpleCommandHandler)

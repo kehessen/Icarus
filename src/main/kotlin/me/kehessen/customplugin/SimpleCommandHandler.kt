@@ -1,6 +1,7 @@
 package me.kehessen.customplugin
 
 import org.bukkit.Bukkit
+import org.bukkit.Material
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -8,6 +9,7 @@ import org.bukkit.command.TabCompleter
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.player.PlayerCommandPreprocessEvent
+import org.bukkit.inventory.ItemStack
 
 @Suppress("unused")
 class SimpleCommandHandler(private val combatTime: CombatTime) : CommandExecutor, TabCompleter {
@@ -44,7 +46,9 @@ class SimpleCommandHandler(private val combatTime: CombatTime) : CommandExecutor
             }
 
             "test" -> {
-                sender.sendMessage("§aCurrently not used")
+                var inv = Bukkit.createInventory(null, 27, "Test")
+                inv.setItem(11, ItemStack(Material.GRASS_BLOCK))
+                sender.openInventory(inv)
             }
 
         }
