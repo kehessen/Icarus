@@ -88,7 +88,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     private val invRows = 4
 
 
-    //    private var shootTaskID: Int? = null
     // multiple tasks for different shot delays, up to 5 -> better than creating a new class hehehehaw
     private var shootTaskIDs: MutableSet<Int> = mutableSetOf()
     private var particleTaskID: Int? = null
@@ -115,10 +114,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                 )
                 turretSpeeds[turret] = shotDelay
             }
-//            if (shootTaskID != null) {
-//                stopTasks()
-//                startTasks()
-//            }
             if (shootTaskIDs.isNotEmpty()) {
                 stopTasks()
                 startTasks()
@@ -221,9 +216,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     }
 
     private fun startTasks() {
-//        shootTaskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, {
-//            onInterval()
-//        }, 0, shotDelay)
 
         val tasksToStart = mutableSetOf<Long>()
         turrets.forEach { turret ->
@@ -249,7 +241,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     }
 
     private fun stopTasks() {
-//        Bukkit.getScheduler().cancelTask(shootTaskID!!)
         shootTaskIDs.forEach { taskID ->
             Bukkit.getScheduler().cancelTask(taskID)
         }
@@ -299,21 +290,13 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             onlinePlayers.forEach { player ->
                 if (player.isGliding && turret.hasLineOfSight(player) && turret.location.distance(player.location) <= turretReach) {
                     targets.add(player)
-//                    if (shootTaskID == null) {
-//                        Bukkit.getLogger().info("Players in range, starting turret tasks")
-//                        startTasks()
 //                    }
                     if (shootTaskIDs.isEmpty()) {
                         Bukkit.getLogger().info("Players in range, starting turret tasks")
                         startTasks()
                     }
                     return@first
-                }
-//                else if (shootTaskID != null && targets.isEmpty()) {
-//                    Bukkit.getLogger().info("No players in range, stopping turret tasks")
-//                    stopTasks()
-//                }
-                else if (shootTaskIDs.isNotEmpty() && targets.isEmpty()) {
+                } else if (shootTaskIDs.isNotEmpty() && targets.isEmpty()) {
                     Bukkit.getLogger().info("No players in range, stopping turret tasks")
                     stopTasks()
                 }
@@ -345,13 +328,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             stopReachCheckTask()
 //            if (shootTaskID != null) stopTasks()
             if (shootTaskIDs.isNotEmpty()) stopTasks()
-        }
-//        else if (activeTurrets.isEmpty() && shootTaskID != null) {
-//            Bukkit.getLogger().info("No turrets found, stopping tasks")
-//            stopTasks()
-//            stopReachCheckTask()
-//        }
-        else if (activeTurrets.isEmpty() && shootTaskIDs.isNotEmpty()) {
+        } else if (activeTurrets.isEmpty() && shootTaskIDs.isNotEmpty()) {
             Bukkit.getLogger().info("No turrets found, stopping tasks")
             stopTasks()
             stopReachCheckTask()
@@ -429,14 +406,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         arrowsToRemove.forEach { arrow ->
             arrow.remove()
             activeArrows.remove(arrow)
-
-//        // particle shooting if i ever want to use it
-//        turret.world.spawnParticle(
-//            Particle.FLAME, turret.eyeLocation, 0,
-//            (player.eyeLocation.x - turret.eyeLocation.x) / 2,
-//            (player.eyeLocation.y - turret.eyeLocation.y) / 2,
-//            (player.eyeLocation.z - turret.eyeLocation.z) / 2,
-//        )
         }
     }
 
