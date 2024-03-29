@@ -13,12 +13,15 @@ import org.bukkit.plugin.java.JavaPlugin
 @Suppress("unused")
 class CustomPlugin : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
 
-
-    private val combatTime = CombatTime(this, config)
-    private val simpleCommandHandler = SimpleCommandHandler(combatTime)
-    private val tpaHandler = TpaHandler(combatTime, config)
-    private val turretHandler = TurretHandler(this, config)
+    // used for other classes
     private val menuHandler = MenuHandler()
+    private val combatTime = CombatTime(this, config)
+
+
+    private val turretHandler = TurretHandler(this, config, menuHandler)
+    private val simpleCommandHandler = SimpleCommandHandler(combatTime, turretHandler)
+    private val tpaHandler = TpaHandler(combatTime, config)
+
 
     override fun onEnable() {
         saveDefaultConfig()
