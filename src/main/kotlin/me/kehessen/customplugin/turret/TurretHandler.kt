@@ -32,13 +32,16 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     TabCompleter,
     Listener {
 
+    // turret still shooting at target if its on ground but another one is in reach
+    // lock on time (about 1 second)
+
     // ---config---
     private var shotDelay: Long = 3 //config.getLong("Turret.shoot-delay")
     private val particleDelay: Long = 2 //config.getLong("Turret.particle-delay")
     private val particleAmount = 20 //config.getInt("Turret.particle-amount")
     private val particleType = Particle.FLAME
     private val particleSpread = 0.2 //config.getDouble("Turret.particle-spread")
-    private var turretReach = 500 //config.getInt("Turret.reach")
+    private var turretReach = 500 //config.getInt("Turret.reach") 500
     private var arrowDamage = 0.5 //config.getDouble("Turret.damage")
     private var ammo: Int = 100
 
@@ -57,10 +60,11 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
     // ---backend---
     // time it takes to reach turret reach + 20 ticks
-    private val arrowLifeTime = (turretReach / speedMultiplier / shotDelay + 20 / shotDelay).toInt()
+    private val arrowLifeTime = (turretReach / speedMultiplier + 20 / speedMultiplier).toInt()
+    private var turrets = mutableSetOf<ArmorStand>()
     private var activeTurrets = mutableSetOf<ArmorStand>()
     private var inactiveTurrets = mutableSetOf<ArmorStand>()
-    private var turrets = mutableSetOf<ArmorStand>()
+    private var shootingTurrets = mutableSetOf<ArmorStand>()
     private var activeArrows = hashMapOf<Arrow, Int>()
     private var onlinePlayers = Bukkit.getOnlinePlayers()
     private val targets = mutableSetOf<Player>()
@@ -72,6 +76,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
     // key: inventory holder, value: turret
     private var openInvs = hashMapOf<InventoryHolder, ArmorStand>()
+    private var playersInInv = hashMapOf<Player, ArmorStand>()
 
     private var keyNames = arrayOf("ammo", "active", "damage", "reach", "shotDelay")
     private val ammoKey = NamespacedKey(plugin, "ammo")
@@ -86,6 +91,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     private val shotDelayMaterial: Material = Material.CLOCK
     private val pickUpMaterial: Material = Material.BARRIER
     private val invRows = 4
+    private val ammoPutSlot = 22
 
 
     // multiple tasks for different shot delays, up to 5 -> better than creating a new class hehehehaw
@@ -187,6 +193,13 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                 armorStand.removeWhenFarAway = false
 
                 armorStand.addScoreboardTag("Turret")
+
+                armorStand.persistentDataContainer.set(ammoKey, PersistentDataType.INTEGER, ammo)
+                armorStand.persistentDataContainer.set(activeKey, PersistentDataType.BOOLEAN, true)
+                armorStand.persistentDataContainer.set(damageKey, PersistentDataType.DOUBLE, arrowDamage)
+                armorStand.persistentDataContainer.set(reachKey, PersistentDataType.INTEGER, turretReach)
+                armorStand.persistentDataContainer.set(shotDelayKey, PersistentDataType.LONG, shotDelay)
+
                 turrets.add(armorStand)
                 activeTurrets.add(armorStand)
                 return true
@@ -212,15 +225,15 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     private fun stopReachCheckTask() {
         Bukkit.getScheduler().cancelTask(reachCheckTaskID!!)
         reachCheckTaskID = null
-        Bukkit.getLogger().info("Disabled turret reach checker since no players are online")
     }
 
     private fun startTasks() {
 
         val tasksToStart = mutableSetOf<Long>()
-        turrets.forEach { turret ->
+        activeTurrets.forEach { turret ->
             if (turretSpeeds[turret] == null) {
                 turretSpeeds[turret] = shotDelay
+                turret.persistentDataContainer.set(shotDelayKey, PersistentDataType.LONG, shotDelay)
             }
             tasksToStart.add(turretSpeeds[turret]!!)
         }
@@ -290,7 +303,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             onlinePlayers.forEach { player ->
                 if (player.isGliding && turret.hasLineOfSight(player) && turret.location.distance(player.location) <= turretReach) {
                     targets.add(player)
-//                    }
+                    shootingTurrets.add(turret)
                     if (shootTaskIDs.isEmpty()) {
                         Bukkit.getLogger().info("Players in range, starting turret tasks")
                         startTasks()
@@ -301,10 +314,42 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                     stopTasks()
                 }
                 targets.remove(player)
+                shootingTurrets.remove(turret)
             }
         }
+        val disabled = mutableSetOf<ArmorStand>()
+        shootingTurrets.forEach { turret ->
+            // doing ammo calculation here because it's faster than writing to NBT every single shot
+            val ammo = turret.persistentDataContainer.get(ammoKey, PersistentDataType.INTEGER)!!
+            val speed = turretSpeeds[turret]!!
+            if (ammo < 1) {
+                activeTurrets.remove(turret)
+                inactiveTurrets.add(turret)
+                turret.persistentDataContainer.set(activeKey, PersistentDataType.BOOLEAN, false)
+                turret.persistentDataContainer.set(ammoKey, PersistentDataType.INTEGER, 0)
+                Bukkit.getLogger().info("Turret with EntityID ${turret.entityId} out of ammo, deactivated")
+                disabled.add(turret)
+                stopTasks()
+                startTasks()
+            }
+            if (ammo >= 20)
+                turret.persistentDataContainer.set(ammoKey, PersistentDataType.INTEGER, ammo - (20 / speed).toInt())
+        }
+        disabled.forEach(shootingTurrets::remove)
+
         // need to do this to prevent turret from shooting at disconnected player locations
-        targets.forEach { target -> if (!target.isOnline) targets.remove(target) }
+        // don't like having to check again, but it's necessary so the hit delay doesn't stay removed when turret runs out of ammo
+        targets.forEach outer@{ player ->
+            if (!player.isOnline) targets.remove(player)
+            turrets.forEach { turret ->
+                if (!player.isGliding || !turret.hasLineOfSight(player) || turret.location.distance(player.location) >= turretReach) {
+                    targets.remove(player)
+                } else {
+                    targets.add(player)
+                    return@outer
+                }
+            }
+        }
         // disable hit delay for targeted players
         onlinePlayers.forEach { player ->
             if (!targets.contains(player)) {
@@ -347,6 +392,10 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         // get settings from turrets
         turretSpeeds.clear()
         turrets.forEach { turret ->
+            // get shot delay, set to default if not found
+            if (!turret.persistentDataContainer.has(shotDelayKey)) {
+                turret.persistentDataContainer.set(shotDelayKey, PersistentDataType.LONG, shotDelay)
+            }
             turretSpeeds[turret] = turret.persistentDataContainer.get(shotDelayKey, PersistentDataType.LONG)!!
         }
         updateSettings()
@@ -391,7 +440,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                         0.6f
                     )
                 }
-
             }
         }
 
@@ -515,24 +563,29 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
     @EventHandler
     private fun onRightClick(event: PlayerInteractAtEntityEvent) {
-        Bukkit.getLogger().info(turrets.size.toString())
+        if (!event.rightClicked.scoreboardTags.contains("Turret")) return
         if (event.rightClicked is ArmorStand && event.rightClicked.scoreboardTags.contains("Turret")) {
-            Bukkit.getLogger().info("Opening turret menu for ${event.player.name}")
             val turret = event.rightClicked as ArmorStand
             val ammo = turret.persistentDataContainer.get(ammoKey, PersistentDataType.INTEGER)!!
             val holder = InvHolder()
             val inv = menu.createInventory(invRows, "§lTurret", holder)
             openInvs[holder] = turret
+            Bukkit.getLogger().info("Opened turret menu of ${event.player.name}")
+            playersInInv[event.player] = turret
 
+            if (turret.persistentDataContainer.get(activeKey, PersistentDataType.BOOLEAN) == false) {
+                menu.createItem(inactiveDisplayMaterial, inv, 10, "Inactive", "Turret is inactive. Click to activate")
+            } else {
+                menu.createItem(activeDisplayMaterial, inv, 10, "Active", "Turret is active. Click to deactivate")
+            }
 
-            menu.createItem(activeDisplayMaterial, inv, 10, "Active", "Turret is active. Click to deactivate")
             menu.createItem(
                 ammoDisplayMaterial,
                 inv,
                 13,
                 "Ammo",
                 "Turret ammo: $ammo",
-                "Add ammo by shift-clicking arrows"
+                "Add ammo by clicking on arrows"
             )
             menu.createItem(
                 shotDelayMaterial,
@@ -545,7 +598,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             )
             menu.createItem(pickUpMaterial, inv, 35, "Pick up", "Pick up turret")
 
-            menu.fillWithoutName(inv, Material.LIGHT_GRAY_STAINED_GLASS_PANE, 22)
+            menu.fillWithoutName(inv, Material.LIGHT_GRAY_STAINED_GLASS_PANE, ammoPutSlot)
 
             event.player.openInventory(inv)
         }
@@ -556,7 +609,9 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         if (event.clickedInventory == null) return
         if (event.view.title != "§lTurret") return
         if (event.currentItem == null) return
+        // if a player clicks his own inventory he is the holder -> turret will be null
         if (event.rawSlot >= invRows * 9) return
+
         val turret = openInvs[event.clickedInventory!!.holder]
 
         when (event.currentItem!!.type) {
@@ -572,6 +627,9 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                     i.itemMeta = meta
                     event.clickedInventory!!.setItem(10, i)
                     turret!!.persistentDataContainer.set(activeKey, PersistentDataType.BOOLEAN, false)
+                    Bukkit.getLogger().info("Turret with EntityID ${turret.entityId} deactivated")
+                    activeTurrets.remove(turret)
+                    inactiveTurrets.add(turret)
                     event.isCancelled = true
                 }
             }
@@ -588,6 +646,9 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                     i.itemMeta = meta
                     event.clickedInventory!!.setItem(10, i)
                     turret!!.persistentDataContainer.set(activeKey, PersistentDataType.BOOLEAN, true)
+                    Bukkit.getLogger().info("Turret with EntityID ${turret.entityId} activated")
+                    activeTurrets.add(turret)
+                    inactiveTurrets.remove(turret)
                     event.isCancelled = true
                 }
             }
@@ -643,10 +704,39 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         event.isCancelled = true
     }
 
+    // adding ammo to turret, updating inv
+    @EventHandler
+    fun onInvMoveItem(event: InventoryClickEvent) {
+        if (event.whoClicked !is Player) return
+        if (event.currentItem == null) return
+        if (playersInInv.isEmpty()) return
+        if (event.rawSlot < invRows * 9) return
+        if (event.whoClicked in playersInInv.keys) {
+            if (event.currentItem!!.type != Material.ARROW) {
+                event.isCancelled = true
+                return
+            }
+            val turret = playersInInv[event.whoClicked]!!
+            val ammo = turret.persistentDataContainer.get(ammoKey, PersistentDataType.INTEGER)!!
+            val amount = event.currentItem!!.amount * 5
+            turret.persistentDataContainer.set(ammoKey, PersistentDataType.INTEGER, ammo + amount)
+            event.currentItem!!.amount = 0
+            val inv = event.whoClicked.openInventory.topInventory
+            inv.setItem(ammoPutSlot, ItemStack(Material.AIR))
+            val i = ItemStack(ammoDisplayMaterial)
+            val meta = i.itemMeta!!
+            meta.setDisplayName("Ammo")
+            meta.lore = mutableListOf("Turret ammo: ${ammo + amount}", "Add ammo by clicking on arrows")
+            i.itemMeta = meta
+            inv.setItem(13, i)
+        }
+    }
+
     @EventHandler
     private fun onInvClose(event: InventoryCloseEvent) {
         if (event.inventory.holder in openInvs.keys) {
             openInvs.remove(event.inventory.holder)
+            playersInInv.remove(event.player)
             Bukkit.getLogger().info("Closed turret menu of ${event.player.name}")
         }
     }

@@ -13,6 +13,8 @@ import org.bukkit.plugin.java.JavaPlugin
 @Suppress("unused")
 class CustomPlugin : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
 
+    // maybe make a plane
+
     // used for other classes
     private val menuHandler = MenuHandler()
     private val combatTime = CombatTime(this, config)
@@ -67,17 +69,11 @@ class CustomPlugin : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
     }
 
 //    @EventHandler
-//    private fun playerMove(event: PlayerMoveEvent) {
-//        if (event.player.isGliding)
-//            event.player.spawnParticle(Particle.FALLING_LAVA, event.player.location, 2, 0.15, 0.15, 0.15, 0.0)//Falling lava, wax off
-//    }
-
-//    @EventHandler
 //    fun onPlayerGlide(event: PlayerMoveEvent) {
 //        val speedLimit = 0.5
 //        if (event.player.isGliding && event.player.velocity.length() > speedLimit) {
 //            event.player.velocity = event.player.velocity.normalize().multiply(speedLimit)
-//            event.player.sendMessage(event.player.ping.toString())
+////            event.player.sendMessage(event.player.ping.toString())
 //        }
 //    }
 }
