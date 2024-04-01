@@ -35,7 +35,13 @@ class CombatTime(private val plugin: JavaPlugin, config: FileConfiguration) : Li
         return true
     }
 
-    fun startTask() {
+    fun start() {
+        startTask()
+        Bukkit.getPluginCommand("combattime")?.setExecutor(this)
+        Bukkit.getPluginManager().registerEvents(this, plugin)
+    }
+
+    private fun startTask() {
         Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, {
             onInterval()
         }, 0, 20 * 1)

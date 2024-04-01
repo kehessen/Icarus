@@ -46,7 +46,7 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
             }
 
             "test" -> {
-                trtHan.enableAllTurrets()
+
             }
 
         }
@@ -68,6 +68,12 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
             }
         }
         return null
+    }
+
+    fun start() {
+        Bukkit.getPluginCommand("spawn")?.setExecutor(this)
+        Bukkit.getPluginCommand("announce")?.setExecutor(this)
+        Bukkit.getPluginCommand("test")?.setExecutor(this)
     }
 
     @EventHandler

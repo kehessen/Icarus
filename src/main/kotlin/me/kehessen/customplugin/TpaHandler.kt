@@ -38,6 +38,11 @@ class TpaHandler(private val combatTime: CombatTime, config: FileConfiguration) 
         }, 20 * 1)
     }
 
+    fun start() {
+        Bukkit.getPluginCommand("tpa")?.setExecutor(this)
+        Bukkit.getPluginCommand("tpaccept")?.setExecutor(this)
+    }
+
     // combat check in CombatTime
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         if (sender !is Player) {

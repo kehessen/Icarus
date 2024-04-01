@@ -4,7 +4,7 @@ Combat:
   can-teleport-in-combat: false
 
 Turret:
-  shoot-delay: 3
+  shot-delay: 3
   particle-delay: 0
   particle-amount: 10
   particle-spread: 0.1

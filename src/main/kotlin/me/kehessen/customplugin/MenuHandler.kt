@@ -6,9 +6,14 @@ import org.bukkit.event.Listener
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
+import org.bukkit.plugin.java.JavaPlugin
 
+@Suppress("unused")
+class MenuHandler(private val plugin: JavaPlugin) : Listener {
 
-class MenuHandler : Listener {
+    fun start() {
+        Bukkit.getPluginManager().registerEvents(this, plugin)
+    }
 
     fun createInventory(rows: Int, name: String, owner: InventoryHolder): Inventory {
         if (rows > 6) throw IllegalArgumentException("Inventory can't have more than 6 rows")

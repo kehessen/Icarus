@@ -25,7 +25,7 @@ commands:
     permission: op
   turret:
     description: turret options
-    usage: /turret <spawn/remove/reload/silence/burningArrow/targets/shotDelay/disableAll/enableAll>
+    usage: /turret <spawn/remove/reload/silence/burningArrow/targets/shotDelay/disableAll/enableAll/getEnderPearl>
     permission: op
   lasercanon:
     description: lasercanon options
