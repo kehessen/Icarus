@@ -18,6 +18,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityDeathEvent
+import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.player.PlayerInteractAtEntityEvent
@@ -32,14 +33,26 @@ import org.bukkit.persistence.PersistentDataType
 import org.bukkit.plugin.java.JavaPlugin
 import java.util.*
 
+// entity activation range has to be set to 500 for arrows to fly correctly
+// this has to be permanent since it requires a server restart to change
+// entities this applies to:
+// - Item frames
+// - Paintings
+// - Dropped items
+// - Experience orbs
+// - Sign text
+// - Arrows
+// - Boats
+// - Minecarts (including chest minecarts and furnace minecarts)
+// - Falling sand entities
+// - Leash knots
+// - Armor stands
 @Suppress("unused", "DuplicatedCode")
 class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, private val menu: MenuHandler) :
-    CommandExecutor,
-    TabCompleter,
-    Listener {
+    CommandExecutor, TabCompleter, Listener {
 
     // TODO: turret still shooting at target if its on ground but another one is in reach (think I fixed it but idk)
-    // TODO: lock on time (~1s beeping before getting beamed)
+    // only ops can access crafting table
 
     // ---config---
     private var shotDelay: Long = 3 //config.getLong("Turret.shot-delay")
@@ -73,6 +86,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     private var shootingTurrets = mutableSetOf<ArmorStand>()
     private var activeArrows = hashMapOf<Arrow, Int>()
     private val targets = mutableSetOf<Player>()
+    private val lockingOn = mutableSetOf<Player>()
 
     // shot delay, key: turret, value: shot delay, delay is 1-5 ticks
     private var minTurretSpeed = 1L
@@ -98,6 +112,9 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     private val invRows = 4
     private val ammoPutSlot = 22
 
+
+    // custom sound
+    private val customSound = "minecraft:missilelock"
 
     // crafting recipe:
     // 1 custom ender pearl from killing an enderman in the overworld without fortune,
@@ -127,9 +144,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             shotDelay = newDelay.toLong()
             turrets.forEach { turret ->
                 turret.persistentDataContainer.set(
-                    shotDelayKey,
-                    PersistentDataType.LONG,
-                    shotDelay
+                    shotDelayKey, PersistentDataType.LONG, shotDelay
                 )
                 turretSpeeds[turret] = shotDelay
             }
@@ -138,6 +153,18 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                 startTasks()
             }
             sender.sendMessage("§aTurret shot delay set to $newDelay ticks")
+            return true
+        }
+        if (args[0] == "missilelock") {
+            if (args.size != 2) {
+                sender.sendMessage("§cInvalid arguments")
+                return true
+            }
+            if (sender !is Player) {
+                sender.sendMessage("§cInvalid sender")
+                return false
+            }
+            Bukkit.getPlayer(args[1])?.playSound(sender.location, customSound, 100f, 1f)
             return true
         }
 
@@ -212,12 +239,21 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                 sender.inventory.addItem(customEnderPearl)
                 return true
             }
+
+            "give" -> {
+                if (sender !is Player) {
+                    sender.sendMessage("§cInvalid sender")
+                    return false
+                }
+                sender.inventory.addItem(customItem)
+                return true
+            }
+
         }
         sender.sendMessage("§cInvalid arguments")
         return true
     }
 
-    // no idea why it spawns with 320 ammo, but it does
     private fun spawnTurret(location: Location) {
         val armorStand = location.world!!.spawn(location, ArmorStand::class.java)
         armorStand.setGravity(false)
@@ -283,7 +319,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     }
 
     private fun startTasks() {
-
         val tasksToStart = mutableSetOf<Long>()
         activeTurrets.forEach { turret ->
             if (turretSpeeds[turret] == null) {
@@ -312,7 +347,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         shootTaskIDs.forEach { taskID ->
             Bukkit.getScheduler().cancelTask(taskID)
         }
-        Bukkit.getScheduler().cancelTask(particleTaskID!!)
+        if (particleTaskID != null) Bukkit.getScheduler().cancelTask(particleTaskID!!)
 
 //        shootTaskID = null
         shootTaskIDs.clear()
@@ -357,11 +392,18 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         val shooters = hashMapOf<Player, MutableSet<ArmorStand>>()
         activeTurrets.forEach { turret ->
             Bukkit.getOnlinePlayers().forEach { player ->
-                if (!shooters.containsKey(player))
-                    shooters[player] = mutableSetOf()
+                if (!shooters.containsKey(player)) shooters[player] = mutableSetOf()
                 if (player.isGliding && turret.hasLineOfSight(player) && turret.location.distance(player.location) <= turretReach) {
                     shooters[player]!!.add(turret)
-                    targets.add(player)
+                    if (!targets.contains(player)) {
+                        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, {
+                            if (player.isGliding && turret.hasLineOfSight(player) && turret.location.distance(player.location) <= turretReach) shootingTurrets.add(
+                                turret
+                            )
+                            targets.add(player)
+                        }, 19)
+                        player.playSound(turret.location, customSound, 100f, 1f)
+                    }
                     if (shootTaskIDs.isEmpty()) {
                         Bukkit.getLogger().info("Players in range, starting turret tasks")
                         startTasks()
@@ -369,6 +411,13 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                 } else {
                     shooters[player]!!.remove(turret)
                 }
+            }
+            var contains = false
+            shooters.values.forEach { set ->
+                if (set.contains(turret)) contains = true
+            }
+            if (!contains) {
+                shootingTurrets.remove(turret)
             }
         }
         val amountOfShooters = hashMapOf<Player, Int>() // player, amount of turrets shooting at player
@@ -381,6 +430,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         amountOfShooters.forEach { (player, amount) ->
             if (amount == 0) {
                 targets.remove(player)
+                lockingOn.remove(player)
             }
         }
 
@@ -407,6 +457,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         shooters.forEach { (player, turrets) ->
             if (turrets.isEmpty()) {
                 targets.remove(player)
+                lockingOn.remove(player)
             }
         }
 
@@ -486,7 +537,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                     val predictedLocation = predictLocation(turret.location, player)
                     arrow.velocity = predictedLocation.toVector().subtract(turret.location.toVector()).normalize()
                         .multiply(speedMultiplier)
-//                arrow.isInvulnerable = true
+                    arrow.isInvulnerable = true
                     arrow.setGravity(false)
                     arrow.damage = arrowDamage
                     arrow.isSilent = true
@@ -502,10 +553,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                             0.6f
                         )
                         turret.world.playSound(
-                            turret.location,
-                            Sound.ENTITY_BLAZE_SHOOT,
-                            1f,
-                            0.6f
+                            turret.location, Sound.ENTITY_BLAZE_SHOOT, 1f, 0.6f
                         )
                     }
                 }
@@ -568,7 +616,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                 val key = NamespacedKey(plugin, keyName)
                 if (turret.persistentDataContainer.has(key)) {
                     when (keyName) {
-                        "ammo" -> ammo = turret.persistentDataContainer.get(key, PersistentDataType.INTEGER)!!
+                        "ammo" -> turret.persistentDataContainer.get(key, PersistentDataType.INTEGER)!!
                         "active" -> {
                             if (turret.persistentDataContainer.get(key, PersistentDataType.BOOLEAN) == false) {
                                 activeTurrets.remove(turret)
@@ -584,8 +632,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                         "shotDelay" -> shotDelay = turret.persistentDataContainer.get(key, PersistentDataType.LONG)!!
                     }
                     return@inner
-                }
-                when (keyName) {
+                } else when (keyName) {
                     "ammo" -> turret.persistentDataContainer.set(key, PersistentDataType.INTEGER, ammo)
                     "active" -> {
                         turret.persistentDataContainer.set(key, PersistentDataType.BOOLEAN, true)
@@ -609,6 +656,12 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     }
 
     @EventHandler
+    private fun onDeath(event: PlayerDeathEvent) {
+        targets.remove(event.entity)
+        lockingOn.remove(event.entity)
+    }
+
+    @EventHandler
     private fun onDestroy(event: EntityDeathEvent) {
         if (event.entity.scoreboardTags.contains("Turret")) {
             activeTurrets.remove(event.entity)
@@ -620,8 +673,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     @EventHandler
     private fun onPlayerJoin(event: PlayerJoinEvent) {
         event.player.discoverRecipe(NamespacedKey(plugin, "turret"))
-        if (reachCheckTaskID == null)
-            Bukkit.getLogger().info("Starting reach check task")
+        if (reachCheckTaskID == null) Bukkit.getLogger().info("Starting reach check task")
         startReachCheckTask()
     }
 
@@ -646,23 +698,14 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
             if (turret.persistentDataContainer.get(activeKey, PersistentDataType.BOOLEAN) == false) {
                 menu.createItem(
-                    inactiveDisplayMaterial,
-                    inv,
-                    10,
-                    "Inactive",
-                    "§r§7Turret is inactive. Click to activate"
+                    inactiveDisplayMaterial, inv, 10, "Inactive", "§r§7Turret is inactive. Click to activate"
                 )
             } else {
                 menu.createItem(activeDisplayMaterial, inv, 10, "Active", "§r§7Turret is active. Click to deactivate")
             }
 
             menu.createItem(
-                ammoDisplayMaterial,
-                inv,
-                13,
-                "Ammo",
-                "§r§7Turret ammo: $ammo",
-                "§r§7Add ammo by clicking on arrows"
+                ammoDisplayMaterial, inv, 13, "Ammo", "§r§7Turret ammo: $ammo", "§r§7Add ammo by clicking on arrows"
             )
             menu.createItem(
                 shotDelayMaterial,
@@ -841,10 +884,8 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                 }
             }
             spawnTurret(event.clickedBlock!!.location.add(0.5, 1.0, 0.5))
-            if (event.player.inventory.itemInMainHand == event.item)
-                event.player.inventory.itemInMainHand.amount -= 1
-            else
-                event.player.inventory.itemInOffHand.amount -= 1
+            if (event.player.inventory.itemInMainHand == event.item) event.player.inventory.itemInMainHand.amount -= 1
+            else event.player.inventory.itemInOffHand.amount -= 1
             // cancelling to prevent another armor stand from being placed if player clicks on the side of a block
             // (it stays a turret when broken again but can't actually do anything)
             event.isCancelled = true
@@ -854,12 +895,12 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     @EventHandler
     private fun onItemDrop(event: EntityDeathEvent) {
         if (event.entity.killer == null || event.entity.killer !is Player) return
-        if (event.entity.type == EntityType.ENDERMAN && event.entity.world.environment == World.Environment.NORMAL &&
-            (!event.entity.killer!!.inventory.itemInMainHand.enchantments.contains(Enchantment.LOOT_BONUS_MOBS))
+        if (event.entity.type == EntityType.ENDERMAN && event.entity.world.environment == World.Environment.NORMAL && (!event.entity.killer!!.inventory.itemInMainHand.enchantments.contains(
+                Enchantment.LOOT_BONUS_MOBS
+            ))
         ) {
             // 50% drop chance
-            if (Random().nextInt(1, 3) == 1)
-                event.drops.add(customEnderPearl)
+            if (Random().nextInt(1, 3) == 1) event.drops.add(customEnderPearl)
             event.drops.remove(ItemStack(Material.ENDER_PEARL))
         }
 
@@ -873,15 +914,27 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                 "burningArrow",
                 "disableAll",
                 "enableAll",
+                "give",
                 "reload",
                 "remove",
                 "shotDelay",
                 "silence",
                 "spawn",
                 "targets",
-                "getEnderPearl"
+                "getEnderPearl",
+                "missilelock"
             )
         }
-        return mutableListOf("")
+        return when {
+            p3.size == 2 && p3[0] == "shotDelay" -> {
+                mutableListOf("1", "2", "3", "4", "5")
+            }
+
+            p3.size == 2 && p3[0] == "missilelock" -> {
+                Bukkit.getOnlinePlayers().map { it.name }.toMutableList()
+            }
+
+            else -> mutableListOf("")
+        }
     }
 }

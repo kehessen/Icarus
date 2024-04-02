@@ -46,9 +46,9 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
             }
 
             "test" -> {
-
+                Bukkit.getPlayer(sender.name)!!
+                    .playSound(Bukkit.getPlayer(sender.name)!!.location, "minecraft:missilelock", 100f, 1f)
             }
-
         }
         return true
     }
