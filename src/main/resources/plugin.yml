@@ -31,3 +31,7 @@ commands:
     description: lasercanon options
     usage: /lasercanon <spawn/remove/reload/silence>
     permission: op
+  tnt:
+    description: tnt options
+    usage: /tnt <spawn> <yield>
+    permission: op

@@ -34,7 +34,7 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
                     val sp = Bukkit.getWorld("world")?.spawnLocation
                     sender.sendMessage("§aSpawn set to ${sp?.x} ${sp?.y} ${sp?.z}")
                 } else
-                    Bukkit.getWorld("world")?.let { sender.teleport(it.spawnLocation) }
+                    sender.teleport(sender.world.spawnLocation)
             }
 
             "announce" -> {
@@ -46,8 +46,7 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
             }
 
             "test" -> {
-                Bukkit.getPlayer(sender.name)!!
-                    .playSound(Bukkit.getPlayer(sender.name)!!.location, "minecraft:missilelock", 100f, 1f)
+                sender.addPassenger(Bukkit.getPlayer(args[1])!!)
             }
         }
         return true

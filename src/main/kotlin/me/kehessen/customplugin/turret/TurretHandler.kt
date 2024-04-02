@@ -9,10 +9,7 @@ import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
 import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.enchantments.Enchantment
-import org.bukkit.entity.ArmorStand
-import org.bukkit.entity.Arrow
-import org.bukkit.entity.EntityType
-import org.bukkit.entity.Player
+import org.bukkit.entity.*
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
@@ -254,139 +251,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         return true
     }
 
-    private fun spawnTurret(location: Location) {
-        val armorStand = location.world!!.spawn(location, ArmorStand::class.java)
-        armorStand.setGravity(false)
-        armorStand.isInvulnerable = true
-        armorStand.customName = "§cTurret"
-        armorStand.isCustomNameVisible = true
-        armorStand.isVisible = true
-        armorStand.removeWhenFarAway = false
-
-        armorStand.addScoreboardTag("Turret")
-
-        armorStand.persistentDataContainer.set(ammoKey, PersistentDataType.INTEGER, ammo)
-        armorStand.persistentDataContainer.set(activeKey, PersistentDataType.BOOLEAN, true)
-        armorStand.persistentDataContainer.set(damageKey, PersistentDataType.DOUBLE, arrowDamage)
-        armorStand.persistentDataContainer.set(reachKey, PersistentDataType.INTEGER, turretReach)
-        armorStand.persistentDataContainer.set(shotDelayKey, PersistentDataType.LONG, shotDelay)
-        turretSpeeds[armorStand] = shotDelay
-
-        turrets.add(armorStand)
-        activeTurrets.add(armorStand)
-    }
-
-    fun start() {
-        Bukkit.getPluginCommand("turret")?.setExecutor(this)
-        Bukkit.getPluginCommand("turret")?.tabCompleter = this
-        Bukkit.getPluginManager().registerEvents(this, plugin)
-        reloadTurrets()
-        startPerformanceCheckTask()
-        startReachCheckTask()
-        addRecipe()
-    }
-
-    private fun addRecipe() {
-        val meta = customItem.itemMeta
-        meta!!.setDisplayName("§r§lTurret")
-        customItem.itemMeta = meta
-        val m = customEnderPearl.itemMeta
-        m!!.setDisplayName("§rEnder Pearl")
-        m.lore = mutableListOf("§r§7Can be used to craft turrets")
-        customEnderPearl.itemMeta = m
-
-        val recipe = ShapedRecipe(NamespacedKey(plugin, "turret"), customItem)
-        recipe.shape(" P ", "NCB", "OOO")
-        recipe.setIngredient('P', RecipeChoice.ExactChoice(customEnderPearl))
-        recipe.setIngredient('N', Material.NETHER_STAR)
-        recipe.setIngredient('C', Material.CROSSBOW)
-        recipe.setIngredient('B', Material.BLAZE_ROD)
-        recipe.setIngredient('O', Material.OBSIDIAN)
-        Bukkit.addRecipe(recipe)
-    }
-
-    private fun startReachCheckTask() {
-        if (reachCheckTaskID != null) return
-        reachCheckTaskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, {
-            reachCheck()
-        }, 0, distanceCheckDelay)
-        Bukkit.getLogger().info("Enabled turret reach checker")
-    }
-
-    private fun stopReachCheckTask() {
-        Bukkit.getScheduler().cancelTask(reachCheckTaskID!!)
-        reachCheckTaskID = null
-    }
-
-    private fun startTasks() {
-        val tasksToStart = mutableSetOf<Long>()
-        activeTurrets.forEach { turret ->
-            if (turretSpeeds[turret] == null) {
-                turretSpeeds[turret] = shotDelay
-                turret.persistentDataContainer.set(shotDelayKey, PersistentDataType.LONG, shotDelay)
-            }
-            tasksToStart.add(turretSpeeds[turret]!!)
-        }
-
-        // start tasks for each shot delay currently used
-        tasksToStart.forEach { delay ->
-            val affectedTurrets: MutableSet<ArmorStand> =
-                activeTurrets.filter { turret -> turretSpeeds[turret] == delay }.toMutableSet()
-            shootTaskIDs.add(Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, {
-                onInterval(affectedTurrets)
-            }, 0, delay))
-        }
-
-        // particles
-        particleTaskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, {
-            spawnParticles()
-        }, 0, particleDelay)
-    }
-
-    private fun stopTasks() {
-        shootTaskIDs.forEach { taskID ->
-            Bukkit.getScheduler().cancelTask(taskID)
-        }
-        if (particleTaskID != null) Bukkit.getScheduler().cancelTask(particleTaskID!!)
-
-//        shootTaskID = null
-        shootTaskIDs.clear()
-        particleTaskID = null
-        // remove arrows later, so it looks better when exiting reach distance
-        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, {
-            removeArrows()
-        }, 40)
-    }
-
-    private fun startPerformanceCheckTask() {
-        performanceCheckTaskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, {
-            performanceChecks()
-        }, 0, performanceCheckDelay)
-    }
-
-    private fun clearTurrets() {
-        turrets.forEach { turret ->
-            turret.remove()
-        }
-        activeTurrets.clear()
-        inactiveTurrets.clear()
-        turrets.clear()
-    }
-
-    private fun spawnParticles() {
-        activeArrows.forEach { (arrow, _) ->
-            arrow.world.spawnParticle(
-                particleType,
-                arrow.location,
-                particleAmount,
-                particleSpread,
-                particleSpread,
-                particleSpread,
-                particleSpread
-            )
-        }
-    }
-
     private fun reachCheck() {
         // add players in range to target list, start tasks if not already running
         val shooters = hashMapOf<Player, MutableSet<ArmorStand>>()
@@ -485,47 +349,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         }
     }
 
-    // THIS SHOULD ALWAYS RUN, EVEN IF NO PLAYERS ARE ONLINE
-    private fun performanceChecks() {
-        if (Bukkit.getOnlinePlayers().isEmpty() && reachCheckTaskID != null) {
-            Bukkit.getLogger().info("No players online, stopping tasks")
-            stopReachCheckTask()
-//            if (shootTaskID != null) stopTasks()
-            if (shootTaskIDs.isNotEmpty()) stopTasks()
-        } else if (activeTurrets.isEmpty() && shootTaskIDs.isNotEmpty()) {
-            Bukkit.getLogger().info("No turrets found, stopping tasks")
-            stopTasks()
-            stopReachCheckTask()
-        }
-    }
-
-    private fun reloadTurrets() {
-        turrets.clear()
-        activeTurrets.clear()
-        inactiveTurrets.clear()
-        Bukkit.getWorld("world")?.entities?.forEach { entity ->
-            if (entity is ArmorStand && entity.scoreboardTags.contains("Turret")) {
-                turrets.add(entity)
-            }
-        }
-        // get settings from turrets
-        turretSpeeds.clear()
-        turrets.forEach { turret ->
-            // get shot delay, set to default if not found
-            if (!turret.persistentDataContainer.has(shotDelayKey)) {
-                turret.persistentDataContainer.set(shotDelayKey, PersistentDataType.LONG, shotDelay)
-            }
-            turretSpeeds[turret] = turret.persistentDataContainer.get(shotDelayKey, PersistentDataType.LONG)!!
-        }
-        updateSettings()
-        activeArrows.clear()
-        Bukkit.getWorld("world")?.entities?.forEach { entity ->
-            if (entity is Arrow && entity.scoreboardTags.contains("TurretArrow")) {
-                activeArrows[entity] = arrowLifeTime
-            }
-        }
-    }
-
     private fun onInterval(turrets: Set<ArmorStand>) {
         targets.forEach { player ->
             turrets.forEach { turret ->
@@ -563,7 +386,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
         val arrowsToRemove = mutableListOf<Arrow>()
         activeArrows.forEach { (arrow, lifeTime) ->
-            if (lifeTime == 0) {
+            if (lifeTime <= 0) {
                 arrowsToRemove.add(arrow)
             } else {
                 activeArrows[arrow] = lifeTime - 1
@@ -573,6 +396,52 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             arrow.remove()
             activeArrows.remove(arrow)
         }
+    }
+
+    // THIS SHOULD ALWAYS RUN, EVEN IF NO PLAYERS ARE ONLINE
+    private fun performanceChecks() {
+        if (Bukkit.getOnlinePlayers().isEmpty() && reachCheckTaskID != null) {
+            Bukkit.getLogger().info("No players online, stopping tasks")
+            stopReachCheckTask()
+//            if (shootTaskID != null) stopTasks()
+            if (shootTaskIDs.isNotEmpty()) stopTasks()
+        } else if (activeTurrets.isEmpty() && shootTaskIDs.isNotEmpty()) {
+            Bukkit.getLogger().info("No turrets found, stopping tasks")
+            stopTasks()
+            stopReachCheckTask()
+        }
+    }
+
+    private fun spawnTurret(location: Location) {
+        val armorStand = location.world!!.spawn(location, ArmorStand::class.java)
+        armorStand.setGravity(false)
+//        armorStand.isInvulnerable = true
+        armorStand.customName = "§cTurret"
+        armorStand.isCustomNameVisible = true
+        armorStand.isVisible = true
+        armorStand.removeWhenFarAway = false
+
+        armorStand.addScoreboardTag("Turret")
+
+        armorStand.persistentDataContainer.set(ammoKey, PersistentDataType.INTEGER, ammo)
+        armorStand.persistentDataContainer.set(activeKey, PersistentDataType.BOOLEAN, true)
+        armorStand.persistentDataContainer.set(damageKey, PersistentDataType.DOUBLE, arrowDamage)
+        armorStand.persistentDataContainer.set(reachKey, PersistentDataType.INTEGER, turretReach)
+        armorStand.persistentDataContainer.set(shotDelayKey, PersistentDataType.LONG, shotDelay)
+        turretSpeeds[armorStand] = shotDelay
+
+        turrets.add(armorStand)
+        activeTurrets.add(armorStand)
+    }
+
+    fun start() {
+        Bukkit.getPluginCommand("turret")?.setExecutor(this)
+        Bukkit.getPluginCommand("turret")?.tabCompleter = this
+        Bukkit.getPluginManager().registerEvents(this, plugin)
+        reloadTurrets()
+        startPerformanceCheckTask()
+        startReachCheckTask()
+        addRecipe()
     }
 
     fun disableAllTurrets() {
@@ -591,6 +460,134 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         inactiveTurrets.clear()
     }
 
+    private fun addRecipe() {
+        val meta = customItem.itemMeta
+        meta!!.setDisplayName("§r§lTurret")
+        customItem.itemMeta = meta
+        val m = customEnderPearl.itemMeta
+        m!!.setDisplayName("§rEnder Pearl")
+        m.lore = mutableListOf("§r§7Can be used to craft turrets")
+        customEnderPearl.itemMeta = m
+
+        val recipe = ShapedRecipe(NamespacedKey(plugin, "turret"), customItem)
+        recipe.shape(" P ", "NCB", "OOO")
+        recipe.setIngredient('P', RecipeChoice.ExactChoice(customEnderPearl))
+        recipe.setIngredient('N', Material.NETHER_STAR)
+        recipe.setIngredient('C', Material.CROSSBOW)
+        recipe.setIngredient('B', Material.BLAZE_ROD)
+        recipe.setIngredient('O', Material.OBSIDIAN)
+        Bukkit.addRecipe(recipe)
+    }
+
+    private fun startTasks() {
+        val tasksToStart = mutableSetOf<Long>()
+        activeTurrets.forEach { turret ->
+            if (turretSpeeds[turret] == null) {
+                turretSpeeds[turret] = shotDelay
+                turret.persistentDataContainer.set(shotDelayKey, PersistentDataType.LONG, shotDelay)
+            }
+            tasksToStart.add(turretSpeeds[turret]!!)
+        }
+
+        // start tasks for each shot delay currently used
+        tasksToStart.forEach { delay ->
+            val affectedTurrets: MutableSet<ArmorStand> =
+                activeTurrets.filter { turret -> turretSpeeds[turret] == delay }.toMutableSet()
+            shootTaskIDs.add(Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, {
+                onInterval(affectedTurrets)
+            }, 0, delay))
+        }
+
+        // particles
+        particleTaskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, {
+            spawnParticles()
+        }, 0, particleDelay)
+    }
+
+    private fun stopTasks() {
+        shootTaskIDs.forEach { taskID ->
+            Bukkit.getScheduler().cancelTask(taskID)
+        }
+        if (particleTaskID != null) Bukkit.getScheduler().cancelTask(particleTaskID!!)
+
+//        shootTaskID = null
+        shootTaskIDs.clear()
+        particleTaskID = null
+        // remove arrows later, so it looks better when exiting reach distance
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, {
+            removeArrows()
+        }, 40)
+    }
+
+    private fun spawnParticles() {
+        activeArrows.forEach { (arrow, _) ->
+            arrow.world.spawnParticle(
+                particleType,
+                arrow.location,
+                particleAmount,
+                particleSpread,
+                particleSpread,
+                particleSpread,
+                particleSpread
+            )
+        }
+    }
+
+    private fun startReachCheckTask() {
+        if (reachCheckTaskID != null) return
+        reachCheckTaskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, {
+            reachCheck()
+        }, 0, distanceCheckDelay)
+        Bukkit.getLogger().info("Enabled turret reach checker")
+    }
+
+    private fun stopReachCheckTask() {
+        Bukkit.getScheduler().cancelTask(reachCheckTaskID!!)
+        reachCheckTaskID = null
+    }
+
+    private fun startPerformanceCheckTask() {
+        performanceCheckTaskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, {
+            performanceChecks()
+        }, 0, performanceCheckDelay)
+    }
+
+    private fun reloadTurrets() {
+        turrets.clear()
+        activeTurrets.clear()
+        inactiveTurrets.clear()
+        Bukkit.getWorld("world")?.entities?.forEach { entity ->
+            if (entity is ArmorStand && entity.scoreboardTags.contains("Turret")) {
+                turrets.add(entity)
+            }
+        }
+        // get settings from turrets
+        turretSpeeds.clear()
+        turrets.forEach { turret ->
+            // get shot delay, set to default if not found
+            if (!turret.persistentDataContainer.has(shotDelayKey)) {
+                turret.persistentDataContainer.set(shotDelayKey, PersistentDataType.LONG, shotDelay)
+            }
+            turretSpeeds[turret] = turret.persistentDataContainer.get(shotDelayKey, PersistentDataType.LONG)!!
+        }
+        updateSettings()
+        activeArrows.clear()
+        Bukkit.getWorld("world")?.entities?.forEach { entity ->
+            if (entity is Arrow && entity.scoreboardTags.contains("TurretArrow")) {
+                activeArrows[entity] = arrowLifeTime
+            }
+        }
+    }
+
+    private fun clearTurrets() {
+        turrets.forEach { turret ->
+            turret.remove()
+        }
+        activeTurrets.clear()
+        inactiveTurrets.clear()
+        turrets.clear()
+    }
+
     private fun removeArrows() {
         activeArrows.forEach { (arrow, _) ->
             arrow.remove()
@@ -603,7 +600,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         playerLocation.y -= 1.5
 
         // adding some extra time since a lot of arrows fly behind the player
-        val timeToReach = (turretLocation.distance(playerLocation) / speedMultiplier) + Random().nextFloat(0.5f, 0.8f)
+        val timeToReach = (turretLocation.distance(playerLocation) / speedMultiplier) + Random().nextFloat(0.5f, 1f)
 
         return playerLocation.add(player.velocity.multiply(timeToReach))
     }
@@ -679,9 +676,12 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
     @EventHandler
     private fun onArmorStandHit(event: EntityDamageByEntityEvent) {
-        if (event.entity.scoreboardTags.contains("Turret")) {
-            event.isCancelled = true
+        if (event.entity !is ArmorStand) return
+        if (event.damager is TNTPrimed && event.entity.scoreboardTags.contains("Turret") && event.damage > 65) {
+            Bukkit.getLogger().info("Tnt did ${event.damage} damage to turret")
+            return
         }
+        event.isCancelled = true
     }
 
     @EventHandler

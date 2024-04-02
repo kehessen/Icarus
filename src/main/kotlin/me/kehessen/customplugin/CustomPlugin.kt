@@ -23,6 +23,7 @@ class CustomPlugin : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
     private val turretHandler = TurretHandler(this, config, menuHandler)
     private val simpleCommandHandler = SimpleCommandHandler(combatTime, turretHandler)
     private val tpaHandler = TpaHandler(combatTime, config)
+    private val tnt = TNT()
 
 
     override fun onEnable() {
@@ -36,6 +37,7 @@ class CustomPlugin : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
         turretHandler.start()
         simpleCommandHandler.start()
         tpaHandler.start()
+        tnt.start()
     }
 
     @EventHandler
