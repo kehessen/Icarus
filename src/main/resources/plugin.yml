@@ -31,7 +31,11 @@ commands:
     description: lasercanon options
     usage: /lasercanon <spawn/remove/reload/silence>
     permission: op
-  tnt:
+  bomb:
     description: tnt options
     usage: /tnt <spawn> <yield>
+    permission: op
+  addpassenger:
+    description: put someone on somebodies head
+    usage: /addpassenger <player> <passenger>
     permission: op

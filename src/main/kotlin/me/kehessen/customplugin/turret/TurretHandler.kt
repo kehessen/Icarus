@@ -1,5 +1,6 @@
 package me.kehessen.customplugin.turret
 
+import me.kehessen.customplugin.CustomItem
 import me.kehessen.customplugin.InvHolder
 import me.kehessen.customplugin.MenuHandler
 import org.bukkit.*
@@ -83,7 +84,10 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     private var shootingTurrets = mutableSetOf<ArmorStand>()
     private var activeArrows = hashMapOf<Arrow, Int>()
     private val targets = mutableSetOf<Player>()
-    private val lockingOn = mutableSetOf<Player>()
+    private val lockedOn = hashMapOf<ArmorStand, Player>()
+    // turrets: activeturrets + inactiveturrets
+    // activeturrets: shootingturrets + non-shootingturrets
+
 
     // shot delay, key: turret, value: shot delay, delay is 1-5 ticks
     private var minTurretSpeed = 1L
@@ -117,8 +121,9 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     // 1 custom ender pearl from killing an enderman in the overworld without fortune,
     // 1 nether star, 1 crossbow, 1 blaze rod
     // 3 obsidian as base
-    private val customEnderPearl = ItemStack(Material.ENDER_PEARL)
-    private val customItem = ItemStack(Material.ARMOR_STAND)
+    private val customEnderPearl =
+        CustomItem(Material.ENDER_PEARL, "§r§lEnder Pearl", "§r§7Can be used to craft turrets")
+    private val customItem = CustomItem(Material.ARMOR_STAND, "§r§lTurret", "§r§7Right click to place")
 
 
     // multiple tasks for different shot delays, up to 5 -> better than creating a new class hehehehaw
@@ -253,58 +258,67 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
     private fun reachCheck() {
         // add players in range to target list, start tasks if not already running
-        val shooters = hashMapOf<Player, MutableSet<ArmorStand>>()
-        activeTurrets.forEach { turret ->
-            Bukkit.getOnlinePlayers().forEach { player ->
-                if (!shooters.containsKey(player)) shooters[player] = mutableSetOf()
-                if (player.isGliding && turret.hasLineOfSight(player) && turret.location.distance(player.location) <= turretReach) {
-                    shooters[player]!!.add(turret)
-                    if (!targets.contains(player)) {
-                        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, {
-                            if (player.isGliding && turret.hasLineOfSight(player) && turret.location.distance(player.location) <= turretReach) shootingTurrets.add(
-                                turret
-                            )
-                            targets.add(player)
-                        }, 19)
-                        player.playSound(turret.location, customSound, 100f, 1f)
-                    }
-                    if (shootTaskIDs.isEmpty()) {
-                        Bukkit.getLogger().info("Players in range, starting turret tasks")
-                        startTasks()
-                    }
+        val shooter = hashMapOf<ArmorStand, Player>()
+        val isShooting = mutableSetOf<ArmorStand>()
+        activeTurrets.forEach outer@{ turret ->
+            // skip all checks if turret already has a target
+            if (lockedOn.containsKey(turret)) {
+                val player = lockedOn[turret]!!
+                if (player.isGliding && player.isOnline && turret.hasLineOfSight(player) && turret.location.distanceSquared(
+                        player.location
+                    ) < turretReach * turretReach
+                ) {
+                    isShooting.add(turret)
+                    shooter[turret] = player
+                    return@outer
                 } else {
-                    shooters[player]!!.remove(turret)
+                    lockedOn.remove(turret)
                 }
             }
-            var contains = false
-            shooters.values.forEach { set ->
-                if (set.contains(turret)) contains = true
-            }
-            if (!contains) {
-                shootingTurrets.remove(turret)
+            Bukkit.getOnlinePlayers().forEach { player ->
+                // using distanceSquared for performance
+                if (player.isGliding && turret.hasLineOfSight(player) &&
+                    turret.location.distanceSquared(player.location) < turretReach * turretReach
+                ) {
+                    shooter[turret] = player
+                    isShooting.add(turret)
+                    if (!targets.contains(player)) {
+                        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, {
+                            if (player.isGliding && turret.hasLineOfSight(player) && turret.location.distanceSquared(
+                                    player.location
+                                ) < turretReach * turretReach
+                            ) {
+                                shootingTurrets.add(turret)
+                                targets.add(player)
+                                lockedOn[turret] = player
+                                if (shootTaskIDs.isEmpty()) {
+                                    Bukkit.getLogger().info("Players in range, starting turret tasks")
+                                    startTasks()
+                                }
+                            }
+                        }, 19)
+                        player.playSound(turret.location, customSound, 100f, 1f)
+                        return@outer
+                    }
+                } else {
+                    isShooting.remove(turret)
+                }
             }
         }
-        val amountOfShooters = hashMapOf<Player, Int>() // player, amount of turrets shooting at player
-        shooters.forEach { (player, turrets) ->
-            amountOfShooters[player] = 0
-            if (turrets.isNotEmpty()) {
-                amountOfShooters[player] = amountOfShooters.getOrDefault(player, 0) + 1
-            }
-        }
-        amountOfShooters.forEach { (player, amount) ->
-            if (amount == 0) {
-                targets.remove(player)
-                lockingOn.remove(player)
-            }
-        }
+
+        shootingTurrets.removeIf { turret -> !isShooting.contains(turret) }
+
+        targets.removeIf { player -> !shooter.containsValue(player) }
 
         if (shootTaskIDs.isNotEmpty() && targets.isEmpty()) {
             Bukkit.getLogger().info("No players in range, stopping turret tasks")
             stopTasks()
         }
         val disabled = mutableSetOf<ArmorStand>()
+
+        // doing ammo calculation here because it's faster than writing to NBT every single shot
+        // disable turrets when out of ammo
         shootingTurrets.forEach { turret ->
-            // doing ammo calculation here because it's faster than writing to NBT every single shot
             val ammo = turret.persistentDataContainer.get(ammoKey, PersistentDataType.INTEGER)!!
             val speed = turretSpeeds[turret]!!
             turret.persistentDataContainer.set(ammoKey, PersistentDataType.INTEGER, ammo - (20 / speed).toInt())
@@ -317,14 +331,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                 Bukkit.getLogger().info("Turret with EntityID ${turret.entityId} out of ammo, deactivated")
             }
         }
-
-        shooters.forEach { (player, turrets) ->
-            if (turrets.isEmpty()) {
-                targets.remove(player)
-                lockingOn.remove(player)
-            }
-        }
-
         if (disabled.isNotEmpty()) {
             disabled.forEach { turret ->
                 shootingTurrets.remove(turret)
@@ -410,6 +416,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             stopTasks()
             stopReachCheckTask()
         }
+        reloadTurrets()
     }
 
     private fun spawnTurret(location: Location) {
@@ -461,14 +468,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     }
 
     private fun addRecipe() {
-        val meta = customItem.itemMeta
-        meta!!.setDisplayName("§r§lTurret")
-        customItem.itemMeta = meta
-        val m = customEnderPearl.itemMeta
-        m!!.setDisplayName("§rEnder Pearl")
-        m.lore = mutableListOf("§r§7Can be used to craft turrets")
-        customEnderPearl.itemMeta = m
-
         val recipe = ShapedRecipe(NamespacedKey(plugin, "turret"), customItem)
         recipe.shape(" P ", "NCB", "OOO")
         recipe.setIngredient('P', RecipeChoice.ExactChoice(customEnderPearl))
@@ -655,7 +654,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     @EventHandler
     private fun onDeath(event: PlayerDeathEvent) {
         targets.remove(event.entity)
-        lockingOn.remove(event.entity)
     }
 
     @EventHandler
@@ -669,7 +667,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
     @EventHandler
     private fun onPlayerJoin(event: PlayerJoinEvent) {
-        event.player.discoverRecipe(NamespacedKey(plugin, "turret"))
         if (reachCheckTaskID == null) Bukkit.getLogger().info("Starting reach check task")
         startReachCheckTask()
     }
@@ -857,7 +854,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             inv.setItem(ammoPutSlot, ItemStack(Material.AIR))
             val i = ItemStack(ammoDisplayMaterial)
             val meta = i.itemMeta!!
-            meta.setDisplayName("Ammo")
+            meta.setDisplayName("§rAmmo")
             meta.lore = mutableListOf("§r§7Turret ammo: ${ammo + amount}", "§r§7Add ammo by clicking on arrows")
             i.itemMeta = meta
             inv.setItem(13, i)
@@ -900,7 +897,13 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             ))
         ) {
             // 50% drop chance
-            if (Random().nextInt(1, 3) == 1) event.drops.add(customEnderPearl)
+            if (Random().nextInt(1, 3) == 1) {
+                event.drops.add(customEnderPearl)
+                if (!event.entity.killer!!.hasDiscoveredRecipe(NamespacedKey(plugin, "turret"))) {
+                    event.entity.killer!!.discoverRecipe(NamespacedKey(plugin, "turret"))
+                    event.entity.killer!!.sendMessage("§aThe Turret recipe has been added to you recipe book. Reconnect to see it.")
+                }
+            }
             event.drops.remove(ItemStack(Material.ENDER_PEARL))
         }
 

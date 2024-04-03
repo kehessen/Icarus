@@ -2,6 +2,7 @@ package me.kehessen.customplugin
 
 import me.kehessen.customplugin.turret.TurretHandler
 import org.bukkit.Bukkit
+import org.bukkit.NamespacedKey
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -45,9 +46,20 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
                 Bukkit.broadcastMessage("§4§l${args.joinToString(" ")}")
             }
 
-            "test" -> {
-                sender.addPassenger(Bukkit.getPlayer(args[1])!!)
+            "addpassenger" -> {
+                if (args.size != 2 || Bukkit.getPlayer(args[0]) == null || Bukkit.getPlayer(args[1]) == null) {
+                    sender.sendMessage("§cInvalid arguments")
+                    return false
+                }
+                Bukkit.getPlayer(args[0])!!.addPassenger(Bukkit.getPlayer(args[1])!!)
             }
+
+            "test" -> sender.discoverRecipe(
+                NamespacedKey(
+                    Bukkit.getPluginManager().getPlugin("CustomPlugin")!!,
+                    "large_bomb"
+                )
+            )
         }
         return true
     }
