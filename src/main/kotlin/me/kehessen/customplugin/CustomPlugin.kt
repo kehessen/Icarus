@@ -24,6 +24,8 @@ class CustomPlugin : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
     private val simpleCommandHandler = SimpleCommandHandler(combatTime, turretHandler)
     private val tpaHandler = TpaHandler(combatTime, config)
     private val bomb = Bomb()
+    private val playerMounting = PlayerMounting()
+    private val smokeGrenade = SmokeGrenade()
 
 
     override fun onEnable() {
@@ -38,6 +40,8 @@ class CustomPlugin : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
         simpleCommandHandler.start()
         tpaHandler.start()
         bomb.start()
+        playerMounting.start()
+        smokeGrenade.start()
     }
 
     @EventHandler

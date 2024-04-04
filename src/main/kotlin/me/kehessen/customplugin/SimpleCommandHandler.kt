@@ -26,7 +26,7 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
                 }
                 if (args.size > 1) {
                     sender.sendMessage("§cInvalid arguments")
-                    return false
+                    return true
                 }
                 if (args.size == 1 && args[0].lowercase() == "set") {
                     Bukkit.getWorld("world")?.let {
@@ -36,32 +36,29 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
                     sender.sendMessage("§aSpawn set to ${sp?.x} ${sp?.y} ${sp?.z}")
                 } else
                     sender.teleport(sender.world.spawnLocation)
+                return true
             }
 
             "announce" -> {
                 if (args.isEmpty()) {
                     sender.sendMessage("§cInvalid arguments")
-                    return false
+                    return true
                 }
                 Bukkit.broadcastMessage("§4§l${args.joinToString(" ")}")
             }
 
-            "addpassenger" -> {
-                if (args.size != 2 || Bukkit.getPlayer(args[0]) == null || Bukkit.getPlayer(args[1]) == null) {
-                    sender.sendMessage("§cInvalid arguments")
-                    return false
-                }
-                Bukkit.getPlayer(args[0])!!.addPassenger(Bukkit.getPlayer(args[1])!!)
-            }
-
-            "test" -> sender.discoverRecipe(
-                NamespacedKey(
-                    Bukkit.getPluginManager().getPlugin("CustomPlugin")!!,
-                    "large_bomb"
+            "test" -> {
+                sender.discoverRecipe(
+                    NamespacedKey(
+                        Bukkit.getPluginManager().getPlugin("CustomPlugin")!!,
+                        "large_bomb"
+                    )
                 )
-            )
+                return true
+            }
         }
-        return true
+        sender.sendMessage("a")
+        return false
     }
 
     override fun onTabComplete(

@@ -83,7 +83,8 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         when (args[0]) {
             "spawn" -> {
-                if (args.size != 2 || sender !is Player || args[1].toFloatOrNull() == null) {
+                if (sender !is Player) return false
+                if (args.size != 2 || args[1].toFloatOrNull() == null) {
                     sender.sendMessage("§cInvalid arguments")
                     return true
                 }
@@ -150,6 +151,10 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
         Bukkit.getPluginManager().registerEvents(this, Bukkit.getPluginManager().getPlugin("CustomPlugin")!!)
 
         addRecipes()
+    }
+
+    fun getPlayersWithBombs(): List<Player> {
+        return listOf(playersWithSmallBomb, playersWithMediumBomb, playersWithLargeBomb).flatten()
     }
 
     private fun addRecipes() {
@@ -222,6 +227,7 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
                 val block = bomb.location.subtract(0.0, 1.0, 0.0).block.type
                 if (block != Material.AIR && block != Material.WATER && block != Material.LAVA) {
                     Bukkit.getScheduler().cancelTask(activeTasks[bomb]!!)
+                    bomb.world.spawnParticle(org.bukkit.Particle.FLAME, bomb.location, 300, 1.0, 1.0, 1.0, 0.5)
                     bomb.fuseTicks = 0
                 }
                 if (bomb.isDead) {
@@ -230,10 +236,6 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
 
             }, 0, 2)
         activeTasks[bomb] = task
-    }
-
-    public fun getPlayersWithBombs(): List<Player> {
-        return listOf(playersWithSmallBomb, playersWithMediumBomb, playersWithLargeBomb).flatten()
     }
 
     @EventHandler
@@ -289,7 +291,7 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
 
     @EventHandler
     private fun onRightClick(event: PlayerInteractEvent) {
-        if (!event.player.isGliding || event.action != Action.RIGHT_CLICK_AIR) return
+        if (!(event.player.isGliding || event.player.vehicle !is Player) || event.action != Action.RIGHT_CLICK_AIR) return
         when (event.player.inventory.itemInMainHand.itemMeta!!.displayName) {
             smallBombItem.itemMeta!!.displayName -> {
                 val bmb = event.player.world.spawn(event.player.location, TNTPrimed::class.java)
