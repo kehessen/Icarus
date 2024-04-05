@@ -4,6 +4,7 @@ import net.md_5.bungee.api.chat.HoverEvent
 import net.md_5.bungee.api.chat.TextComponent
 import net.md_5.bungee.api.chat.hover.content.Text
 import org.bukkit.Bukkit
+import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.command.Command
@@ -20,9 +21,11 @@ import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockPlaceEvent
 import org.bukkit.event.entity.EntityDeathEvent
 import org.bukkit.event.entity.EntityToggleGlideEvent
+import org.bukkit.event.entity.ProjectileHitEvent
 import org.bukkit.event.inventory.CraftItemEvent
 import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerInteractEvent
+import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.RecipeChoice
@@ -55,10 +58,25 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
         "§7Can be used to destroy turrets, or anything else for that matter",
         "§7Will slow you down when flying"
     )
+    private var rocketLauncherItem = CustomItem(
+        Material.CROSSBOW,
+        "§r§c§lRocket Launcher",
+        "§7Right click to shoot an unguided missile",
+        "§7Can be used to destroy bombs"
+    )
+    private var rocketLauncherAmmo = CustomItem(
+        Material.FIREWORK_ROCKET,
+        "§r§cRocket",
+        "§fUsed for the Rocket Launcher",
+    )
 
     private var smallBombYield = 6
     private var mediumBombYield = 20
     private var largeBombYield = 75
+
+    private var launcherRange = 100.0
+    private var rockets = hashMapOf<org.bukkit.entity.SpectralArrow, Location>()
+    private var rocketCheckID: Int? = null
 
     private var smallSpeedLimit = 0.8
     private var mediumSpeedLimit = 0.6
@@ -133,6 +151,16 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
                         return true
                     }
 
+                    "rocketLauncher" -> {
+                        sender.inventory.addItem(ItemStack(rocketLauncherItem))
+                        return true
+                    }
+
+                    "launcherAmmo" -> {
+                        sender.inventory.addItem(ItemStack(rocketLauncherAmmo))
+                        return true
+                    }
+
                     else -> {
                         sender.sendMessage("§cInvalid arguments")
                         return true
@@ -150,7 +178,12 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
         Bukkit.getPluginCommand("bomb")?.tabCompleter = this
         Bukkit.getPluginManager().registerEvents(this, Bukkit.getPluginManager().getPlugin("CustomPlugin")!!)
 
+        val meta = rocketLauncherItem.itemMeta as org.bukkit.inventory.meta.CrossbowMeta
+        meta.setChargedProjectiles(listOf(ItemStack(Material.FIREWORK_ROCKET)))
+        rocketLauncherItem.itemMeta = meta
+
         addRecipes()
+        reloadRockets()
     }
 
     fun getPlayersWithBombs(): List<Player> {
@@ -179,6 +212,26 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
         recipe.shape("TTT", "TCT", "TTT")
         recipe.setIngredient('T', RecipeChoice.ExactChoice(mediumBombItem))
         recipe.setIngredient('C', RecipeChoice.ExactChoice(plutoniumCore))
+        Bukkit.addRecipe(recipe)
+
+        recipe = ShapedRecipe(
+            NamespacedKey(Bukkit.getPluginManager().getPlugin("CustomPlugin")!!, "rocket_launcher"), rocketLauncherItem
+        )
+        recipe.shape("OOO", "ONO", "ORO")
+        recipe.setIngredient('N', RecipeChoice.ExactChoice(ItemStack(Material.NETHER_STAR)))
+        recipe.setIngredient('O', RecipeChoice.ExactChoice(ItemStack(Material.OBSIDIAN)))
+        recipe.setIngredient('R', RecipeChoice.ExactChoice(ItemStack(Material.REDSTONE_BLOCK)))
+        Bukkit.addRecipe(recipe)
+
+        recipe = ShapedRecipe(
+            NamespacedKey(Bukkit.getPluginManager().getPlugin("CustomPlugin")!!, "rocket_launcher_ammo"),
+            rocketLauncherAmmo
+        )
+        recipe.shape(" I ", " S ", "GBG")
+        recipe.setIngredient('I', Material.IRON_INGOT)
+        recipe.setIngredient('S', Material.STICK)
+        recipe.setIngredient('G', Material.GUNPOWDER)
+        recipe.setIngredient('B', Material.BLAZE_POWDER)
         Bukkit.addRecipe(recipe)
     }
 
@@ -238,6 +291,52 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
         activeTasks[bomb] = task
     }
 
+    private fun reloadRockets() {
+        Bukkit.getWorld("world")!!.entities.forEach { entity ->
+            if (entity.scoreboardTags.contains("SAM_rocket")) {
+                rockets[entity as org.bukkit.entity.SpectralArrow] = entity.location
+            }
+        }
+    }
+
+    private fun checkRockets() {
+        if (rockets.isEmpty()) {
+            stopRocketTask()
+            return
+        }
+        val rocketsToRemove = mutableListOf<org.bukkit.entity.SpectralArrow>()
+        rockets.forEach { (rocket, spawnLocation) ->
+            if (rocket.isDead || rocket.velocity.length() < 0.2) {
+                rocket.remove()
+                rocketsToRemove.add(rocket)
+            }
+            if (rocket.location.distance(spawnLocation) > launcherRange) {
+                rocket.world.createExplosion(rocket.location, 3f, false, true, rocket)
+                rocket.remove()
+            }
+            rocket.getNearbyEntities(5.0, 5.0, 5.0).forEach { entity ->
+                if (entity.scoreboardTags.contains("bomb")) {
+                    (entity as TNTPrimed).fuseTicks = 0
+                }
+            }
+        }
+        rocketsToRemove.forEach { rockets.remove(it) }
+    }
+
+    private fun startRocketTask() {
+        if (rocketCheckID != null) return
+        rocketCheckID =
+            Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("CustomPlugin")!!, {
+                checkRockets()
+            }, 0, 3)
+    }
+
+    private fun stopRocketTask() {
+        if (rocketCheckID == null) return
+        Bukkit.getScheduler().cancelTask(rocketCheckID!!)
+        rocketCheckID = null
+    }
+
     @EventHandler
     private fun onPlayerGlide(event: PlayerMoveEvent) {
         checkSpeed()
@@ -290,11 +389,12 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
     }
 
     @EventHandler
-    private fun onRightClick(event: PlayerInteractEvent) {
+    private fun onBombDrop(event: PlayerInteractEvent) {
         if (!(event.player.isGliding || event.player.vehicle !is Player) || event.action != Action.RIGHT_CLICK_AIR) return
         when (event.player.inventory.itemInMainHand.itemMeta!!.displayName) {
             smallBombItem.itemMeta!!.displayName -> {
                 val bmb = event.player.world.spawn(event.player.location, TNTPrimed::class.java)
+                bmb.addScoreboardTag("bomb")
                 bmb.fuseTicks = 100
                 bmb.yield = smallBombYield.toFloat()
                 explosionCheck(bmb)
@@ -304,6 +404,7 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
 
             mediumBombItem.itemMeta!!.displayName -> {
                 val bmb = event.player.world.spawn(event.player.location, TNTPrimed::class.java)
+                bmb.addScoreboardTag("bomb")
                 bmb.fuseTicks = 100
                 bmb.yield = mediumBombYield.toFloat()
                 explosionCheck(bmb)
@@ -313,12 +414,35 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
 
             largeBombItem.itemMeta!!.displayName -> {
                 val bmb = event.player.world.spawn(event.player.location, TNTPrimed::class.java)
+                bmb.addScoreboardTag("bomb")
                 bmb.fuseTicks = 100
                 bmb.yield = largeBombYield.toFloat()
                 explosionCheck(bmb)
                 event.player.inventory.itemInMainHand.amount -= 1
                 checkItems(listOf(event.player))
             }
+        }
+    }
+
+    @EventHandler
+    private fun onRocketLaunch(event: PlayerInteractEvent) {
+        if (event.item == null || event.item!!.itemMeta == null) return
+        if (event.item!!.itemMeta!!.displayName != rocketLauncherItem.itemMeta!!.displayName) return
+        val rocket = event.player.launchProjectile(org.bukkit.entity.SpectralArrow::class.java)
+        rocket.velocity = event.player.location.direction.multiply(4)
+        rocket.addScoreboardTag("SAM_rocket")
+        rocket.isGlowing = true
+        rocket.setGravity(false)
+        rockets[rocket] = rocket.location
+        startRocketTask()
+        event.isCancelled = true
+    }
+
+    @EventHandler
+    private fun rocketImpactEvent(event: ProjectileHitEvent) {
+        if (event.entity.scoreboardTags.contains("SAM_rocket")) {
+            event.entity.world.createExplosion(event.entity.location, 2f)
+            event.entity.remove()
         }
     }
 
@@ -360,6 +484,30 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
         checkItems(listOf(event.player))
     }
 
+    @EventHandler
+    private fun onPlayerJoin(event: PlayerJoinEvent) {
+        if (!event.player.hasDiscoveredRecipe(
+                NamespacedKey(
+                    Bukkit.getPluginManager().getPlugin("CustomPlugin")!!,
+                    "rocket_launcher"
+                )
+            )
+        ) {
+            event.player.discoverRecipe(
+                NamespacedKey(
+                    Bukkit.getPluginManager().getPlugin("CustomPlugin")!!,
+                    "rocket_launcher"
+                )
+            )
+            event.player.discoverRecipe(
+                NamespacedKey(
+                    Bukkit.getPluginManager().getPlugin("CustomPlugin")!!,
+                    "rocket_launcher_ammo"
+                )
+            )
+        }
+    }
+
     override fun onTabComplete(p0: CommandSender, p1: Command, p2: String, p3: Array<out String>): MutableList<String> {
         if (p3.size == 1) {
             return mutableListOf("spawn", "give")
@@ -370,7 +518,7 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
             }
 
             p3.size == 2 && p3[0] == "give" -> {
-                mutableListOf("small", "medium", "large", "ammonium", "plutonium")
+                mutableListOf("small", "medium", "large", "ammonium", "plutonium", "rocketLauncher", "launcherAmmo")
             }
 
             else -> mutableListOf()

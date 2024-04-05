@@ -2,7 +2,6 @@ package me.kehessen.customplugin
 
 import me.kehessen.customplugin.turret.TurretHandler
 import org.bukkit.Bukkit
-import org.bukkit.NamespacedKey
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -48,16 +47,10 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
             }
 
             "test" -> {
-                sender.discoverRecipe(
-                    NamespacedKey(
-                        Bukkit.getPluginManager().getPlugin("CustomPlugin")!!,
-                        "large_bomb"
-                    )
-                )
+                sender.sendMessage(Bukkit.getScoreboardManager()!!.mainScoreboard.getTeam("test")!!.name)
                 return true
             }
         }
-        sender.sendMessage("a")
         return false
     }
 

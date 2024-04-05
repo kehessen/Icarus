@@ -15,6 +15,7 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
 import org.bukkit.event.entity.EntityDamageByEntityEvent
+import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.EntityDeathEvent
 import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.inventory.InventoryClickEvent
@@ -93,6 +94,8 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     private var minTurretSpeed = 1L
     private var maxTurretSpeed = 5L
     private var turretSpeeds = hashMapOf<ArmorStand, Long>()
+
+    private val sb = Bukkit.getScoreboardManager()!!.mainScoreboard
 
     // key: inventory holder, value: turret
     private var openInvs = hashMapOf<InventoryHolder, ArmorStand>()
@@ -224,7 +227,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             "spawn" -> {
                 if (Bukkit.getPlayer(sender.name) !is Player) return false
                 startReachCheckTask()
-                spawnTurret(Bukkit.getPlayer(sender.name)!!.location)
+                spawnTurret(Bukkit.getPlayer(sender.name)!!, Bukkit.getPlayer(sender.name)!!.location)
                 return true
             }
 
@@ -275,7 +278,12 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                     lockedOn.remove(turret)
                 }
             }
-            Bukkit.getOnlinePlayers().forEach { player ->
+            turret.getNearbyEntities(turretReach.toDouble(), turretReach.toDouble(), turretReach.toDouble())
+                .forEach { player ->
+                    if (player !is Player) return@forEach
+                    if (sb.getEntryTeam(player.name) == sb.getEntryTeam(turret.uniqueId.toString())) {
+                        return@forEach
+                    }
                 // using distanceSquared for performance
                 if (player.isGliding && turret.hasLineOfSight(player) &&
                     turret.location.distanceSquared(player.location) < turretReach * turretReach
@@ -419,7 +427,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         reloadTurrets()
     }
 
-    private fun spawnTurret(location: Location) {
+    private fun spawnTurret(player: Player, location: Location) {
         val armorStand = location.world!!.spawn(location, ArmorStand::class.java)
         armorStand.setGravity(false)
 //        armorStand.isInvulnerable = true
@@ -429,6 +437,8 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         armorStand.removeWhenFarAway = false
 
         armorStand.addScoreboardTag("Turret")
+
+        sb.getEntryTeam(player.name)!!.addEntry(armorStand.uniqueId.toString())
 
         armorStand.persistentDataContainer.set(ammoKey, PersistentDataType.INTEGER, ammo)
         armorStand.persistentDataContainer.set(activeKey, PersistentDataType.BOOLEAN, true)
@@ -599,7 +609,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         playerLocation.y -= 1.5
 
         // adding some extra time since a lot of arrows fly behind the player
-        val timeToReach = (turretLocation.distance(playerLocation) / speedMultiplier) + Random().nextFloat(0.5f, 1f)
+        val timeToReach = (turretLocation.distance(playerLocation) / speedMultiplier) + Random().nextFloat(0.3f, 1f)
 
         return playerLocation.add(player.velocity.multiply(timeToReach))
     }
@@ -645,7 +655,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
     @EventHandler
     private fun onArrowHit(event: EntityDamageByEntityEvent) {
-        if (event.damager.scoreboardTags.contains("TurretArrow") && event.entity is Player) {
+        if (event.damager.scoreboardTags.contains("TurretArrow")) {
             activeArrows.remove(event.entity)
             event.damager.remove()
         }
@@ -674,16 +684,28 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     @EventHandler
     private fun onArmorStandHit(event: EntityDamageByEntityEvent) {
         if (event.entity !is ArmorStand) return
+        if (!event.entity.scoreboardTags.contains("Turret")) return
         if (event.damager is TNTPrimed && event.entity.scoreboardTags.contains("Turret") && event.damage > 65) {
-            Bukkit.getLogger().info("Tnt did ${event.damage} damage to turret")
             return
         }
         event.isCancelled = true
     }
 
     @EventHandler
+    private fun onArmorStandHit(event: EntityDamageEvent) {
+        if (event.entity !is ArmorStand) return
+        if (!event.entity.scoreboardTags.contains("Turret")) return
+        event.isCancelled = true
+    }
+
+    @EventHandler
     private fun onRightClick(event: PlayerInteractAtEntityEvent) {
         if (!event.rightClicked.scoreboardTags.contains("Turret")) return
+        if (event.rightClicked !is ArmorStand) return
+        if (sb.getEntryTeam(event.player.name) != sb.getEntryTeam(event.rightClicked.uniqueId.toString())) {
+            event.player.sendMessage("§cYou can't interact with this turret")
+            return
+        }
         if (event.rightClicked is ArmorStand && event.rightClicked.scoreboardTags.contains("Turret")) {
             val turret = event.rightClicked as ArmorStand
             val ammo = turret.persistentDataContainer.get(ammoKey, PersistentDataType.INTEGER)!!
@@ -880,7 +902,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                     return
                 }
             }
-            spawnTurret(event.clickedBlock!!.location.add(0.5, 1.0, 0.5))
+            spawnTurret(event.player, event.clickedBlock!!.location.add(0.5, 1.0, 0.5))
             if (event.player.inventory.itemInMainHand == event.item) event.player.inventory.itemInMainHand.amount -= 1
             else event.player.inventory.itemInOffHand.amount -= 1
             // cancelling to prevent another armor stand from being placed if player clicks on the side of a block

@@ -1,10 +1,7 @@
 package me.kehessen.customplugin
 
-import org.bukkit.Bukkit
-import org.bukkit.Material
-import org.bukkit.NamespacedKey
-import org.bukkit.Particle
-import org.bukkit.entity.Egg
+import org.bukkit.*
+import org.bukkit.entity.Snowball
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
@@ -55,11 +52,12 @@ class SmokeGrenade : Listener {
 
     @EventHandler
     fun onRightClick(event: PlayerInteractEvent) {
-        if (event.item == null) return
+        if (event.item == null || event.item!!.itemMeta == null) return
         if (event.item!!.itemMeta!!.displayName == smokeGrenade.itemMeta!!.displayName && event.action == Action.RIGHT_CLICK_AIR) {
-            val egg = event.player.launchProjectile(Egg::class.java)
-            egg.scoreboardTags.add("smoke_grenade")
-            egg.velocity = event.player.location.direction.multiply(1.5)
+            val proj = event.player.launchProjectile(Snowball::class.java)
+            proj.scoreboardTags.add("smoke_grenade")
+            proj.velocity = event.player.location.direction.multiply(5)
+            proj.world.playSound(proj.location, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1f, 1f)
             event.item!!.amount -= 1
         }
     }
@@ -67,18 +65,17 @@ class SmokeGrenade : Listener {
     @EventHandler
     fun onEggBreak(event: ProjectileHitEvent) {
         if (event.entity.scoreboardTags.contains("smoke_grenade")) {
-            val loc = event.entity.location
+            val loc = event.entity.location.add(0.0, radius / 2, 0.0)
             val world = loc.world
             world!!.spawnParticle(
                 Particle.CAMPFIRE_COSY_SMOKE,
                 loc,
-                (2000 * radius).toInt(),
+                (1000 * radius).toInt(),
                 radius,
-                radius,
+                radius / 2,
                 radius,
                 0.01
             )
-            event.isCancelled = true
         }
     }
 }

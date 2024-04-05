@@ -1,12 +1,10 @@
 package me.kehessen.customplugin
 
-import org.bukkit.Bukkit
-import org.bukkit.Material
-import org.bukkit.Particle
-import org.bukkit.Sound
+import org.bukkit.*
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
+import org.bukkit.command.TabCompleter
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -14,23 +12,33 @@ import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDismountEvent
 import org.bukkit.event.entity.EntityToggleGlideEvent
 import org.bukkit.event.player.PlayerInteractEvent
+import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.ShapedRecipe
 import org.bukkit.inventory.meta.CrossbowMeta
 
-class PlayerMounting : Listener, CommandExecutor {
+class PlayerMounting : Listener, CommandExecutor, TabCompleter {
     // key: mounted player, value: flying player
     private val mountedPlayers = hashMapOf<Player, Player>()
     private val customWeapon: ItemStack =
         CustomItem(Material.CROSSBOW, "§r§l§c12.7mm M2 Browning", "§7Right click to shoot .50 cal bullets")
+    private val customAmmo: ItemStack =
+        CustomItem(Material.ARROW, "§r§l§c.50 BMG", "§7Used for the M2 Browning", "§7Armor piercing")
 
     private var canonReach = 100.0
     private var damage = 5.0
-    private var onlyAllowMountingForFlight = true
+    private var onlyAllowMountingForFlight = false
+    private var playHurtAnimation = true
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         if (sender !is Player) return false
-        if (command.name == "mount" && args.size == 1) {
+        if (args.size == 1) {
+            if (args[0] == "hurtAnimation" && sender.isOp) {
+                playHurtAnimation = !playHurtAnimation
+                sender.sendMessage("§aHurt animation toggled to $playHurtAnimation")
+                return true
+            }
             val target = Bukkit.getPlayer(args[0])
             if (target == null) {
                 sender.sendMessage("§cPlayer not found")
@@ -51,7 +59,7 @@ class PlayerMounting : Listener, CommandExecutor {
             player.sendMessage("§cPlayer already has a shooter")
             return true
         }
-        if (player.inventory.contents.size == 36) {
+        if (!player.inventory.storageContents.contains(null)) {
             player.sendMessage("§cCannot mount with a full inventory")
             return true
         }
@@ -88,6 +96,20 @@ class PlayerMounting : Listener, CommandExecutor {
                 mountedPlayers[player] = player.vehicle as Player
             }
         }
+
+        addCustomRecipe()
+    }
+
+    private fun addCustomRecipe() {
+        val recipe = ShapedRecipe(
+            NamespacedKey(Bukkit.getPluginManager().getPlugin("CustomPlugin")!!, "50_cal_bullet"),
+            customAmmo
+        )
+        recipe.shape("   ", "NAN", " G ")
+        recipe.setIngredient('N', Material.IRON_NUGGET)
+        recipe.setIngredient('G', Material.GUNPOWDER)
+        recipe.setIngredient('A', Material.ARROW)
+        Bukkit.addRecipe(recipe)
     }
 
     @EventHandler
@@ -98,7 +120,7 @@ class PlayerMounting : Listener, CommandExecutor {
             return
         }
         if (event.item!!.itemMeta?.displayName == customWeapon.itemMeta!!.displayName) {
-            if (!event.player.inventory.containsAtLeast(ItemStack(Material.ARROW), 1)) {
+            if (!event.player.inventory.containsAtLeast(customAmmo, 1)) {
                 event.player.sendMessage("§cNo ammo left")
                 event.isCancelled = true
                 return
@@ -123,11 +145,13 @@ class PlayerMounting : Listener, CommandExecutor {
             if (hitEntity != null) {
                 if (hitEntity.hitEntity is LivingEntity) {
                     (hitEntity.hitEntity as LivingEntity).damage(damage)
+                    (hitEntity.hitEntity as LivingEntity).noDamageTicks = 5
                 }
             }
-            event.player.inventory.removeItem(ItemStack(Material.ARROW))
+            event.player.inventory.removeItem(customAmmo)
 
-            event.player.playHurtAnimation(0f)
+            if (playHurtAnimation)
+                event.player.playHurtAnimation(0f)
             event.player.world.playSound(event.player.location, Sound.ENTITY_ENDER_PEARL_THROW, 100f, 0.1f)
 
             event.isCancelled = true
@@ -169,5 +193,38 @@ class PlayerMounting : Listener, CommandExecutor {
             mountedPlayers[event.player]!!.removePassenger(event.player)
             mountedPlayers.remove(event.player)
         }
+    }
+
+    @EventHandler
+    private fun onPlayerJoin(event: PlayerJoinEvent) {
+        if (!event.player.hasDiscoveredRecipe(
+                NamespacedKey(
+                    Bukkit.getPluginManager().getPlugin("CustomPlugin")!!,
+                    "50_cal_bullet"
+                )
+            )
+        ) {
+            event.player.discoverRecipe(
+                NamespacedKey(
+                    Bukkit.getPluginManager().getPlugin("CustomPlugin")!!,
+                    "50_cal_bullet"
+                )
+            )
+        }
+    }
+
+    override fun onTabComplete(
+        p0: CommandSender,
+        p1: Command,
+        p2: String,
+        p3: Array<out String>
+    ): MutableList<String> {
+        if (p3.size == 1) {
+            val list = Bukkit.getOnlinePlayers().map { it.name }.toMutableList()
+            if (p0.isOp)
+                list.add("hurtAnimation")
+            return list
+        }
+        return mutableListOf()
     }
 }

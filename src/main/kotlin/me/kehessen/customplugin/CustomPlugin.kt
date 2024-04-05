@@ -1,6 +1,7 @@
 package me.kehessen.customplugin
 
 import me.kehessen.customplugin.turret.TurretHandler
+import org.bukkit.Bukkit
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.TabCompleter
 import org.bukkit.event.EventHandler
@@ -27,12 +28,18 @@ class CustomPlugin : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
     private val playerMounting = PlayerMounting()
     private val smokeGrenade = SmokeGrenade()
 
+    private val sb = Bukkit.getScoreboardManager()!!.mainScoreboard
+
 
     override fun onEnable() {
         saveDefaultConfig()
         config.options().copyDefaults(true)
         reloadConfig()
         server.pluginManager.registerEvents(this, this)
+
+        if (Bukkit.getScoreboardManager()!!.mainScoreboard.getTeam("Default") == null) {
+            Bukkit.getScoreboardManager()!!.mainScoreboard.registerNewTeam("Default")
+        }
 
         combatTime.start()
         menuHandler.start()
@@ -47,6 +54,9 @@ class CustomPlugin : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
     @EventHandler
     private fun onPlayerJoin(event: PlayerJoinEvent) {
         event.joinMessage = "§2+ ${event.player.name}"
+        if (event.player.scoreboard.getEntryTeam(event.player.name) == null) {
+            event.player.scoreboard.getTeam("Default")?.addEntry(event.player.name)
+        }
     }
 
     @EventHandler
