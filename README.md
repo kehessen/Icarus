@@ -1,5 +1,3 @@
-Icarus
-
 A Minecraft Plugin focused on adding some fun combat mechanics. 
 
 Bombs: 
