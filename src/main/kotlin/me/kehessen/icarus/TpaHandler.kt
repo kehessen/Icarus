@@ -1,4 +1,4 @@
-package me.kehessen.customplugin
+package me.kehessen.icarus
 
 import net.md_5.bungee.api.chat.ClickEvent
 import net.md_5.bungee.api.chat.HoverEvent
@@ -23,7 +23,7 @@ class TpaHandler(private val combatTime: CombatTime, config: FileConfiguration) 
 
     // uses the creator as "owner" of the tpa request
     private var creationTime = hashMapOf<UUID, Time>()
-    var scheduler = Bukkit.getPluginManager().getPlugin("CustomPlugin")?.let {
+    var scheduler = Bukkit.getPluginManager().getPlugin("Icarus")?.let {
         Bukkit.getScheduler().scheduleSyncDelayedTask(it, {
             map.forEach { (key, value) ->
                 // 20*60?

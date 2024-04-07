@@ -24,7 +24,7 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>2.3.1</version>
                 <configuration>
-                    <outputDirectory>C:/Users/kehes/Desktop/spigot/plugins</outputDirectory>
+                    <outputDirectory>C:/Users/kehes/Desktop/paper/plugins</outputDirectory>
                 </configuration>
             </plugin>
             <plugin>

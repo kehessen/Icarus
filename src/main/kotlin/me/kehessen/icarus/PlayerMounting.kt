@@ -1,4 +1,4 @@
-package me.kehessen.customplugin
+package me.kehessen.icarus
 
 import org.bukkit.*
 import org.bukkit.command.Command
@@ -84,7 +84,7 @@ class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, Tab
         player.sendMessage("§aYou are now mounted on ${target.name}")
         target.sendMessage("§a${player.name} is now your gunman")
         if (onlyAllowMountingForFlight)
-            Bukkit.getScheduler().scheduleSyncDelayedTask(Bukkit.getPluginManager().getPlugin("CustomPlugin")!!, {
+            Bukkit.getScheduler().scheduleSyncDelayedTask(Bukkit.getPluginManager().getPlugin("Icarus")!!, {
                 if (target.passengers.contains(player) && !target.isGliding) {
                     player.inventory.removeItem(customWeapon)
                     mountedPlayers.remove(player)
@@ -102,7 +102,7 @@ class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, Tab
         customWeapon.itemMeta = meta
 
         Bukkit.getPluginCommand("mount")?.setExecutor(this)
-        Bukkit.getPluginManager().registerEvents(this, Bukkit.getPluginManager().getPlugin("CustomPlugin")!!)
+        Bukkit.getPluginManager().registerEvents(this, Bukkit.getPluginManager().getPlugin("Icarus")!!)
         Bukkit.getOnlinePlayers().forEach { player ->
             if (player.isInsideVehicle && player.vehicle is Player) {
                 mountedPlayers[player] = player.vehicle as Player
@@ -114,7 +114,7 @@ class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, Tab
 
     private fun addCustomRecipe() {
         val recipe = ShapedRecipe(
-            NamespacedKey(Bukkit.getPluginManager().getPlugin("CustomPlugin")!!, "50_cal_bullet"),
+            NamespacedKey(Bukkit.getPluginManager().getPlugin("Icarus")!!, "50_cal_bullet"),
             customAmmo
         )
         recipe.shape("   ", "NAN", " G ")
@@ -212,14 +212,14 @@ class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, Tab
     private fun onPlayerJoin(event: PlayerJoinEvent) {
         if (!event.player.hasDiscoveredRecipe(
                 NamespacedKey(
-                    Bukkit.getPluginManager().getPlugin("CustomPlugin")!!,
+                    Bukkit.getPluginManager().getPlugin("Icarus")!!,
                     "50_cal_bullet"
                 )
             )
         ) {
             event.player.discoverRecipe(
                 NamespacedKey(
-                    Bukkit.getPluginManager().getPlugin("CustomPlugin")!!,
+                    Bukkit.getPluginManager().getPlugin("Icarus")!!,
                     "50_cal_bullet"
                 )
             )

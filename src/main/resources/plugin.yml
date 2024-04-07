@@ -1,6 +1,6 @@
-name: CustomPlugin
+name: Icarus
 version: '${project.version}'
-main: me.kehessen.customplugin.CustomPlugin
+main: me.kehessen.icarus.Icarus
 api-version: '1.20'
 authors: [ Kenny ]
 commands:

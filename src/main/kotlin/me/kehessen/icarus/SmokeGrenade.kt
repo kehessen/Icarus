@@ -1,4 +1,4 @@
-package me.kehessen.customplugin
+package me.kehessen.icarus
 
 import org.bukkit.Bukkit
 import org.bukkit.Material
@@ -24,10 +24,10 @@ class SmokeGrenade : Listener {
     private var radius: Double = 4.0
 
     fun start() {
-        Bukkit.getPluginManager().registerEvents(this, Bukkit.getPluginManager().getPlugin("CustomPlugin")!!)
-        radius = Bukkit.getPluginManager().getPlugin("CustomPlugin")!!.config.getDouble("SmokeGrenade.radius")
+        Bukkit.getPluginManager().registerEvents(this, Bukkit.getPluginManager().getPlugin("Icarus")!!)
+        radius = Bukkit.getPluginManager().getPlugin("Icarus")!!.config.getDouble("SmokeGrenade.radius")
         val recipe = ShapedRecipe(
-            NamespacedKey(Bukkit.getPluginManager().getPlugin("CustomPlugin")!!, "smoke_grenade"),
+            NamespacedKey(Bukkit.getPluginManager().getPlugin("Icarus")!!, "smoke_grenade"),
             smokeGrenade
         )
         recipe.shape("BC", "GS")
@@ -42,14 +42,14 @@ class SmokeGrenade : Listener {
     fun onPlayerJoin(event: PlayerJoinEvent) {
         if (!event.player.hasDiscoveredRecipe(
                 NamespacedKey(
-                    Bukkit.getPluginManager().getPlugin("CustomPlugin")!!,
+                    Bukkit.getPluginManager().getPlugin("Icarus")!!,
                     "smoke_grenade"
                 )
             )
         ) {
             event.player.discoverRecipe(
                 NamespacedKey(
-                    Bukkit.getPluginManager().getPlugin("CustomPlugin")!!,
+                    Bukkit.getPluginManager().getPlugin("Icarus")!!,
                     "smoke_grenade"
                 )
             )

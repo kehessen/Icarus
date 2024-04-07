@@ -1,4 +1,4 @@
-package me.kehessen.customplugin
+package me.kehessen.icarus
 
 import org.bukkit.Location
 import org.bukkit.Particle

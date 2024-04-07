@@ -1,4 +1,4 @@
-package me.kehessen.customplugin
+package me.kehessen.icarus
 
 import net.md_5.bungee.api.chat.HoverEvent
 import net.md_5.bungee.api.chat.TextComponent
@@ -176,7 +176,7 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
     fun start() {
         Bukkit.getPluginCommand("bomb")?.setExecutor(this)
         Bukkit.getPluginCommand("bomb")?.tabCompleter = this
-        Bukkit.getPluginManager().registerEvents(this, Bukkit.getPluginManager().getPlugin("CustomPlugin")!!)
+        Bukkit.getPluginManager().registerEvents(this, Bukkit.getPluginManager().getPlugin("Icarus")!!)
 
         val meta = rocketLauncherItem.itemMeta as org.bukkit.inventory.meta.CrossbowMeta
         meta.setChargedProjectiles(listOf(ItemStack(Material.FIREWORK_ROCKET)))
@@ -192,14 +192,14 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
 
     private fun addRecipes() {
         var recipe = ShapedRecipe(
-            NamespacedKey(Bukkit.getPluginManager().getPlugin("CustomPlugin")!!, "small_bomb"), smallBombItem
+            NamespacedKey(Bukkit.getPluginManager().getPlugin("Icarus")!!, "small_bomb"), smallBombItem
         )
         recipe.shape("TT", "TT")
         recipe.setIngredient('T', Material.TNT)
         Bukkit.addRecipe(recipe)
 
         recipe = ShapedRecipe(
-            NamespacedKey(Bukkit.getPluginManager().getPlugin("CustomPlugin")!!, "medium_bomb"), mediumBombItem
+            NamespacedKey(Bukkit.getPluginManager().getPlugin("Icarus")!!, "medium_bomb"), mediumBombItem
         )
         recipe.shape("TTT", "TAT", "TTT")
         recipe.setIngredient('T', RecipeChoice.ExactChoice(ItemStack(Material.TNT)))
@@ -207,7 +207,7 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
         Bukkit.addRecipe(recipe)
 
         recipe = ShapedRecipe(
-            NamespacedKey(Bukkit.getPluginManager().getPlugin("CustomPlugin")!!, "large_bomb"), largeBombItem
+            NamespacedKey(Bukkit.getPluginManager().getPlugin("Icarus")!!, "large_bomb"), largeBombItem
         )
         recipe.shape("TTT", "TCT", "TTT")
         recipe.setIngredient('T', RecipeChoice.ExactChoice(mediumBombItem))
@@ -215,7 +215,7 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
         Bukkit.addRecipe(recipe)
 
         recipe = ShapedRecipe(
-            NamespacedKey(Bukkit.getPluginManager().getPlugin("CustomPlugin")!!, "rocket_launcher"), rocketLauncherItem
+            NamespacedKey(Bukkit.getPluginManager().getPlugin("Icarus")!!, "rocket_launcher"), rocketLauncherItem
         )
         recipe.shape("OOO", "ONO", "ORO")
         recipe.setIngredient('N', RecipeChoice.ExactChoice(ItemStack(Material.NETHER_STAR)))
@@ -224,7 +224,7 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
         Bukkit.addRecipe(recipe)
 
         recipe = ShapedRecipe(
-            NamespacedKey(Bukkit.getPluginManager().getPlugin("CustomPlugin")!!, "rocket_launcher_ammo"),
+            NamespacedKey(Bukkit.getPluginManager().getPlugin("Icarus")!!, "rocket_launcher_ammo"),
             rocketLauncherAmmo
         )
         recipe.shape(" I ", " S ", "GBG")
@@ -275,7 +275,7 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
 
     private fun explosionCheck(bomb: TNTPrimed) {
         val task =
-            Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("CustomPlugin")!!, {
+            Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("Icarus")!!, {
 
                 val block = bomb.location.subtract(0.0, 1.0, 0.0).block.type
                 if (block != Material.AIR && block != Material.WATER && block != Material.LAVA) {
@@ -326,7 +326,7 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
     private fun startRocketTask() {
         if (rocketCheckID != null) return
         rocketCheckID =
-            Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("CustomPlugin")!!, {
+            Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("Icarus")!!, {
                 checkRockets()
             }, 0, 3)
     }
@@ -353,13 +353,13 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
             event.drops.add(ammoniumNitrate)
             if (!player.hasDiscoveredRecipe(
                     NamespacedKey(
-                        Bukkit.getPluginManager().getPlugin("CustomPlugin")!!, "medium_bomb"
+                        Bukkit.getPluginManager().getPlugin("Icarus")!!, "medium_bomb"
                     )
                 )
             ) {
                 player.discoverRecipe(
                     NamespacedKey(
-                        Bukkit.getPluginManager().getPlugin("CustomPlugin")!!, "medium_bomb"
+                        Bukkit.getPluginManager().getPlugin("Icarus")!!, "medium_bomb"
                     )
                 )
                 player.sendMessage("§aThe 100kg bomb recipe has been added to your recipe book. Reconnect to see it.")
@@ -369,13 +369,13 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
             event.drops.add(plutoniumCore)
             if (!player.hasDiscoveredRecipe(
                     NamespacedKey(
-                        Bukkit.getPluginManager().getPlugin("CustomPlugin")!!, "large_bomb"
+                        Bukkit.getPluginManager().getPlugin("Icarus")!!, "large_bomb"
                     )
                 )
             ) {
                 player.discoverRecipe(
                     NamespacedKey(
-                        Bukkit.getPluginManager().getPlugin("CustomPlugin")!!, "large_bomb"
+                        Bukkit.getPluginManager().getPlugin("Icarus")!!, "large_bomb"
                     )
                 )
                 player.sendMessage("§aThe Hydrogen bomb recipe has been added to your recipe book. Reconnect to see it.")
@@ -496,20 +496,20 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
     private fun onPlayerJoin(event: PlayerJoinEvent) {
         if (!event.player.hasDiscoveredRecipe(
                 NamespacedKey(
-                    Bukkit.getPluginManager().getPlugin("CustomPlugin")!!,
+                    Bukkit.getPluginManager().getPlugin("Icarus")!!,
                     "rocket_launcher"
                 )
             )
         ) {
             event.player.discoverRecipe(
                 NamespacedKey(
-                    Bukkit.getPluginManager().getPlugin("CustomPlugin")!!,
+                    Bukkit.getPluginManager().getPlugin("Icarus")!!,
                     "rocket_launcher"
                 )
             )
             event.player.discoverRecipe(
                 NamespacedKey(
-                    Bukkit.getPluginManager().getPlugin("CustomPlugin")!!,
+                    Bukkit.getPluginManager().getPlugin("Icarus")!!,
                     "rocket_launcher_ammo"
                 )
             )

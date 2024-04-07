@@ -1,4 +1,4 @@
-package me.kehessen.customplugin
+package me.kehessen.icarus
 
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
@@ -15,7 +15,7 @@ import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.scoreboard.Scoreboard
 
 @Suppress("unused")
-class CustomPlugin : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
+class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
 
     // used for other classes
     private val menuHandler = MenuHandler(this)
