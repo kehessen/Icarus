@@ -1,8 +1,5 @@
-package me.kehessen.customplugin.turret
+package me.kehessen.customplugin
 
-import me.kehessen.customplugin.CustomItem
-import me.kehessen.customplugin.InvHolder
-import me.kehessen.customplugin.MenuHandler
 import org.bukkit.*
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -30,6 +27,7 @@ import org.bukkit.inventory.ShapedRecipe
 import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.plugin.java.JavaPlugin
+import org.bukkit.scoreboard.Scoreboard
 import java.util.*
 
 // entity activation range has to be set to 500 for arrows to fly correctly
@@ -50,30 +48,27 @@ import java.util.*
 class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, private val menu: MenuHandler) :
     CommandExecutor, TabCompleter, Listener {
 
-    // TODO: turret still shooting at target if its on ground but another one is in reach (think I fixed it but idk)
-    // only ops can access crafting table
-
     // ---config---
-    private var shotDelay: Long = 3 //config.getLong("Turret.shot-delay")
-    private val particleDelay: Long = 2 //config.getLong("Turret.particle-delay")
-    private val particleAmount = 20 //config.getInt("Turret.particle-amount")
+    private var shotDelay: Long = config.getLong("Turret.shot-delay")
+    private val particleDelay: Long = config.getLong("Turret.particle-delay")
+    private val particleAmount = config.getInt("Turret.particle-amount")
     private val particleType = Particle.FLAME
-    private val particleSpread = 0.2 //config.getDouble("Turret.particle-spread")
-    private var turretReach = 500 //config.getInt("Turret.reach") 500
-    private var arrowDamage = 0.5 //config.getDouble("Turret.damage")
-    private var ammo: Int = 0 //config.getInt("Turret.ammo")
+    private val particleSpread = config.getDouble("Turret.particle-spread")
+    private var turretReach = config.getInt("Turret.reach")
+    private var arrowDamage = config.getDouble("Turret.damage")
+    private var ammo: Int = 0
 
     // blocks per tick
-    private val speedMultiplier: Float = 5f //config.getInt("Turret.arrow-speed-multiplier")
+    private val speedMultiplier: Float = config.getInt("Turret.arrow-speed-multiplier").toFloat()
 
     // ticks
-    private val distanceCheckDelay: Long = 20
-    private val performanceCheckDelay: Long = 20 * 60
+    private val distanceCheckDelay: Long = config.getLong("Turret.distance-check-delay")
+    private val performanceCheckDelay: Long = config.getLong("Turret.performance-check-delay")
 
 
     // ---options---
-    private var burningArrow: Boolean = true
-    private var silenced = false
+    private var burningArrow: Boolean = config.getBoolean("Turret.burning-arrow")
+    private var silenced: Boolean = config.getBoolean("Turret.silenced")
 
 
     // ---backend---
@@ -95,7 +90,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     private var maxTurretSpeed = 5L
     private var turretSpeeds = hashMapOf<ArmorStand, Long>()
 
-    private val sb = Bukkit.getScoreboardManager()!!.mainScoreboard
+    private var sb: Scoreboard? = null
 
     // key: inventory holder, value: turret
     private var openInvs = hashMapOf<InventoryHolder, ArmorStand>()
@@ -124,9 +119,9 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     // 1 custom ender pearl from killing an enderman in the overworld without fortune,
     // 1 nether star, 1 crossbow, 1 blaze rod
     // 3 obsidian as base
-    private val customEnderPearl =
+    internal val customEnderPearl =
         CustomItem(Material.ENDER_PEARL, "§r§lEnder Pearl", "§r§7Can be used to craft turrets")
-    private val customItem = CustomItem(Material.ARMOR_STAND, "§r§lTurret", "§r§7Right click to place")
+    internal val customItem = CustomItem(Material.ARMOR_STAND, "§r§lTurret", "§r§7Right click to place")
 
 
     // multiple tasks for different shot delays, up to 5 -> better than creating a new class hehehehaw
@@ -281,37 +276,35 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             turret.getNearbyEntities(turretReach.toDouble(), turretReach.toDouble(), turretReach.toDouble())
                 .forEach { player ->
                     if (player !is Player) return@forEach
-                    if (sb.getEntryTeam(player.name) == sb.getEntryTeam(turret.uniqueId.toString())) {
+                    if (sb!!.getEntryTeam(player.name) == sb!!.getEntryTeam(turret.uniqueId.toString())) {
                         return@forEach
                     }
-                // using distanceSquared for performance
-                if (player.isGliding && turret.hasLineOfSight(player) &&
-                    turret.location.distanceSquared(player.location) < turretReach * turretReach
-                ) {
-                    shooter[turret] = player
-                    isShooting.add(turret)
-                    if (!targets.contains(player)) {
-                        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, {
-                            if (player.isGliding && turret.hasLineOfSight(player) && turret.location.distanceSquared(
-                                    player.location
-                                ) < turretReach * turretReach
-                            ) {
-                                shootingTurrets.add(turret)
-                                targets.add(player)
-                                lockedOn[turret] = player
-                                if (shootTaskIDs.isEmpty()) {
-                                    Bukkit.getLogger().info("Players in range, starting turret tasks")
-                                    startTasks()
+                    // using distanceSquared for performance
+                    if (player.isGliding && turret.hasLineOfSight(player) && turret.location.distanceSquared(player.location) < turretReach * turretReach) {
+                        shooter[turret] = player
+                        isShooting.add(turret)
+                        if (!targets.contains(player)) {
+                            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, {
+                                if (player.isGliding && turret.hasLineOfSight(player) && turret.location.distanceSquared(
+                                        player.location
+                                    ) < turretReach * turretReach
+                                ) {
+                                    shootingTurrets.add(turret)
+                                    targets.add(player)
+                                    lockedOn[turret] = player
+                                    if (shootTaskIDs.isEmpty()) {
+                                        Bukkit.getLogger().info("Players in range, starting turret tasks")
+                                        startTasks()
+                                    }
                                 }
-                            }
-                        }, 19)
-                        player.playSound(turret.location, customSound, 100f, 1f)
-                        return@outer
+                            }, 19)
+                            player.playSound(turret.location, customSound, 100f, 1f)
+                            return@outer
+                        }
+                    } else {
+                        isShooting.remove(turret)
                     }
-                } else {
-                    isShooting.remove(turret)
                 }
-            }
         }
 
         shootingTurrets.removeIf { turret -> !isShooting.contains(turret) }
@@ -380,7 +373,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                     arrow.isSilent = true
                     arrow.isVisualFire = burningArrow
                     activeArrows[arrow] = arrowLifeTime
-//                    player.sendHurtAnimation(0f)
 
                     if (!silenced) {
                         player.playSound(
@@ -424,13 +416,17 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             stopTasks()
             stopReachCheckTask()
         }
-        reloadTurrets()
+        activeArrows.clear()
+        Bukkit.getWorld("world")?.entities?.forEach { entity ->
+            if (entity is Arrow && entity.scoreboardTags.contains("TurretArrow")) {
+                activeArrows[entity] = arrowLifeTime
+            }
+        }
     }
 
     private fun spawnTurret(player: Player, location: Location) {
         val armorStand = location.world!!.spawn(location, ArmorStand::class.java)
         armorStand.setGravity(false)
-//        armorStand.isInvulnerable = true
         armorStand.customName = "§cTurret"
         armorStand.isCustomNameVisible = true
         armorStand.isVisible = true
@@ -438,7 +434,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
         armorStand.addScoreboardTag("Turret")
 
-        sb.getEntryTeam(player.name)!!.addEntry(armorStand.uniqueId.toString())
+        sb!!.getEntryTeam(player.name)!!.addEntry(armorStand.uniqueId.toString())
 
         armorStand.persistentDataContainer.set(ammoKey, PersistentDataType.INTEGER, ammo)
         armorStand.persistentDataContainer.set(activeKey, PersistentDataType.BOOLEAN, true)
@@ -455,6 +451,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         Bukkit.getPluginCommand("turret")?.setExecutor(this)
         Bukkit.getPluginCommand("turret")?.tabCompleter = this
         Bukkit.getPluginManager().registerEvents(this, plugin)
+        sb = Bukkit.getScoreboardManager()!!.mainScoreboard
         reloadTurrets()
         startPerformanceCheckTask()
         startReachCheckTask()
@@ -519,7 +516,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         }
         if (particleTaskID != null) Bukkit.getScheduler().cancelTask(particleTaskID!!)
 
-//        shootTaskID = null
         shootTaskIDs.clear()
         particleTaskID = null
         // remove arrows later, so it looks better when exiting reach distance
@@ -580,12 +576,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             turretSpeeds[turret] = turret.persistentDataContainer.get(shotDelayKey, PersistentDataType.LONG)!!
         }
         updateSettings()
-        activeArrows.clear()
-        Bukkit.getWorld("world")?.entities?.forEach { entity ->
-            if (entity is Arrow && entity.scoreboardTags.contains("TurretArrow")) {
-                activeArrows[entity] = arrowLifeTime
-            }
-        }
     }
 
     private fun clearTurrets() {
@@ -614,8 +604,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         return playerLocation.add(player.velocity.multiply(timeToReach))
     }
 
-    // I MADE A WHOLE CLASS FOR THIS JUST TO REALIZE 5 HOURS LATER THAT I DON'T NEED IT FML (I might need it)
-    // active needs special treatment since I need another set for inactive turrets unless I make a new class (I won't)
     private fun updateSettings() {
         turrets.forEach { turret ->
             keyNames.forEach inner@{ keyName ->
@@ -702,7 +690,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     private fun onRightClick(event: PlayerInteractAtEntityEvent) {
         if (!event.rightClicked.scoreboardTags.contains("Turret")) return
         if (event.rightClicked !is ArmorStand) return
-        if (sb.getEntryTeam(event.player.name) != sb.getEntryTeam(event.rightClicked.uniqueId.toString())) {
+        if (sb!!.getEntryTeam(event.player.name) != sb!!.getEntryTeam(event.rightClicked.uniqueId.toString())) {
             event.player.sendMessage("§cYou can't interact with this turret")
             return
         }
@@ -895,7 +883,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     @EventHandler
     private fun onArmorStandPlace(event: PlayerInteractEvent) {
         if (event.item == null) return
-        if (event.item!!.itemMeta!!.displayName == ("§lTurret") && event.action == Action.RIGHT_CLICK_BLOCK) { // && event.item!!.type == Material.ARMOR_STAND
+        if (event.item!!.itemMeta!!.displayName == ("§lTurret") && event.action == Action.RIGHT_CLICK_BLOCK) {
             turrets.forEach { turret ->
                 if (event.clickedBlock!!.location.add(0.5, 1.0, 0.5).distance(turret.location) < 0.5) {
                     event.isCancelled = true

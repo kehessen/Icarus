@@ -6,10 +6,29 @@ Combat:
 Turret:
   shot-delay: 3
   particle-delay: 0
-  particle-amount: 10
-  particle-spread: 0.1
-  reach: 500
+  particle-amount: 20
+  particle-spread: 0.2
+  reach: 192
   damage: 0.5
   arrow-speed-multiplier: 5
   # Tick delay between player distance checks
-  player-check-delay: 20
+  distance-check-delay: 20
+  # Tick delay between performance checks (automatically disable turret tasks if no player is online etc.)
+  performance-check-delay: 600
+  # whether the arrow is burning or not
+  burning-arrow: true
+  # whether the turret makes noise when shooting
+  silenced: false
+
+SmokeGrenade:
+  # particle amount will be calculated based on the radius, too high values will not look good as there is a particle limit for clients
+  radius: 4.0
+
+PlayerMounting:
+  canon-reach: 100.0
+  canon-damage: 5.0
+  # whether to prevent players from mounting on players who aren't flying
+  # players have 5 seconds to take off before being dismounted if this is set to true
+  only-flight: true
+  # whether to play a hurt animation when shooting
+  hurt-animation: false

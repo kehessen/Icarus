@@ -93,7 +93,6 @@ class TpaHandler(private val combatTime: CombatTime, config: FileConfiguration) 
 
 
         // check if both sender and receiver are players and if the command parameters are valid and sends the request
-        // receiver is player check removed, should work without
         if (command.name == "tpa") {
             if (args[0] == "cancel") {
                 if (!map.containsKey(sender.uniqueId)) {
@@ -138,7 +137,7 @@ class TpaHandler(private val combatTime: CombatTime, config: FileConfiguration) 
                 list.remove(sender.name)
                 // not entirely sure how it behaves if the sender is not a player, but shouldn't crash
                 // also who else would send a tpa
-                // except for the CIA after hearing someone invented a cure for cancer
+                // CIA after hearing someone invented a cure for cancer
                 if (map.containsKey(Bukkit.getPlayer(sender.name)!!.uniqueId)) list.add("cancel")
                 return list
             }

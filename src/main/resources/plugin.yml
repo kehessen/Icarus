@@ -9,7 +9,7 @@ commands:
     usage: /announce <message>
     permission: op
   tpa:
-    description: Teleport to a player
+    description: Send a teleport request to a player
   tpaccept:
     description: Accept a teleport request
   spawn:
@@ -19,17 +19,9 @@ commands:
     description: Check someone's combat time
     usage: /combattime <player>
     permission: op
-  test:
-    description: Test command
-    usage: /test
-    permission: op
   turret:
     description: turret options
     usage: /turret <spawn/remove/reload/silence/burningArrow/targets/shotDelay/disableAll/enableAll/getEnderPearl/give>
-    permission: op
-  lasercanon:
-    description: lasercanon options
-    usage: /lasercanon <spawn/remove/reload/silence>
     permission: op
   bomb:
     description: tnt options
@@ -38,3 +30,7 @@ commands:
   mount:
     description: mount a player to act as a shooter
     usage: /mount <player>
+  customitem:
+    description: give a custom item
+    usage: /customitem <item>
+    permission: op

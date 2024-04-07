@@ -37,34 +37,34 @@ import kotlin.random.Random
 @Suppress("Duplicates", "unused")
 class Bomb : CommandExecutor, TabCompleter, Listener {
 
-    private var smallBombItem = CustomItem(
+    internal var smallBombItem = CustomItem(
         Material.TNT,
         "§r§c50kg Bomb",
         "§fRight click while flying to drop",
         "§7Can be used to destroy turrets",
         "§7Will slow you down when flying"
     )
-    private var mediumBombItem = CustomItem(
+    internal var mediumBombItem = CustomItem(
         Material.TNT,
         "§r§c100kg Bomb",
         "§fRight click while flying to drop",
         "§7Can be used to destroy turrets",
         "§7Will slow you down when flying"
     )
-    private var largeBombItem = CustomItem(
+    internal var largeBombItem = CustomItem(
         Material.TNT,
         "§r§c§lHydrogen Bomb",
         "§fRight click while flying to drop",
         "§7Can be used to destroy turrets, or anything else for that matter",
         "§7Will slow you down when flying"
     )
-    private var rocketLauncherItem = CustomItem(
+    internal var rocketLauncherItem = CustomItem(
         Material.CROSSBOW,
         "§r§c§lRocket Launcher",
         "§7Right click to shoot an unguided missile",
         "§7Can be used to destroy bombs"
     )
-    private var rocketLauncherAmmo = CustomItem(
+    internal var rocketLauncherAmmo = CustomItem(
         Material.FIREWORK_ROCKET,
         "§r§cRocket",
         "§fUsed for the Rocket Launcher",
@@ -90,8 +90,8 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
 
     // both items can only be obtained form creepers, ammonium nitrate has a 10% drop chance, plutonium core has a 1% drop chance
     // items won't drop if the player has looting
-    private var ammoniumNitrate = CustomItem(Material.SUGAR, "§r§cAmmonium Nitrate", "§fUsed to craft Bombs")
-    private var plutoniumCore = CustomItem(
+    internal var ammoniumNitrate = CustomItem(Material.SUGAR, "§r§cAmmonium Nitrate", "§fUsed to craft Bombs")
+    internal var plutoniumCore = CustomItem(
         Material.FIREWORK_STAR,
         "§r§c§lPlutonium Core",
         "§fUsed to craft Hydrogen Bombs",
@@ -427,7 +427,15 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
     @EventHandler
     private fun onRocketLaunch(event: PlayerInteractEvent) {
         if (event.item == null || event.item!!.itemMeta == null) return
+        if (event.action != Action.RIGHT_CLICK_AIR) return
         if (event.item!!.itemMeta!!.displayName != rocketLauncherItem.itemMeta!!.displayName) return
+        if (event.player.inventory.containsAtLeast(rocketLauncherAmmo, 1)) {
+            event.player.inventory.removeItem(rocketLauncherAmmo)
+        } else {
+            event.player.sendMessage("§cNo ammo left")
+            event.isCancelled = true
+            return
+        }
         val rocket = event.player.launchProjectile(org.bukkit.entity.SpectralArrow::class.java)
         rocket.velocity = event.player.location.direction.multiply(4)
         rocket.addScoreboardTag("SAM_rocket")

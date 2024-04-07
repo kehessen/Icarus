@@ -59,7 +59,6 @@ class CombatTime(private val plugin: JavaPlugin, config: FileConfiguration) : Li
     }
 
     private fun onInterval() {
-        // creating HashSet to avoid ConcurrentModificationException/ removing keys from map while iterating
         val keysToRemoveFromCombatTimeMap = HashSet<UUID>()
         val keysToRemoveFromCurrentlyInCombat = HashSet<UUID>()
 
@@ -73,7 +72,7 @@ class CombatTime(private val plugin: JavaPlugin, config: FileConfiguration) : Li
             }
         }
 
-        // Remove the keys from combatTimeMap and currentlyInCombat outside the iteration
+
         keysToRemoveFromCombatTimeMap.forEach { key ->
             combatTimeMap.remove(key)
         }

@@ -5,10 +5,12 @@ import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
+import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
+import org.bukkit.event.block.Action
 import org.bukkit.event.entity.EntityDismountEvent
 import org.bukkit.event.entity.EntityToggleGlideEvent
 import org.bukkit.event.player.PlayerInteractEvent
@@ -18,18 +20,18 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.ShapedRecipe
 import org.bukkit.inventory.meta.CrossbowMeta
 
-class PlayerMounting : Listener, CommandExecutor, TabCompleter {
+class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, TabCompleter {
     // key: mounted player, value: flying player
     private val mountedPlayers = hashMapOf<Player, Player>()
-    private val customWeapon: ItemStack =
+    internal val customWeapon: ItemStack =
         CustomItem(Material.CROSSBOW, "§r§l§c12.7mm M2 Browning", "§7Right click to shoot .50 cal bullets")
-    private val customAmmo: ItemStack =
+    internal val customAmmo: ItemStack =
         CustomItem(Material.ARROW, "§r§l§c.50 BMG", "§7Used for the M2 Browning", "§7Armor piercing")
 
-    private var canonReach = 100.0
-    private var damage = 5.0
-    private var onlyAllowMountingForFlight = false
-    private var playHurtAnimation = true
+    private var canonReach: Double = config.getDouble("PlayerMounting.canon-reach")
+    private var damage: Double = config.getDouble("PlayerMounting.canon-damage")
+    private var onlyAllowMountingForFlight: Boolean = config.getBoolean("PlayerMounting.only-flight")
+    private var playHurtAnimation: Boolean = config.getBoolean("PlayerMounting.hurt-animation")
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         if (sender !is Player) return false
@@ -67,6 +69,15 @@ class PlayerMounting : Listener, CommandExecutor, TabCompleter {
             player.sendMessage("§cYou are too far away from ${target.name}")
             return true
         }
+        if (onlyAllowMountingForFlight && target.inventory.armorContents[2]?.type != Material.ELYTRA) {
+            player.sendMessage("§c${target.name} is not wearing an elytra")
+            return true
+        }
+        val scoreboard = Bukkit.getScoreboardManager()?.mainScoreboard
+        if (scoreboard!!.getEntryTeam(player.name) != scoreboard.getEntryTeam(target.name)) {
+            player.sendMessage("§cYou cannot mount an enemy player")
+            return true
+        }
         mountedPlayers[player] = target
         target.addPassenger(player)
         player.inventory.addItem(customWeapon)
@@ -79,6 +90,7 @@ class PlayerMounting : Listener, CommandExecutor, TabCompleter {
                     mountedPlayers.remove(player)
                     target.removePassenger(player)
                     player.sendMessage("§cYou have been dismounted as ${target.name} hasn't taken off in time")
+                    target.sendMessage("§c${player.name} has been dismounted as you haven't taken off in time")
                 }
             }, 20 * 5)
         return true
@@ -115,6 +127,7 @@ class PlayerMounting : Listener, CommandExecutor, TabCompleter {
     @EventHandler
     private fun onShot(event: PlayerInteractEvent) {
         if (event.item == null || event.item!!.itemMeta == null) return
+        if (event.action != Action.RIGHT_CLICK_AIR) return
         if (!event.player.isInsideVehicle) {
             event.player.inventory.removeItem(customWeapon)
             return
@@ -138,13 +151,13 @@ class PlayerMounting : Listener, CommandExecutor, TabCompleter {
             if (distance == null) {
                 distance = canonReach
             }
-            val particleAmount = 100 - (100 - distance.toInt())
+            val particleAmount = (canonReach - (canonReach - distance)).toInt()
             val location = event.player.eyeLocation.subtract(0.0, 0.5, 0.0)
             val to = location.clone().add(location.direction.clone().multiply(distance)).add(0.0, 0.5, 0.0)
             Utils.drawLine(location, to, Particle.FLAME, particleAmount)
             if (hitEntity != null) {
                 if (hitEntity.hitEntity is LivingEntity) {
-                    (hitEntity.hitEntity as LivingEntity).damage(damage)
+                    (hitEntity.hitEntity as LivingEntity).damage(damage, event.player)
                     (hitEntity.hitEntity as LivingEntity).noDamageTicks = 5
                 }
             }
@@ -223,8 +236,9 @@ class PlayerMounting : Listener, CommandExecutor, TabCompleter {
             val list = Bukkit.getOnlinePlayers().map { it.name }.toMutableList()
             if (p0.isOp)
                 list.add("hurtAnimation")
+            list.remove(p0.name)
             return list
         }
-        return mutableListOf()
+        return mutableListOf("")
     }
 }

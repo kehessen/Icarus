@@ -1,6 +1,9 @@
 package me.kehessen.customplugin
 
-import org.bukkit.*
+import org.bukkit.Bukkit
+import org.bukkit.Material
+import org.bukkit.NamespacedKey
+import org.bukkit.Particle
 import org.bukkit.entity.Snowball
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -11,12 +14,14 @@ import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.inventory.ShapedRecipe
 
 class SmokeGrenade : Listener {
-    private val smokeGrenade = CustomItem(
+    val smokeGrenade = CustomItem(
         Material.GRAY_DYE,
         "§r§l§cSmoke Grenade",
         "§7Right click to throw"
     )
-    private val radius = 4.0
+
+    // load from config
+    private val radius = Bukkit.getPluginManager().getPlugin("CustomPlugin")!!.config.getDouble("SmokeGrenade.radius")
 
     fun start() {
         Bukkit.getPluginManager().registerEvents(this, Bukkit.getPluginManager().getPlugin("CustomPlugin")!!)
@@ -53,11 +58,10 @@ class SmokeGrenade : Listener {
     @EventHandler
     fun onRightClick(event: PlayerInteractEvent) {
         if (event.item == null || event.item!!.itemMeta == null) return
-        if (event.item!!.itemMeta!!.displayName == smokeGrenade.itemMeta!!.displayName && event.action == Action.RIGHT_CLICK_AIR) {
+        if (event.item!!.itemMeta!!.displayName == smokeGrenade.itemMeta!!.displayName && (event.action == Action.RIGHT_CLICK_AIR || event.action == Action.RIGHT_CLICK_BLOCK)) {
             val proj = event.player.launchProjectile(Snowball::class.java)
             proj.scoreboardTags.add("smoke_grenade")
             proj.velocity = event.player.location.direction.multiply(5)
-            proj.world.playSound(proj.location, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1f, 1f)
             event.item!!.amount -= 1
         }
     }

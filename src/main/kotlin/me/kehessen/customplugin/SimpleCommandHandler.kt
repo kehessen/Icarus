@@ -1,6 +1,5 @@
 package me.kehessen.customplugin
 
-import me.kehessen.customplugin.turret.TurretHandler
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -44,10 +43,6 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
                     return true
                 }
                 Bukkit.broadcastMessage("§4§l${args.joinToString(" ")}")
-            }
-
-            "test" -> {
-                sender.sendMessage(Bukkit.getScoreboardManager()!!.mainScoreboard.getTeam("test")!!.name)
                 return true
             }
         }
