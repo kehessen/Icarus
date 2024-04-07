@@ -31,11 +31,11 @@ class CustomPlugin : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
 
     private var sb: Scoreboard? = null
 
-
-    override fun onEnable() {
+    override fun onLoad() {
         saveDefaultConfig()
+    }
+    override fun onEnable() {
         config.options().copyDefaults(true)
-        reloadConfig()
         server.pluginManager.registerEvents(this, this)
         Bukkit.getPluginCommand("customitem")?.setExecutor(this)
 

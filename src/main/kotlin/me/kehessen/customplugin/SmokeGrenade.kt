@@ -21,10 +21,11 @@ class SmokeGrenade : Listener {
     )
 
     // load from config
-    private val radius = Bukkit.getPluginManager().getPlugin("CustomPlugin")!!.config.getDouble("SmokeGrenade.radius")
+    private var radius: Double = 4.0
 
     fun start() {
         Bukkit.getPluginManager().registerEvents(this, Bukkit.getPluginManager().getPlugin("CustomPlugin")!!)
+        radius = Bukkit.getPluginManager().getPlugin("CustomPlugin")!!.config.getDouble("SmokeGrenade.radius")
         val recipe = ShapedRecipe(
             NamespacedKey(Bukkit.getPluginManager().getPlugin("CustomPlugin")!!, "smoke_grenade"),
             smokeGrenade
