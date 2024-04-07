@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>me.kehessen</groupId>
-    <artifactId>CustomPlugin</artifactId>
+    <artifactId>Icarus</artifactId>
     <version>1.0</version>
     <packaging>jar</packaging>
 
-    <name>CustomPlugin</name>
+    <name>Icarus</name>
 
     <properties>
         <java.version>1.8</java.version>

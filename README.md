@@ -24,3 +24,5 @@ Player Mounting:
 
 Smoke Grenades: 
   - self-explanatory, don't rely on them too much as enemies can just disable particles!
+
+Many features are configurable in the config.yml file
