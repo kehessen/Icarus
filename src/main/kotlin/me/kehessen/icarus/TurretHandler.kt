@@ -29,6 +29,8 @@ import org.bukkit.persistence.PersistentDataType
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.scoreboard.Scoreboard
 import java.util.*
+import kotlin.math.cos
+import kotlin.math.sin
 
 // entity activation range has to be set to 500 for arrows to fly correctly
 // this has to be permanent since it requires a server restart to change
@@ -44,7 +46,7 @@ import java.util.*
 // - Falling sand entities
 // - Leash knots
 // - Armor stands
-@Suppress("unused", "DuplicatedCode")
+@Suppress("unused")
 class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, private val menu: MenuHandler) :
     CommandExecutor, TabCompleter, Listener {
 
@@ -81,6 +83,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     private var activeArrows = hashMapOf<Arrow, Int>()
     private val targets = mutableSetOf<Player>()
     private val lockedOn = hashMapOf<ArmorStand, Player>()
+    private val immunePlayers = mutableSetOf<Player>()
     // turrets: activeturrets + inactiveturrets
     // activeturrets: shootingturrets + non-shootingturrets
 
@@ -122,6 +125,12 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     internal val customEnderPearl =
         CustomItem(Material.ENDER_PEARL, "§r§lEnder Pearl", "§r§7Can be used to craft turrets")
     internal val customItem = CustomItem(Material.ARMOR_STAND, "§r§lTurret", "§r§7Right click to place")
+    internal val flares = CustomItem(
+        Material.BLAZE_ROD,
+        "§r§lFlares",
+        "§r§7Right click to use",
+        "§r§7Can be used to distract turrets"
+    )
 
 
     // multiple tasks for different shot delays, up to 5 -> better than creating a new class hehehehaw
@@ -359,8 +368,10 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     private fun onInterval(turrets: Set<ArmorStand>) {
         targets.forEach { player ->
             turrets.forEach { turret ->
-                if (turret.location.distance(player.location) <= turretReach && player.isOnline) {
-                    // shoot arrow in player direction
+                if (turret.location.distance(player.location) <= turretReach && player.isOnline && !immunePlayers.contains(
+                        player
+                    )
+                ) {
                     val arrow = turret.world.spawn(turret.eyeLocation, Arrow::class.java)
                     arrow.addScoreboardTag("TurretArrow")
 
@@ -373,6 +384,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                     arrow.isSilent = true
                     arrow.isVisualFire = burningArrow
                     activeArrows[arrow] = arrowLifeTime
+                    arrow.shooter = turret
 
                     if (!silenced) {
                         player.playSound(
@@ -455,7 +467,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         reloadTurrets()
         startPerformanceCheckTask()
         startReachCheckTask()
-        addRecipe()
+        addRecipes()
     }
 
     fun disableAllTurrets() {
@@ -474,14 +486,21 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         inactiveTurrets.clear()
     }
 
-    private fun addRecipe() {
-        val recipe = ShapedRecipe(NamespacedKey(plugin, "turret"), customItem)
+    private fun addRecipes() {
+        var recipe = ShapedRecipe(NamespacedKey(plugin, "turret"), customItem)
         recipe.shape(" P ", "NCB", "OOO")
         recipe.setIngredient('P', RecipeChoice.ExactChoice(customEnderPearl))
         recipe.setIngredient('N', Material.NETHER_STAR)
         recipe.setIngredient('C', Material.CROSSBOW)
         recipe.setIngredient('B', Material.BLAZE_ROD)
         recipe.setIngredient('O', Material.OBSIDIAN)
+        Bukkit.addRecipe(recipe)
+
+        recipe = ShapedRecipe(NamespacedKey(plugin, "flares"), flares)
+        recipe.shape(" B ", " R ", " I ")
+        recipe.setIngredient('B', Material.BLAZE_ROD)
+        recipe.setIngredient('R', Material.REDSTONE_BLOCK)
+        recipe.setIngredient('I', Material.IRON_INGOT)
         Bukkit.addRecipe(recipe)
     }
 
@@ -642,16 +661,58 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     }
 
     @EventHandler
-    private fun onArrowHit(event: EntityDamageByEntityEvent) {
-        if (event.damager.scoreboardTags.contains("TurretArrow")) {
-            activeArrows.remove(event.entity)
-            event.damager.remove()
+    private fun onFlareDeploy(event: PlayerInteractEvent) {
+        if (event.item == null) return
+        if (event.item!!.itemMeta!!.displayName != flares.itemMeta!!.displayName) return
+        if (event.action != Action.RIGHT_CLICK_AIR) {
+            event.isCancelled = true
+            return
         }
+
+        var a = 0
+        val world = event.player.world
+        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, {
+            if (a > 15) return@scheduleSyncRepeatingTask
+            for (i in 0..360 step 10) {
+                val x = sin(i.toDouble()).times(a.toDouble())
+                val z = cos(i.toDouble()).times(a.toDouble())
+                world.spawnParticle(Particle.FLAME, event.player.location.add(x, 0.0, z), 3)
+            }
+            world.playSound(event.player.location, Sound.ENTITY_FIREWORK_ROCKET_LARGE_BLAST, 1f, 100f)
+            a++
+        }, 0, 1)
+
+        immunePlayers.add(event.player)
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, {
+            immunePlayers.remove(event.player)
+        }, 50)
+
+        if (event.player.gameMode != GameMode.CREATIVE) {
+            if (event.player.inventory.itemInMainHand.itemMeta!!.displayName == flares.itemMeta!!.displayName) {
+                event.player.inventory.itemInMainHand.amount -= 1
+            } else if (event.player.inventory.itemInOffHand.itemMeta!!.displayName == flares.itemMeta!!.displayName) {
+                event.player.inventory.itemInOffHand.amount -= 1
+            } else {
+                Bukkit.getLogger().warning("Flare item not found in ${event.player}'s hand but was activated")
+            }
+        }
+
+        event.isCancelled = true
     }
+
+//    @EventHandler
+//    private fun onArrowHit(event: EntityDamageByEntityEvent) {
+//        if (event.damager.scoreboardTags.contains("TurretArrow")) {
+//            activeArrows.remove(event.entity)
+//            event.damager.remove()
+//        }
+//    }
 
     @EventHandler
     private fun onDeath(event: PlayerDeathEvent) {
         targets.remove(event.entity)
+        if (event.entity.killer == null || !turrets.contains(event.entity.killer as ArmorStand)) return
+        event.deathMessage = "§c${event.entity.name} was shot by a turret"
     }
 
     @EventHandler
@@ -667,6 +728,9 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     private fun onPlayerJoin(event: PlayerJoinEvent) {
         if (reachCheckTaskID == null) Bukkit.getLogger().info("Starting reach check task")
         startReachCheckTask()
+        if (!event.player.hasDiscoveredRecipe(NamespacedKey(plugin, "flares"))) {
+            event.player.discoverRecipe(NamespacedKey(plugin, "flares"))
+        }
     }
 
     @EventHandler

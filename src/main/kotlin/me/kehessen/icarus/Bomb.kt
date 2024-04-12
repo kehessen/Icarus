@@ -390,8 +390,8 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
 
     @EventHandler
     private fun onBombDrop(event: PlayerInteractEvent) {
-        if (!(event.player.isGliding || event.player.vehicle !is Player) || event.action != Action.RIGHT_CLICK_AIR) return
-        when (event.player.inventory.itemInMainHand.itemMeta!!.displayName) {
+        if (!(event.player.isGliding || event.player.vehicle !is Player) || event.action != Action.RIGHT_CLICK_AIR || event.item == null || event.item!!.itemMeta == null) return
+        when (event.item!!.itemMeta!!.displayName) {
             smallBombItem.itemMeta!!.displayName -> {
                 val bmb = event.player.world.spawn(event.player.location, TNTPrimed::class.java)
                 bmb.addScoreboardTag("bomb")

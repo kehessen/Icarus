@@ -19,12 +19,20 @@ import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.ShapedRecipe
 import org.bukkit.inventory.meta.CrossbowMeta
+import org.bukkit.potion.PotionEffect
+import org.bukkit.potion.PotionEffect.INFINITE_DURATION
+import org.bukkit.potion.PotionEffectType
 
 class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, TabCompleter {
     // key: mounted player, value: flying player
     private val mountedPlayers = hashMapOf<Player, Player>()
     internal val customWeapon: ItemStack =
-        CustomItem(Material.CROSSBOW, "§r§l§c12.7mm M2 Browning", "§7Right click to shoot .50 cal bullets")
+        CustomItem(
+            Material.CROSSBOW,
+            "§r§l§c12.7mm M2 Browning",
+            "§7Left click to zoom",
+            "§7Right click to shoot .50 cal bullets"
+        )
     internal val customAmmo: ItemStack =
         CustomItem(Material.ARROW, "§r§l§c.50 BMG", "§7Used for the M2 Browning", "§7Armor piercing")
 
@@ -86,14 +94,18 @@ class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, Tab
         if (onlyAllowMountingForFlight)
             Bukkit.getScheduler().scheduleSyncDelayedTask(Bukkit.getPluginManager().getPlugin("Icarus")!!, {
                 if (target.passengers.contains(player) && !target.isGliding) {
-                    player.inventory.removeItem(customWeapon)
-                    mountedPlayers.remove(player)
-                    target.removePassenger(player)
+                    dismount(player)
                     player.sendMessage("§cYou have been dismounted as ${target.name} hasn't taken off in time")
                     target.sendMessage("§c${player.name} has been dismounted as you haven't taken off in time")
                 }
             }, 20 * 5)
         return true
+    }
+
+    private fun dismount(player: Player) {
+        player.inventory.removeItem(customWeapon)
+        mountedPlayers[player]!!.removePassenger(player)
+        mountedPlayers.remove(player)
     }
 
     fun start() {
@@ -172,6 +184,47 @@ class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, Tab
     }
 
     @EventHandler
+    private fun onZoom(event: PlayerInteractEvent) {
+        if (event.item == null || event.item!!.itemMeta == null) return
+        if (event.action != Action.LEFT_CLICK_AIR) return
+        if (event.item!!.itemMeta?.displayName != customWeapon.itemMeta!!.displayName) return
+
+        val potionEffect = event.player.getPotionEffect(PotionEffectType.SLOW)
+        when {
+            potionEffect == null -> {
+                event.player.addPotionEffect(
+                    PotionEffect(
+                        PotionEffectType.SLOW,
+                        INFINITE_DURATION,
+                        3,
+                        false,
+                        false,
+                        false
+                    )
+                )
+            }
+
+            potionEffect.amplifier == 3 -> {
+                event.player.addPotionEffect(
+                    PotionEffect(
+                        PotionEffectType.SLOW,
+                        INFINITE_DURATION,
+                        6,
+                        false,
+                        false,
+                        false
+                    )
+                )
+            }
+
+            else -> {
+                event.player.removePotionEffect(PotionEffectType.SLOW)
+            }
+        }
+        event.isCancelled = true
+    }
+
+    @EventHandler
     private fun onDismount(event: EntityDismountEvent) {
         if (event.entity is Player && event.dismounted is Player) {
             val player = event.entity as Player
@@ -180,6 +233,7 @@ class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, Tab
                 mountedPlayers.remove(player)
                 player.inventory.removeItem(customWeapon)
                 plane.sendMessage("§c${player.name} is no longer your gunman")
+                player.removePotionEffect(PotionEffectType.SLOW)
             }
         }
     }

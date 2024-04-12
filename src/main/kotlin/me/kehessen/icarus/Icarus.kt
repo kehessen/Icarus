@@ -34,6 +34,7 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
     override fun onLoad() {
         saveDefaultConfig()
     }
+
     override fun onEnable() {
         config.options().copyDefaults(true)
         server.pluginManager.registerEvents(this, this)
@@ -79,6 +80,7 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
                 "rocketlauncherammo" -> player!!.inventory.addItem(bomb.rocketLauncherAmmo)
                 "ammonium" -> player!!.inventory.addItem(bomb.ammoniumNitrate)
                 "plutonium" -> player!!.inventory.addItem(bomb.plutoniumCore)
+                "flares" -> player!!.inventory.addItem(turretHandler.flares)
 
                 else -> sender.sendMessage("§cInvalid arguments")
             }
@@ -123,7 +125,8 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
                 "rocketlauncher",
                 "rocketlauncherammo",
                 "ammonium",
-                "plutonium"
+                "plutonium",
+                "flares"
             )
 
             else -> mutableListOf("")
