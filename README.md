@@ -9,6 +9,9 @@ Turrets:
   - craft turrets to defend against enemy bombers and other aerial attackers
   - the required ender pearl can be dropped by endermen without using looting
 
+Flares:
+  - can be used to distract turrets for 2.5 seconds
+
 Rocket Launchers:
   - Can be used to explode dropped bombs before they reach the ground
   - don't forget to craft ammo, or your team will be mad
