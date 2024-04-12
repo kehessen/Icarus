@@ -1,7 +1,7 @@
 # [Icarus](https://github.com/kehessen/Icarus/releases/latest)
 
 A Minecraft Plugin focused on adding some fun combat mechanics.\
-It relies on a custom resource pack for custom sounds (fow now just the lock-on sound for the turret).
+There is a resource pack which adds custom sounds (fow now just the lock-on sound for the turret), but the plugin will work perfectly fine without it.
 
 ### Bombs:
   - Craft 50kg, 100kg and Hydrogen Bombs to attack enemy teams in the air
