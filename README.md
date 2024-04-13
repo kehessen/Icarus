@@ -30,11 +30,11 @@ _Many features are configurable in the config.yml file_
 - Ammonium Nitrate and Plutonium cores can be dropped by creepers when killed by a player without using looting
 - Bombs can be used against enemy bases or turrets
 - 50kg bomb crafting recipe (normal TNT): \
-  ![img.png](SmallBombRecipe.png)
+  ![img.png](Images/SmallBombRecipe.png)
 - 100kg bomb crafting recipe (normal TNT and Ammonium Nitrate): \
-  ![img.png](MediumBombRecipe.png)
+  ![img.png](Images/MediumBombRecipe.png)
 - Hydrogen bomb crafting recipe (100kg Bombs and Plutonium core): \
-  ![img.png](HydrogenBombRecipe.png)
+  ![img.png](Images/HydrogenBombRecipe.png)
 - It is generally suggested not to craft Hydrogen Bombs in your base, as something might happen rarely
 
 ### Turrets
@@ -43,22 +43,22 @@ _Many features are configurable in the config.yml file_
 - the required ender pearl can be dropped by Endermen without using looting
 - right-click the turret to add ammo, activate / deactivate it or change the shot delay
 - crafting recipe: \
-  ![img.png](TurretRecipe.png)
+  ![img.png](Images/TurretRecipe.png)
 
 ### Flares
 
 - can be used to distract turrets for 2.5 seconds
 - crafting recipe: \
-  ![img.png](FlareRecipe.png)
+  ![img.png](Images/FlareRecipe.png)
 
 ### Rocket Launchers
 
 - Can be used to explode dropped bombs before they reach the ground
 - Crafting recipe:\
-  ![img.png](RocketLauncherRecipe.png)
+  ![img.png](Images/RocketLauncherRecipe.png)
 - don't forget to craft ammo, or your team will be mad
 - Ammo crafting recipe: \
-  ![img.png](RocketLauncherAmmoRecipe.png)
+  ![img.png](Images/RocketLauncherAmmoRecipe.png)
 - (it's not a bug, it's a feature: Rocket Launchers can be used to get a quick height advantage by spamming them below
   you)
 
@@ -68,10 +68,10 @@ _Many features are configurable in the config.yml file_
 - shoot with a M2 Browning
 - don't forget to craft ammo before entering a fight
 - ammo recipe:   
-  ![img.png](BrowningAmmoRecipe.png)
+  ![img.png](Images/BrowningAmmoRecipe.png)
 
 ### Smoke Grenades
 
 - self-explanatory, don't rely on them too much as enemies can just disable particles!
 - crafting recipe: \
-  ![img.png](SmokeGrenadeRecipe.png)
+  ![img.png](Images/SmokeGrenadeRecipe.png)
