@@ -11,9 +11,11 @@ import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
+import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
+import org.bukkit.entity.SpectralArrow
 import org.bukkit.entity.TNTPrimed
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -35,7 +37,7 @@ import kotlin.random.Random
 // anything over yield 5 can destroy turrets
 // wanted to do a custom advancement, but it would require a dependency which is annoying
 @Suppress("Duplicates", "unused")
-class Bomb : CommandExecutor, TabCompleter, Listener {
+class Bomb(config: FileConfiguration) : CommandExecutor, TabCompleter, Listener {
 
     internal var smallBombItem = CustomItem(
         Material.TNT,
@@ -70,17 +72,18 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
         "§fUsed for the Rocket Launcher",
     )
 
-    private var smallBombYield = 6
-    private var mediumBombYield = 20
-    private var largeBombYield = 75
+    private var smallBombYield = config.getInt("Bomb.small-yield")
+    private var mediumBombYield = config.getInt("Bomb.medium-yield")
+    private var largeBombYield = config.getInt("Bomb.large-yield")
 
-    private var launcherRange = 100.0
-    private var rockets = hashMapOf<org.bukkit.entity.SpectralArrow, Location>()
+    private var launcherRange = config.getDouble("RocketLauncher.range")
+    private var rocketYield = config.getDouble("RocketLauncher.yield").toFloat()
+    private var rockets = hashMapOf<SpectralArrow, Location>()
     private var rocketCheckID: Int? = null
 
-    private var smallSpeedLimit = 0.8
-    private var mediumSpeedLimit = 0.6
-    private var largeSpeedLimit = 0.4
+    private var smallSpeedLimit = config.getDouble("Bomb.small-speed-limit")
+    private var mediumSpeedLimit = config.getDouble("Bomb.medium-speed-limit")
+    private var largeSpeedLimit = config.getDouble("Bomb.large-speed-limit")
 
     private var playersWithSmallBomb = mutableSetOf<Player>()
     private var playersWithMediumBomb = mutableSetOf<Player>()
@@ -273,6 +276,18 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
         }
     }
 
+    private fun checkSpeedOf(player: Player){
+        if (player.isGliding && player.velocity.length() > largeSpeedLimit) {
+            player.velocity = player.velocity.normalize().multiply(largeSpeedLimit)
+        }
+        if (player.isGliding && player.velocity.length() > mediumSpeedLimit) {
+            player.velocity = player.velocity.normalize().multiply(mediumSpeedLimit)
+        }
+        if (player.isGliding && player.velocity.length() > smallSpeedLimit) {
+            player.velocity = player.velocity.normalize().multiply(smallSpeedLimit)
+        }
+    }
+
     private fun explosionCheck(bomb: TNTPrimed) {
         val task =
             Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("Icarus")!!, {
@@ -294,7 +309,7 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
     private fun reloadRockets() {
         Bukkit.getWorld("world")!!.entities.forEach { entity ->
             if (entity.scoreboardTags.contains("SAM_rocket")) {
-                rockets[entity as org.bukkit.entity.SpectralArrow] = entity.location
+                rockets[entity as SpectralArrow] = entity.location
             }
         }
     }
@@ -304,7 +319,7 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
             stopRocketTask()
             return
         }
-        val rocketsToRemove = mutableListOf<org.bukkit.entity.SpectralArrow>()
+        val rocketsToRemove = mutableListOf<SpectralArrow>()
         rockets.forEach { (rocket, spawnLocation) ->
             if (rocket.isDead || rocket.velocity.length() < 0.2) {
                 rocket.remove()
@@ -339,7 +354,7 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
 
     @EventHandler
     private fun onPlayerGlide(event: PlayerMoveEvent) {
-        checkSpeed()
+        checkSpeedOf(event.player)
     }
 
     @EventHandler
@@ -362,7 +377,6 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
                         Bukkit.getPluginManager().getPlugin("Icarus")!!, "medium_bomb"
                     )
                 )
-                player.sendMessage("§aThe 100kg bomb recipe has been added to your recipe book. Reconnect to see it.")
             }
         }
         if (Random.nextInt(0, 100) == 99) {
@@ -378,7 +392,6 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
                         Bukkit.getPluginManager().getPlugin("Icarus")!!, "large_bomb"
                     )
                 )
-                player.sendMessage("§aThe Hydrogen bomb recipe has been added to your recipe book. Reconnect to see it.")
                 val component = TextComponent("${player.name}:§a Hmm... Interesting")
                 component.hoverEvent = HoverEvent(
                     HoverEvent.Action.SHOW_TEXT, Text("§aDiscover a plutonium core. \nWhat could this be used for?")
@@ -390,7 +403,8 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
 
     @EventHandler
     private fun onBombDrop(event: PlayerInteractEvent) {
-        if (!(event.player.isGliding || event.player.vehicle !is Player) || event.action != Action.RIGHT_CLICK_AIR || event.item == null || event.item!!.itemMeta == null) return
+
+        if (!event.player.isGliding || event.action != Action.RIGHT_CLICK_AIR || event.item == null || event.item!!.itemMeta == null) return
         when (event.item!!.itemMeta!!.displayName) {
             smallBombItem.itemMeta!!.displayName -> {
                 val bmb = event.player.world.spawn(event.player.location, TNTPrimed::class.java)
@@ -449,7 +463,7 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
     @EventHandler
     private fun rocketImpactEvent(event: ProjectileHitEvent) {
         if (event.entity.scoreboardTags.contains("SAM_rocket")) {
-            event.entity.world.createExplosion(event.entity.location, 2f)
+            event.entity.world.createExplosion(event.entity.location, rocketYield)
             event.entity.remove()
         }
     }
@@ -466,12 +480,13 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
     private fun onCraft(event: CraftItemEvent) {
         if (event.recipe.result.itemMeta == null) return
         val itemName = event.recipe.result.itemMeta!!.displayName
-        if (itemName != largeBombItem.itemMeta!!.displayName) return
-        if (Random.nextInt(0, 20) == 19) {
-            event.whoClicked.damage(500.0)
-            Bukkit.getWorld("world")!!.createExplosion(event.whoClicked.location, 120f)
-            Bukkit.getServer()
-                .broadcastMessage("${event.whoClicked.name} has been vaporized while trying to craft a Hydrogen Bomb")
+        if (itemName == largeBombItem.itemMeta!!.displayName) {
+            if (Random.nextInt(0, 20) == 19) {
+                event.whoClicked.damage(500.0)
+                Bukkit.getWorld("world")!!.createExplosion(event.whoClicked.location, 120f)
+                Bukkit.getServer()
+                    .broadcastMessage("${event.whoClicked.name} has been vaporized while trying to craft a Hydrogen Bomb")
+            }
         }
     }
 
@@ -511,6 +526,20 @@ class Bomb : CommandExecutor, TabCompleter, Listener {
                 NamespacedKey(
                     Bukkit.getPluginManager().getPlugin("Icarus")!!,
                     "rocket_launcher_ammo"
+                )
+            )
+        }
+        if (!event.player.hasDiscoveredRecipe(
+                NamespacedKey(
+                    Bukkit.getPluginManager().getPlugin("Icarus")!!,
+                    "small_bomb"
+                )
+            )
+        ) {
+            event.player.discoverRecipe(
+                NamespacedKey(
+                    Bukkit.getPluginManager().getPlugin("Icarus")!!,
+                    "small_bomb"
                 )
             )
         }

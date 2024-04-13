@@ -34,3 +34,12 @@ commands:
     description: give a custom item
     usage: /customitem <item>
     permission: op
+  join:
+    description: join a team
+    usage: /join <team>
+  accept:
+    description: accept a team invite
+    usage: /accept <player>
+  decline:
+    description: decline a team invite
+    usage: /decline <player>

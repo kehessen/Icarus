@@ -11,6 +11,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.AsyncPlayerChatEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
+import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.scoreboard.Scoreboard
 
@@ -25,9 +26,10 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
     private val turretHandler = TurretHandler(this, config, menuHandler)
     private val simpleCommandHandler = SimpleCommandHandler(combatTime, turretHandler)
     private val tpaHandler = TpaHandler(combatTime, config)
-    private val bomb = Bomb()
+    private val bomb = Bomb(config)
     private val playerMounting = PlayerMounting(config)
     private val smokeGrenade = SmokeGrenade()
+    private val airstrike = Airstrike(config)
 
     private var sb: Scoreboard? = null
 
@@ -54,35 +56,46 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
         bomb.start()
         playerMounting.start()
         smokeGrenade.start()
+        airstrike.start()
     }
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
-        if (command.name == "customitem") {
-            if (args.isEmpty()) {
-                sender.sendMessage("§cInvalid arguments")
-                return true
-            }
-            if (sender !is Player) {
-                sender.sendMessage("§cInvalid sender")
-                return true
-            }
-            val player = Bukkit.getPlayer(sender.name)
-            when (args[0]) {
-                "turret" -> player!!.inventory.addItem(turretHandler.customItem)
-                "customenderpearl" -> player!!.inventory.addItem(turretHandler.customEnderPearl)
-                "smokegrenade" -> player!!.inventory.addItem(smokeGrenade.smokeGrenade)
-                "smallbomb" -> player!!.inventory.addItem(bomb.smallBombItem)
-                "mediumbomb" -> player!!.inventory.addItem(bomb.mediumBombItem)
-                "largebomb" -> player!!.inventory.addItem(bomb.largeBombItem)
-                "mountinggun" -> player!!.inventory.addItem(playerMounting.customWeapon)
-                "mountingammo" -> player!!.inventory.addItem(playerMounting.customAmmo)
-                "rocketlauncher" -> player!!.inventory.addItem(bomb.rocketLauncherItem)
-                "rocketlauncherammo" -> player!!.inventory.addItem(bomb.rocketLauncherAmmo)
-                "ammonium" -> player!!.inventory.addItem(bomb.ammoniumNitrate)
-                "plutonium" -> player!!.inventory.addItem(bomb.plutoniumCore)
-                "flares" -> player!!.inventory.addItem(turretHandler.flares)
+        if (args.isEmpty()) {
+            sender.sendMessage("§cInvalid arguments")
+            return true
+        }
+        if (sender !is Player) {
+            sender.sendMessage("§cInvalid sender")
+            return true
+        }
+        val player = Bukkit.getPlayer(sender.name)
+        when (command.name) {
+            "customitem" -> {
+                val amount = if (args.size == 2) args[1].toInt() else 1
+                val item: ItemStack?
+                when (args[0]) {
+                    "turret" -> item = turretHandler.customItem
+                    "customenderpearl" -> item = turretHandler.customEnderPearl
+                    "smokegrenade" -> item = smokeGrenade.smokeGrenade
+                    "smallbomb" -> item = bomb.smallBombItem
+                    "mediumbomb" -> item = bomb.mediumBombItem
+                    "largebomb" -> item = bomb.largeBombItem
+                    "mountinggun" -> item = playerMounting.customWeapon
+                    "mountingammo" -> item = playerMounting.customAmmo
+                    "rocketlauncher" -> item = bomb.rocketLauncherItem
+                    "rocketlauncherammo" -> item = bomb.rocketLauncherAmmo
+                    "ammonium" -> item = bomb.ammoniumNitrate
+                    "plutonium" -> item = bomb.plutoniumCore
+                    "flares" -> item = turretHandler.flares
+                    "airstrike" -> item = airstrike.item
 
-                else -> sender.sendMessage("§cInvalid arguments")
+                    else -> {
+                        sender.sendMessage("§cInvalid arguments")
+                        return true
+                    }
+                }
+                item.amount = amount
+                player!!.inventory.addItem(item)
             }
         }
         return true
@@ -91,8 +104,8 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
     @EventHandler
     private fun onPlayerJoin(event: PlayerJoinEvent) {
         event.joinMessage = "§2+ ${event.player.name}"
-        if (event.player.scoreboard.getEntryTeam(event.player.name) == null) {
-            event.player.scoreboard.getTeam("Default")?.addEntry(event.player.name)
+        if (sb!!.getEntryTeam(event.player.name) == null) {
+            sb!!.getTeam("Default")?.addEntry(event.player.name)
         }
     }
 
@@ -112,24 +125,29 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
         alias: String,
         args: Array<out String>
     ): MutableList<String> {
-        return when (args.size) {
-            1 -> mutableListOf(
-                "turret",
-                "customenderpearl",
-                "smokegrenade",
-                "smallbomb",
-                "mediumbomb",
-                "largebomb",
-                "mountinggun",
-                "mountingammo",
-                "rocketlauncher",
-                "rocketlauncherammo",
-                "ammonium",
-                "plutonium",
-                "flares"
-            )
+        when (command.name) {
+            "customitem" -> {
+                return if (args.size == 1) mutableListOf(
+                    "turret",
+                    "customenderpearl",
+                    "smokegrenade",
+                    "smallbomb",
+                    "mediumbomb",
+                    "largebomb",
+                    "mountinggun",
+                    "mountingammo",
+                    "rocketlauncher",
+                    "rocketlauncherammo",
+                    "ammonium",
+                    "plutonium",
+                    "flares",
+                    "airstrike"
+                )
+                else mutableListOf("")
+            }
 
-            else -> mutableListOf("")
         }
+
+        return mutableListOf("")
     }
 }

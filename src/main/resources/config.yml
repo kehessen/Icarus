@@ -4,8 +4,10 @@ Combat:
   can-teleport-in-combat: false
 
 Turret:
+  # Default value for the shot delay when places, can be changed to 1-5 ticks in the turret menu
   shot-delay: 3
   particle-delay: 0
+  # amount of particles each arrow spawns per tick
   particle-amount: 20
   particle-spread: 0.2
   reach: 192
@@ -25,6 +27,7 @@ SmokeGrenade:
   radius: 4.0
 
 PlayerMounting:
+  # Reach and damage of the M2 Browning the gunman gets when mounted
   canon-reach: 100.0
   canon-damage: 5.0
   # whether to prevent players from mounting on players who aren't flying
@@ -32,3 +35,31 @@ PlayerMounting:
   only-flight: true
   # whether to play a hurt animation when shooting
   hurt-animation: false
+  # The time in ticks a player has before being dismounted when the plane isn't flying
+  dismount-time: 100
+
+Airstrike:
+  missile-amount: 8
+  # delay in ticks between each missile
+  missile-delay: 4
+  # explosion force of a missile
+  missile-yield: 8.0
+  # delay in ticks between the arrow hitting the ground and the first missile being spawned
+  initial-delay: 60
+
+Bomb:
+  # The yield of the bomb explosion
+  # Usually a server can handle a couple of 150 yield at once, but after that it starts to lag pretty soon
+  small-yield: 6
+  medium-yield: 20
+  large-yield: 75
+
+  # The maximum speed a player is allowed to fly if he is carrying a certain bomb
+  small-speed-limit: 0.8
+  medium-speed-limit: 0.6
+  large-speed-limit: 0.4
+
+RocketLauncher:
+  range: 100.0
+  # Explosion force of the rocket
+  yield: 2.0

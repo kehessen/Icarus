@@ -338,7 +338,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                 disabled.add(turret)
                 turret.persistentDataContainer.set(activeKey, PersistentDataType.BOOLEAN, false)
                 turret.persistentDataContainer.set(ammoKey, PersistentDataType.INTEGER, 0)
-                Bukkit.getLogger().info("Turret with EntityID ${turret.entityId} out of ammo, deactivated")
+                Bukkit.getLogger().info("Turret with ID ${turret.uniqueId} out of ammo, deactivated")
             }
         }
         if (disabled.isNotEmpty()) {
@@ -819,7 +819,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                     i.itemMeta = meta
                     event.clickedInventory!!.setItem(10, i)
                     turret!!.persistentDataContainer.set(activeKey, PersistentDataType.BOOLEAN, false)
-                    Bukkit.getLogger().info("Turret with EntityID ${turret.entityId} deactivated")
+                    Bukkit.getLogger().info("Turret with ID ${turret.uniqueId} deactivated")
                     activeTurrets.remove(turret)
                     inactiveTurrets.add(turret)
                     event.isCancelled = true
@@ -838,7 +838,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                     i.itemMeta = meta
                     event.clickedInventory!!.setItem(10, i)
                     turret!!.persistentDataContainer.set(activeKey, PersistentDataType.BOOLEAN, true)
-                    Bukkit.getLogger().info("Turret with EntityID ${turret.entityId} activated")
+                    Bukkit.getLogger().info("Turret with ID ${turret.uniqueId} activated")
                     activeTurrets.add(turret)
                     inactiveTurrets.remove(turret)
                     event.isCancelled = true
@@ -895,7 +895,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                 activeTurrets.remove(turret)
                 inactiveTurrets.remove(turret)
                 turrets.remove(turret)
-                Bukkit.getLogger().info("$player picked up turret with EntityID ${turret.entityId}")
+                Bukkit.getLogger().info("$player picked up turret with ID ${turret.uniqueId}")
                 event.isCancelled = true
             }
 
@@ -975,7 +975,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                 event.drops.add(customEnderPearl)
                 if (!event.entity.killer!!.hasDiscoveredRecipe(NamespacedKey(plugin, "turret"))) {
                     event.entity.killer!!.discoverRecipe(NamespacedKey(plugin, "turret"))
-                    event.entity.killer!!.sendMessage("§aThe Turret recipe has been added to you recipe book. Reconnect to see it.")
                 }
             }
             event.drops.remove(ItemStack(Material.ENDER_PEARL))
