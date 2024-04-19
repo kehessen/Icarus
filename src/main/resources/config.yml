@@ -60,6 +60,6 @@ Bomb:
   large-speed-limit: 0.4
 
 RocketLauncher:
-  range: 100.0
+  range: 125.0
   # Explosion force of the rocket
   yield: 2.0

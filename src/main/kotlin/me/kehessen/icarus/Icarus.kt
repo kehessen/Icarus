@@ -15,7 +15,6 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.scoreboard.Scoreboard
 
-@Suppress("unused")
 class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
 
     // used for other classes, so they need to be initialized first

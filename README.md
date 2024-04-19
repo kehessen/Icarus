@@ -13,14 +13,14 @@ _Many features are configurable in the config.yml file_
 ### TPA and Spawn
 
 - Quality-of-life features such as _**/spawn**_ or _**/tpa**_
-- spawn can be set with **_/spawn set_**
+- Spawn can be set with **_/spawn set_**
 
 ### Teams
 
-- You can join teams by using _/join [teamname]_
+- You can join teams by using _/join [teamName]_
 - Any player in the team can accept or deny join requests
-- Teams have to be created by operators using _**/team add [teamname]**_ and the first player has to be added using _**/team
-  join [teamname] [playername]**_
+- Teams have to be created by operators using _**/team add [teamName]**_ and the first player has to be added using _**/team
+  join [teamName] [playerName]**_
 - There will be "random" UUIDs in the team list, these belong to the turrets as they can only be used by the team that
   created them
 
@@ -29,7 +29,7 @@ _Many features are configurable in the config.yml file_
 - Craft 50kg, 100kg and Hydrogen Bombs to attack enemy teams in the air
 - Ammonium Nitrate and Plutonium cores can be dropped by creepers when killed by a player without using looting
 - Ammonium Nitrate has a 5% chance to drop, the Plutonium Core has a .5% chance to drop
-- Bombs can be used against enemy bases or turrets
+- Can be used against enemy bases or turrets
 - 50kg bomb crafting recipe (normal TNT): \
   ![img.png](Images/SmallBombRecipe.png)
 - 100kg bomb crafting recipe (normal TNT and Ammonium Nitrate): \
@@ -43,13 +43,13 @@ _Many features are configurable in the config.yml file_
 - craft turrets to defend against enemy bombers and other aerial attackers
 - the required ender pearl can be dropped by Endermen without using looting
 - right-click the turret to add ammo, activate / deactivate it or change the shot delay
-- crafting recipe: \
+- Crafting recipe: \
   ![img.png](Images/TurretRecipe.png)
 
 ### Flares
 
 - Can be used to distract turrets for 2.5 seconds
-- crafting recipe: \
+- Crafting recipe: \
   ![img.png](Images/FlareRecipe.png)
 
 ### Rocket Launchers
@@ -60,13 +60,11 @@ _Many features are configurable in the config.yml file_
 - don't forget to craft ammo, or your team will be mad
 - Ammo crafting recipe: \
   ![img.png](Images/RocketLauncherAmmoRecipe.png)
-- (it's not a bug, it's a feature: Rocket Launchers can be used to get a quick height advantage by spamming them below
-  you)
 
 ### Airstrikes
 
 - Call an airstrike on the marked location
-- crafting recipe: \
+- Crafting recipe: \
 ![img.png](Images/img.png)
 
 ### Player Mounting
@@ -74,11 +72,11 @@ _Many features are configurable in the config.yml file_
 - Mount on a player's back while they are flying to act as their gunman
 - shoot with a M2 Browning
 - don't forget to craft ammo before entering a fight
-- ammo recipe:   
+- Ammo recipe:   
   ![img.png](Images/BrowningAmmoRecipe.png)
 
 ### Smoke Grenades
 
-- self-explanatory, don't rely on them too much as enemies can just disable particles!
-- crafting recipe: \
+- self-explanatory, will give all entities in radius blindness and invisibility for 2.5 seconds
+- Crafting recipe: \
   ![img.png](Images/SmokeGrenadeRecipe.png)

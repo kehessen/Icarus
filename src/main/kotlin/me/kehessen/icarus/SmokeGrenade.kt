@@ -4,6 +4,7 @@ import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.Particle
+import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Snowball
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -12,6 +13,8 @@ import org.bukkit.event.entity.ProjectileHitEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.inventory.ShapedRecipe
+import org.bukkit.potion.PotionEffect
+import org.bukkit.potion.PotionEffectType
 
 class SmokeGrenade : Listener {
     val smokeGrenade = CustomItem(
@@ -68,7 +71,7 @@ class SmokeGrenade : Listener {
     }
 
     @EventHandler
-    fun onEggBreak(event: ProjectileHitEvent) {
+    fun onImpact(event: ProjectileHitEvent) {
         if (event.entity.scoreboardTags.contains("smoke_grenade")) {
             val loc = event.entity.location.add(0.0, radius / 2, 0.0)
             val world = loc.world
@@ -81,6 +84,12 @@ class SmokeGrenade : Listener {
                 radius,
                 0.01
             )
+            event.entity.getNearbyEntities(radius, radius, radius).forEach {
+                if (it !is LivingEntity) return@forEach
+                it.addPotionEffect(PotionEffect(PotionEffectType.BLINDNESS, 50, 1, true, false))
+                it.addPotionEffect(PotionEffect(PotionEffectType.INVISIBILITY, 50, 1, true, false))
+                it.addPotionEffect(PotionEffect(PotionEffectType.SPEED, 50, 1, true, false))
+            }
         }
     }
 }
