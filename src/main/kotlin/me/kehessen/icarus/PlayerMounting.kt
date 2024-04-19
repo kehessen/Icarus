@@ -40,7 +40,7 @@ class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, Tab
     private var damage: Double = config.getDouble("PlayerMounting.canon-damage")
     private var onlyAllowMountingForFlight: Boolean = config.getBoolean("PlayerMounting.only-flight")
     private var playHurtAnimation: Boolean = config.getBoolean("PlayerMounting.hurt-animation")
-    private var dismountTime = config.getLong("PlayerMounting.dismount-time")*20
+    private var dismountTime = config.getLong("PlayerMounting.dismount-time") * 20
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         if (sender !is Player) return false

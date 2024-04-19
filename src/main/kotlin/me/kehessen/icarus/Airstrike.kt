@@ -25,9 +25,7 @@ class Airstrike(config: FileConfiguration) : Listener {
     private val initialDelay = config.getInt("Airstrike.initial-delay").toLong()
 
     internal val item = CustomItem(
-        Material.BOW,
-        "§r§c§lAirstrike",
-        "§r§7Shoot to call an airstrike"
+        Material.BOW, "§r§c§lAirstrike", "§r§7Shoot to call an airstrike"
     )
 
     internal fun start() {
@@ -54,13 +52,10 @@ class Airstrike(config: FileConfiguration) : Listener {
             arrow.isGlowing = true
 
             if (player.gameMode == org.bukkit.GameMode.CREATIVE) return
-            if (player.inventory.itemInMainHand.itemMeta!!.displayName == item.itemMeta!!.displayName)
-                player.inventory.itemInMainHand.amount--
-            else if (player.inventory.itemInOffHand.itemMeta!!.displayName == item.itemMeta!!.displayName)
-                player.inventory.itemInOffHand.amount--
-            else
-                Bukkit.getLogger()
-                    .warning("Airstrike was called, but ${player.name} didn't have the item in their hand.")
+            if (player.inventory.itemInMainHand.itemMeta!!.displayName == item.itemMeta!!.displayName) player.inventory.itemInMainHand.amount--
+            else if (player.inventory.itemInOffHand.itemMeta!!.displayName == item.itemMeta!!.displayName) player.inventory.itemInOffHand.amount--
+            else Bukkit.getLogger()
+                .warning("Airstrike was called, but ${player.name} didn't have the item in their hand.")
         }
     }
 
@@ -79,10 +74,7 @@ class Airstrike(config: FileConfiguration) : Listener {
             for (i in 0 until missileAmount) {
                 Bukkit.getScheduler().runTaskLater(Bukkit.getPluginManager().getPlugin("Icarus")!!, Runnable {
                     val missile = position.world!!.spawnArrow(
-                        position.clone().add(0.0, 100.0, 0.0),
-                        position.direction,
-                        0.0f,
-                        0.0f
+                        position.clone().add(0.0, 150.0, 0.0), position.direction, 0.0f, 0.0f
                     )
                     missile.addScoreboardTag("airstrikeMissile")
                     missile.velocity = Vector(0.0, -10.0, 0.0)

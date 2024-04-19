@@ -618,7 +618,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         playerLocation.y -= 1.5
 
         // adding some extra time since a lot of arrows fly behind the player
-        val timeToReach = (turretLocation.distance(playerLocation) / speedMultiplier) + Random().nextFloat(0.3f, 1f)
+        val timeToReach = (turretLocation.distance(playerLocation) / speedMultiplier) + Random().nextFloat(0.3f, 1.5f)
 
         return playerLocation.add(player.velocity.multiply(timeToReach))
     }
@@ -700,14 +700,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         event.isCancelled = true
     }
 
-//    @EventHandler
-//    private fun onArrowHit(event: EntityDamageByEntityEvent) {
-//        if (event.damager.scoreboardTags.contains("TurretArrow")) {
-//            activeArrows.remove(event.entity)
-//            event.damager.remove()
-//        }
-//    }
-
     @EventHandler
     private fun onDeath(event: PlayerDeathEvent) {
         targets.remove(event.entity)
@@ -746,6 +738,9 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     @EventHandler
     private fun onArmorStandHit(event: EntityDamageEvent) {
         if (event.entity !is ArmorStand) return
+        if (event.cause == EntityDamageEvent.DamageCause.BLOCK_EXPLOSION && event.damage > 65) {
+            return
+        }
         if (!event.entity.scoreboardTags.contains("Turret")) return
         event.isCancelled = true
     }

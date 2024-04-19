@@ -91,7 +91,7 @@ class Bomb(config: FileConfiguration) : CommandExecutor, TabCompleter, Listener 
 
     private val activeTasks = hashMapOf<TNTPrimed, Int>()
 
-    // both items can only be obtained form creepers, ammonium nitrate has a 10% drop chance, plutonium core has a 1% drop chance
+    // both items can only be obtained form creepers, ammonium nitrate has a 5% drop chance, plutonium core has a .5% drop chance
     // items won't drop if the player has looting
     internal var ammoniumNitrate = CustomItem(Material.SUGAR, "§r§cAmmonium Nitrate", "§fUsed to craft Bombs")
     internal var plutoniumCore = CustomItem(
@@ -190,7 +190,7 @@ class Bomb(config: FileConfiguration) : CommandExecutor, TabCompleter, Listener 
     }
 
     fun getPlayersWithBombs(): List<Player> {
-        return listOf(playersWithSmallBomb, playersWithMediumBomb, playersWithLargeBomb).flatten()
+        return (playersWithSmallBomb + playersWithMediumBomb + playersWithLargeBomb).toList()
     }
 
     private fun addRecipes() {
@@ -227,8 +227,7 @@ class Bomb(config: FileConfiguration) : CommandExecutor, TabCompleter, Listener 
         Bukkit.addRecipe(recipe)
 
         recipe = ShapedRecipe(
-            NamespacedKey(Bukkit.getPluginManager().getPlugin("Icarus")!!, "rocket_launcher_ammo"),
-            rocketLauncherAmmo
+            NamespacedKey(Bukkit.getPluginManager().getPlugin("Icarus")!!, "rocket_launcher_ammo"), rocketLauncherAmmo
         )
         recipe.shape(" I ", " S ", "GBG")
         recipe.setIngredient('I', Material.IRON_INGOT)
@@ -238,24 +237,21 @@ class Bomb(config: FileConfiguration) : CommandExecutor, TabCompleter, Listener 
         Bukkit.addRecipe(recipe)
     }
 
-    private fun checkItems(players: List<Player>, sendMessage: Boolean = false) {
-        players.forEach { player ->
-            if (player.inventory.containsAtLeast(smallBombItem, 1)) {
-                playersWithSmallBomb.add(player)
-                if (sendMessage) player.sendMessage("§cYou are carrying a bomb. This will slow you down when flying.")
-            } else playersWithSmallBomb.remove(player)
+    private fun checkItems(player: Player, sendMessage: Boolean = false) {
+        if (player.inventory.containsAtLeast(smallBombItem, 1)) {
+            playersWithSmallBomb.add(player)
+            if (sendMessage) player.sendMessage("§cYou are carrying a bomb. This will slow you down when flying.")
+        } else playersWithSmallBomb.remove(player)
 
-            if (player.inventory.containsAtLeast(mediumBombItem, 1)) {
-                playersWithMediumBomb.add(player)
-                if (sendMessage) player.sendMessage("§cYou are carrying a bomb. This will slow you down when flying.")
-            } else playersWithMediumBomb.remove(player)
+        if (player.inventory.containsAtLeast(mediumBombItem, 1)) {
+            playersWithMediumBomb.add(player)
+            if (sendMessage) player.sendMessage("§cYou are carrying a bomb. This will slow you down when flying.")
+        } else playersWithMediumBomb.remove(player)
 
-            if (player.inventory.containsAtLeast(largeBombItem, 1)) {
-                playersWithLargeBomb.add(player)
-                if (sendMessage) player.sendMessage("§cYou are carrying a bomb. This will slow you down when flying.")
-            } else playersWithLargeBomb.remove(player)
-
-        }
+        if (player.inventory.containsAtLeast(largeBombItem, 1)) {
+            playersWithLargeBomb.add(player)
+            if (sendMessage) player.sendMessage("§cYou are carrying a bomb. This will slow you down when flying.")
+        } else playersWithLargeBomb.remove(player)
     }
 
     private fun checkSpeed() {
@@ -276,33 +272,30 @@ class Bomb(config: FileConfiguration) : CommandExecutor, TabCompleter, Listener 
         }
     }
 
-    private fun checkSpeedOf(player: Player){
-        if (player.isGliding && player.velocity.length() > largeSpeedLimit) {
+    private fun checkSpeedOf(player: Player) {
+        if (player.isGliding && playersWithLargeBomb.contains(player) && player.velocity.length() > largeSpeedLimit) {
             player.velocity = player.velocity.normalize().multiply(largeSpeedLimit)
-        }
-        if (player.isGliding && player.velocity.length() > mediumSpeedLimit) {
+        } else if (player.isGliding && playersWithMediumBomb.contains(player) && player.velocity.length() > mediumSpeedLimit) {
             player.velocity = player.velocity.normalize().multiply(mediumSpeedLimit)
-        }
-        if (player.isGliding && player.velocity.length() > smallSpeedLimit) {
+        } else if (player.isGliding && playersWithSmallBomb.contains(player) && player.velocity.length() > smallSpeedLimit) {
             player.velocity = player.velocity.normalize().multiply(smallSpeedLimit)
         }
     }
 
     private fun explosionCheck(bomb: TNTPrimed) {
-        val task =
-            Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("Icarus")!!, {
+        val task = Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("Icarus")!!, {
 
-                val block = bomb.location.subtract(0.0, 1.0, 0.0).block.type
-                if (block != Material.AIR && block != Material.WATER && block != Material.LAVA) {
-                    Bukkit.getScheduler().cancelTask(activeTasks[bomb]!!)
-                    bomb.world.spawnParticle(org.bukkit.Particle.FLAME, bomb.location, 300, 1.0, 1.0, 1.0, 0.5)
-                    bomb.fuseTicks = 0
-                }
-                if (bomb.isDead) {
-                    Bukkit.getScheduler().cancelTask(activeTasks[bomb]!!)
-                }
+            val block = bomb.location.subtract(0.0, 1.0, 0.0).block.type
+            if (block != Material.AIR && block != Material.WATER && block != Material.LAVA) {
+                Bukkit.getScheduler().cancelTask(activeTasks[bomb]!!)
+                bomb.world.spawnParticle(org.bukkit.Particle.FLAME, bomb.location, 300, 1.0, 1.0, 1.0, 0.5)
+                bomb.fuseTicks = 0
+            }
+            if (bomb.isDead) {
+                Bukkit.getScheduler().cancelTask(activeTasks[bomb]!!)
+            }
 
-            }, 0, 2)
+        }, 0, 2)
         activeTasks[bomb] = task
     }
 
@@ -364,7 +357,7 @@ class Bomb(config: FileConfiguration) : CommandExecutor, TabCompleter, Listener 
             )
         ) return
         val player = event.entity.killer!!
-        if (Random.nextInt(0, 10) == 9) {
+        if (Random.nextInt(0, 20) == 19) {
             event.drops.add(ammoniumNitrate)
             if (!player.hasDiscoveredRecipe(
                     NamespacedKey(
@@ -379,7 +372,7 @@ class Bomb(config: FileConfiguration) : CommandExecutor, TabCompleter, Listener 
                 )
             }
         }
-        if (Random.nextInt(0, 100) == 99) {
+        if (Random.nextInt(0, 200) == 199) {
             event.drops.add(plutoniumCore)
             if (!player.hasDiscoveredRecipe(
                     NamespacedKey(
@@ -413,7 +406,7 @@ class Bomb(config: FileConfiguration) : CommandExecutor, TabCompleter, Listener 
                 bmb.yield = smallBombYield.toFloat()
                 explosionCheck(bmb)
                 event.player.inventory.itemInMainHand.amount -= 1
-                checkItems(listOf(event.player))
+                checkItems(event.player)
             }
 
             mediumBombItem.itemMeta!!.displayName -> {
@@ -423,7 +416,7 @@ class Bomb(config: FileConfiguration) : CommandExecutor, TabCompleter, Listener 
                 bmb.yield = mediumBombYield.toFloat()
                 explosionCheck(bmb)
                 event.player.inventory.itemInMainHand.amount -= 1
-                checkItems(listOf(event.player))
+                checkItems(event.player)
             }
 
             largeBombItem.itemMeta!!.displayName -> {
@@ -433,7 +426,7 @@ class Bomb(config: FileConfiguration) : CommandExecutor, TabCompleter, Listener 
                 bmb.yield = largeBombYield.toFloat()
                 explosionCheck(bmb)
                 event.player.inventory.itemInMainHand.amount -= 1
-                checkItems(listOf(event.player))
+                checkItems(event.player)
             }
         }
     }
@@ -495,7 +488,7 @@ class Bomb(config: FileConfiguration) : CommandExecutor, TabCompleter, Listener 
         if (event.entity !is Player) return
         if (event.isGliding) {
             val player = event.entity as Player
-            checkItems(listOf(player), true)
+            checkItems(player, true)
         }
     }
 
@@ -504,42 +497,37 @@ class Bomb(config: FileConfiguration) : CommandExecutor, TabCompleter, Listener 
         if (event.itemDrop.itemStack.itemMeta == null) return
         val itemName = event.itemDrop.itemStack.itemMeta!!.displayName
         if (itemName != smallBombItem.itemMeta!!.displayName && itemName != mediumBombItem.itemMeta!!.displayName && itemName != largeBombItem.itemMeta!!.displayName) return
-        checkItems(listOf(event.player))
+        checkItems(event.player)
     }
 
     @EventHandler
     private fun onPlayerJoin(event: PlayerJoinEvent) {
         if (!event.player.hasDiscoveredRecipe(
                 NamespacedKey(
-                    Bukkit.getPluginManager().getPlugin("Icarus")!!,
-                    "rocket_launcher"
+                    Bukkit.getPluginManager().getPlugin("Icarus")!!, "rocket_launcher"
                 )
             )
         ) {
             event.player.discoverRecipe(
                 NamespacedKey(
-                    Bukkit.getPluginManager().getPlugin("Icarus")!!,
-                    "rocket_launcher"
+                    Bukkit.getPluginManager().getPlugin("Icarus")!!, "rocket_launcher"
                 )
             )
             event.player.discoverRecipe(
                 NamespacedKey(
-                    Bukkit.getPluginManager().getPlugin("Icarus")!!,
-                    "rocket_launcher_ammo"
+                    Bukkit.getPluginManager().getPlugin("Icarus")!!, "rocket_launcher_ammo"
                 )
             )
         }
         if (!event.player.hasDiscoveredRecipe(
                 NamespacedKey(
-                    Bukkit.getPluginManager().getPlugin("Icarus")!!,
-                    "small_bomb"
+                    Bukkit.getPluginManager().getPlugin("Icarus")!!, "small_bomb"
                 )
             )
         ) {
             event.player.discoverRecipe(
                 NamespacedKey(
-                    Bukkit.getPluginManager().getPlugin("Icarus")!!,
-                    "small_bomb"
+                    Bukkit.getPluginManager().getPlugin("Icarus")!!, "small_bomb"
                 )
             )
         }

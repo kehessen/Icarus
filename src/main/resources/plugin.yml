@@ -2,7 +2,8 @@ name: Icarus
 version: '${project.version}'
 main: me.kehessen.icarus.Icarus
 api-version: '1.20'
-authors: [ Kenny ]
+author: Kenny
+website: https://github.com/kehessen/Icarus/
 commands:
   announce:
     description: Announce a message

@@ -18,7 +18,7 @@ import org.bukkit.scoreboard.Scoreboard
 @Suppress("unused")
 class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
 
-    // used for other classes
+    // used for other classes, so they need to be initialized first
     private val menuHandler = MenuHandler(this)
     private val combatTime = CombatTime(this, config)
 
@@ -120,10 +120,7 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
     }
 
     override fun onTabComplete(
-        sender: CommandSender,
-        command: Command,
-        alias: String,
-        args: Array<out String>
+        sender: CommandSender, command: Command, alias: String, args: Array<out String>
     ): MutableList<String> {
         when (command.name) {
             "customitem" -> {

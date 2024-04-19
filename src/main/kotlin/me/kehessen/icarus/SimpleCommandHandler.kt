@@ -42,8 +42,7 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
                     }
                     val sp = Bukkit.getWorld("world")?.spawnLocation
                     sender.sendMessage("§aSpawn set to ${sp?.x} ${sp?.y} ${sp?.z}")
-                } else
-                    sender.teleport(sender.world.spawnLocation)
+                } else sender.teleport(sender.world.spawnLocation)
                 return true
             }
 
@@ -71,7 +70,7 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
                     sender.sendMessage("§cYou are already in this team")
                     return true
                 }
-                if(pendingInvites[sender] == team) {
+                if (pendingInvites[sender] == team) {
                     sender.sendMessage("§cYou already have a pending invite")
                     return true
                 }
@@ -154,10 +153,7 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
     }
 
     override fun onTabComplete(
-        sender: CommandSender,
-        command: Command,
-        alias: String,
-        args: Array<out String>
+        sender: CommandSender, command: Command, alias: String, args: Array<out String>
     ): MutableList<String>? {
         when (command.name) {
             "spawn" -> if (sender.hasPermission("op")) return args.size.let {
