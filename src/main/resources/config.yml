@@ -41,19 +41,19 @@ PlayerMounting:
   dismount-time: 100
 
 Airstrike:
-  missile-amount: 8
+  missile-amount: 3
   # delay in ticks between each missile
-  missile-delay: 4
+  missile-delay: 8
   # explosion force of a missile
-  missile-yield: 8.0
+  missile-yield: 10
   # delay in ticks between the arrow hitting the ground and the first missile being spawned
   initial-delay: 60
 
 Bomb:
   # The yield of the bomb explosion
-  # Usually a server can handle a couple of 150 yield at once, but after that it starts to lag pretty soon
+  # Usually a server can handle a couple of 150 yield bombs at once, but after that it starts to lag pretty soon
   small-yield: 6
-  medium-yield: 20
+  medium-yield: 15
   large-yield: 75
 
   # The maximum speed a player is allowed to fly if he is carrying a certain bomb

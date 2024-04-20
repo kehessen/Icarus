@@ -42,7 +42,7 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
                     }
                     val sp = Bukkit.getWorld("world")?.spawnLocation
                     sender.sendMessage("§aSpawn set to ${sp?.x} ${sp?.y} ${sp?.z}")
-                } else sender.teleport(sender.world.spawnLocation)
+                } else sender.teleport(Bukkit.getWorld("world")!!.spawnLocation)
                 return true
             }
 

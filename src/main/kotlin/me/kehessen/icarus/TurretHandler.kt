@@ -75,7 +75,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
     // ---backend---
     // time it takes to reach turret reach + 20 ticks
-    private val arrowLifeTime = (turretReach / speedMultiplier + 20 / speedMultiplier).toInt()
+    private val arrowLifeTime = (turretReach / speedMultiplier + 20).toInt()
     private var turrets = mutableSetOf<ArmorStand>()
     private var activeTurrets = mutableSetOf<ArmorStand>()
     private var inactiveTurrets = mutableSetOf<ArmorStand>()
@@ -84,8 +84,8 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     private val targets = mutableSetOf<Player>()
     private val lockedOn = hashMapOf<ArmorStand, Player>()
     private val immunePlayers = mutableSetOf<Player>()
-    // turrets: activeturrets + inactiveturrets
     // activeturrets: shootingturrets + non-shootingturrets
+    // turrets: activeturrets + inactiveturrets
 
 
     // shot delay, key: turret, value: shot delay, delay is 1-5 ticks
@@ -720,7 +720,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
     @EventHandler
     private fun onPlayerJoin(event: PlayerJoinEvent) {
-        if (reachCheckTaskID == null) Bukkit.getLogger().info("Starting reach check task")
         startReachCheckTask()
         if (!event.player.hasDiscoveredRecipe(NamespacedKey(plugin, "flares"))) {
             event.player.discoverRecipe(NamespacedKey(plugin, "flares"))
@@ -957,7 +956,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                 else event.player.inventory.itemInOffHand.amount -= 1
             }
             // cancelling to prevent another armor stand from being placed if player clicks on the side of a block
-            // (it stays a turret when broken again but can't actually do anything)
+            // (it stays a turret when broken again but can't do anything)
             event.isCancelled = true
         }
     }

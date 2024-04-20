@@ -77,7 +77,7 @@ class Airstrike(config: FileConfiguration) : Listener {
                         position.clone().add(0.0, 150.0, 0.0), position.direction, 0.0f, 0.0f
                     )
                     missile.addScoreboardTag("airstrikeMissile")
-                    missile.velocity = Vector(0.0, -10.0, 0.0)
+                    missile.velocity = Vector(0.0, -3.0, 0.0)
                     missile.isGlowing = true
                     missile.color = org.bukkit.Color.RED
                 }, initialDelay + i * missileDelay)

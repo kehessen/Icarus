@@ -1,14 +1,15 @@
 # [Icarus](https://github.com/kehessen/Icarus/releases/latest)
 
-A Minecraft Plugin focused on adding some fun combat mechanics.\
+A Minecraft Plugin focused on adding some combat mechanics.\
 There is a resource pack which adds custom sounds (fow now just the lock-on sound for the turret), but the plugin will
 work perfectly fine without it.
 
-Some crafting recipes are available from the start, others are discovered by crafting / obtaining certain items\
-The **entity-activation-range for misc** has to be set to ~160-200 for the turret shots to look good, otherwise the
-arrows will start to group up instead of constantly firing
+Some crafting recipes are available from the start, others are discovered by crafting / obtaining certain items.
+\
+The **entity-activation-range for misc** has to be set to ~160–200 for the turret shots to look good, otherwise the
+arrows will start to group up instead of constantly firing.
 
-_Many features are configurable in the config.yml file_
+_Many features are configurable in the config.yml file._
 
 ### TPA and Spawn
 
@@ -28,7 +29,7 @@ _Many features are configurable in the config.yml file_
 
 - Craft 50kg, 100kg and Hydrogen Bombs to attack enemy teams in the air
 - Ammonium Nitrate and Plutonium cores can be dropped by creepers when killed by a player without using looting
-- Ammonium Nitrate has a 5% chance to drop, the Plutonium Core has a .5% chance to drop
+- Ammonium Nitrate has a 5% chance to drop; the Plutonium Core has a .5% chance to drop
 - Can be used against enemy bases or turrets
 - 50kg bomb crafting recipe (normal TNT): \
   ![img.png](Images/SmallBombRecipe.png)

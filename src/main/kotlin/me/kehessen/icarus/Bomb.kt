@@ -109,13 +109,6 @@ class Bomb(config: FileConfiguration) : CommandExecutor, TabCompleter, Listener 
                     sender.sendMessage("§cInvalid arguments")
                     return true
                 }
-                if (args[1].toFloat() > 150) {
-                    sender.sendMessage("§cYou're gonna crash the server")
-                    return true
-                }
-                if (args[1].toFloat() > 100) {
-                    sender.sendMessage("§cI'm gonna do it but dont blame me if the server crashes")
-                }
                 val player = Bukkit.getPlayer(sender.name)
                 val tnt = player!!.world.spawn(player.location, org.bukkit.entity.TNTPrimed::class.java)
                 tnt.fuseTicks = 100
