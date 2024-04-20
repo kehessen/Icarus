@@ -689,9 +689,11 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
         if (event.player.gameMode != GameMode.CREATIVE) {
             if (event.player.inventory.itemInMainHand.itemMeta!!.displayName == flares.itemMeta!!.displayName) {
-                event.player.inventory.itemInMainHand.amount -= 1
+                if (event.player.gameMode != GameMode.CREATIVE)
+                    event.player.inventory.itemInMainHand.amount -= 1
             } else if (event.player.inventory.itemInOffHand.itemMeta!!.displayName == flares.itemMeta!!.displayName) {
-                event.player.inventory.itemInOffHand.amount -= 1
+                if (event.player.gameMode != GameMode.CREATIVE)
+                    event.player.inventory.itemInOffHand.amount -= 1
             } else {
                 Bukkit.getLogger().warning("Flare item not found in ${event.player}'s hand but was activated")
             }
@@ -950,8 +952,10 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                 }
             }
             spawnTurret(event.player, event.clickedBlock!!.location.add(0.5, 1.0, 0.5))
-            if (event.player.inventory.itemInMainHand == event.item) event.player.inventory.itemInMainHand.amount -= 1
-            else event.player.inventory.itemInOffHand.amount -= 1
+            if (event.player.gameMode != GameMode.CREATIVE) {
+                if (event.player.inventory.itemInMainHand == event.item) event.player.inventory.itemInMainHand.amount -= 1
+                else event.player.inventory.itemInOffHand.amount -= 1
+            }
             // cancelling to prevent another armor stand from being placed if player clicks on the side of a block
             // (it stays a turret when broken again but can't actually do anything)
             event.isCancelled = true

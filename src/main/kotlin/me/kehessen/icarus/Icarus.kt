@@ -6,11 +6,7 @@ import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
 import org.bukkit.entity.Player
-import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
-import org.bukkit.event.player.AsyncPlayerChatEvent
-import org.bukkit.event.player.PlayerJoinEvent
-import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.scoreboard.Scoreboard
@@ -21,13 +17,13 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
     private val menuHandler = MenuHandler(this)
     private val combatTime = CombatTime(this, config)
 
-
+    private val chat = Chat()
     private val turretHandler = TurretHandler(this, config, menuHandler)
     private val simpleCommandHandler = SimpleCommandHandler(combatTime, turretHandler)
     private val tpaHandler = TpaHandler(combatTime, config)
     private val bomb = Bomb(config)
     private val playerMounting = PlayerMounting(config)
-    private val smokeGrenade = SmokeGrenade()
+    private val smokeGrenade = SmokeGrenade(config)
     private val airstrike = Airstrike(config)
 
     private var sb: Scoreboard? = null
@@ -49,6 +45,8 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
 
         combatTime.start()
         menuHandler.start()
+
+        chat.start()
         turretHandler.start()
         simpleCommandHandler.start()
         tpaHandler.start()
@@ -98,24 +96,6 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
             }
         }
         return true
-    }
-
-    @EventHandler
-    private fun onPlayerJoin(event: PlayerJoinEvent) {
-        event.joinMessage = "§2+ ${event.player.name}"
-        if (sb!!.getEntryTeam(event.player.name) == null) {
-            sb!!.getTeam("Default")?.addEntry(event.player.name)
-        }
-    }
-
-    @EventHandler
-    private fun onPlayerChat(event: AsyncPlayerChatEvent) {
-        event.format = "§7" + event.player.name + ":§f " + event.message
-    }
-
-    @EventHandler
-    private fun onPlayerLeave(event: PlayerQuitEvent) {
-        event.quitMessage = "§7- " + event.player.name
     }
 
     override fun onTabComplete(

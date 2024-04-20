@@ -405,7 +405,8 @@ class Bomb(config: FileConfiguration) : CommandExecutor, TabCompleter, Listener 
                 bmb.fuseTicks = 100
                 bmb.yield = smallBombYield.toFloat()
                 explosionCheck(bmb)
-                event.player.inventory.itemInMainHand.amount -= 1
+                if (event.player.gameMode != org.bukkit.GameMode.CREATIVE)
+                    event.player.inventory.itemInMainHand.amount -= 1
                 checkItems(event.player)
             }
 
@@ -415,7 +416,8 @@ class Bomb(config: FileConfiguration) : CommandExecutor, TabCompleter, Listener 
                 bmb.fuseTicks = 100
                 bmb.yield = mediumBombYield.toFloat()
                 explosionCheck(bmb)
-                event.player.inventory.itemInMainHand.amount -= 1
+                if (event.player.gameMode != org.bukkit.GameMode.CREATIVE)
+                    event.player.inventory.itemInMainHand.amount -= 1
                 checkItems(event.player)
             }
 
@@ -425,7 +427,8 @@ class Bomb(config: FileConfiguration) : CommandExecutor, TabCompleter, Listener 
                 bmb.fuseTicks = 100
                 bmb.yield = largeBombYield.toFloat()
                 explosionCheck(bmb)
-                event.player.inventory.itemInMainHand.amount -= 1
+                if (event.player.gameMode != org.bukkit.GameMode.CREATIVE)
+                    event.player.inventory.itemInMainHand.amount -= 1
                 checkItems(event.player)
             }
         }

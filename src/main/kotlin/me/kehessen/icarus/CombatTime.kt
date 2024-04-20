@@ -72,7 +72,6 @@ class CombatTime(private val plugin: JavaPlugin, config: FileConfiguration) : Li
             }
         }
 
-
         keysToRemoveFromCombatTimeMap.forEach { key ->
             combatTimeMap.remove(key)
         }

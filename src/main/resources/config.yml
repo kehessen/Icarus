@@ -1,5 +1,5 @@
 Combat:
-  # only whole seconds
+  # Time in seconds a player is invulnerable after being hit, only whole seconds
   combat-time: 5
   can-teleport-in-combat: false
 
@@ -7,7 +7,7 @@ Turret:
   # Default value for the shot delay when places, can be changed to 1-5 ticks in the turret menu
   shot-delay: 3
   particle-delay: 0
-  # amount of particles each arrow spawns per tick
+  # The number of particles each arrow spawns per tick
   particle-amount: 20
   particle-spread: 0.2
   reach: 192
@@ -23,8 +23,10 @@ Turret:
   silenced: false
 
 SmokeGrenade:
-  # particle amount will be calculated based on the radius, too high values will not look good as there is a particle limit for clients
+  # Particle amount will be calculated based on the radius, too high values will not look good as there is a particle limit for clients
   radius: 4.0
+  # Cooldown in ticks between smoke grenade throws
+  cooldown: 100
 
 PlayerMounting:
   # Reach and damage of the M2 Browning the gunman gets when mounted
