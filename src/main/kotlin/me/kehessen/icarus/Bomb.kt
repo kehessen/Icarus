@@ -430,7 +430,7 @@ class Bomb(config: FileConfiguration) : CommandExecutor, TabCompleter, Listener 
     @EventHandler
     private fun onRocketLaunch(event: PlayerInteractEvent) {
         if (event.item == null || event.item!!.itemMeta == null) return
-        if (event.action != Action.RIGHT_CLICK_AIR) return
+        if (event.action != Action.RIGHT_CLICK_AIR && event.action != Action.RIGHT_CLICK_BLOCK) return
         if (event.item!!.itemMeta!!.displayName != rocketLauncherItem.itemMeta!!.displayName) return
         if (event.player.inventory.containsAtLeast(rocketLauncherAmmo, 1)) {
             event.player.inventory.removeItem(rocketLauncherAmmo)

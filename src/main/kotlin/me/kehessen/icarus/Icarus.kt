@@ -25,6 +25,7 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
     private val playerMounting = PlayerMounting(config)
     private val smokeGrenade = SmokeGrenade(config)
     private val airstrike = Airstrike(config)
+    private val timedAccess = TimedAccess(config)
 
     private var sb: Scoreboard? = null
 
@@ -54,6 +55,7 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
         playerMounting.start()
         smokeGrenade.start()
         airstrike.start()
+        timedAccess.start()
     }
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {

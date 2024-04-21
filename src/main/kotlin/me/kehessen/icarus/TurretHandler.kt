@@ -705,6 +705,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     @EventHandler
     private fun onDeath(event: PlayerDeathEvent) {
         targets.remove(event.entity)
+        if (event.entity.killer as ArmorStand? == null) return
         if (event.entity.killer == null || !turrets.contains(event.entity.killer as ArmorStand)) return
         event.deathMessage = "§c${event.entity.name} was shot by a turret"
     }

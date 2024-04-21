@@ -44,3 +44,7 @@ commands:
   decline:
     description: decline a team invite
     usage: /decline <player>
+  schedulewhitelist:
+    description: schedule a whitelist
+    usage: /schedulewhitelist <hour> <minute>
+    permission: op

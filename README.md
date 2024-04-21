@@ -1,7 +1,7 @@
 # [Icarus](https://github.com/kehessen/Icarus/releases/latest)
 
 A Minecraft Plugin focused on adding some combat mechanics.\
-There is a resource pack which adds custom sounds (fow now just the lock-on sound for the turret), but the plugin will
+There is a resource pack which adds custom sounds (for now just the lock-on sound for the turret), but the plugin will
 work perfectly fine without it.
 
 Some crafting recipes are available from the start, others are discovered by crafting / obtaining certain items.
@@ -15,6 +15,11 @@ _Many features are configurable in the config.yml file._
 
 - Quality-of-life features such as _**/spawn**_ or _**/tpa**_
 - Spawn can be set with **_/spawn set_**
+
+### Timed Server Opening
+
+- configurable in config.yml
+- the server will enable / disable the whitelist at the specified times and kick all players
 
 ### Teams
 

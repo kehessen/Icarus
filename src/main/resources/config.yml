@@ -1,3 +1,17 @@
+# Only open the server for a certain amount of time
+# will enable the whitelist when a player joins before or after the open hours
+# using the server time format
+TimedAccess:
+  enabled: true
+  # Hour and minute the server will be open (24h format)
+  open-hour: 19
+  open-minute: 0
+  # Hour and minute the server will be closed (24h format)
+  close-hour: 23
+  close-minute: 0
+  # warning time in minutes before the server closes
+  warning-time: 5
+
 Combat:
   # Time in seconds a player is invulnerable after being hit, only whole seconds
   combat-time: 5
