@@ -72,13 +72,13 @@ _Many features are configurable in the config.yml file._
 
 - Call an airstrike on the marked location
 - Crafting recipe: \
-![img.png](Images/img.png)
+![img.png](Images/AirstrikeRecipe.png)
 
 ### Napalm
 
 - Use napalm to burn down enemy bases
 - Crafting recipe: \
-![img.png](Images/img.png)
+![img.png](Images/NapalmRecipe.png)
 
 ### Player Mounting
 
