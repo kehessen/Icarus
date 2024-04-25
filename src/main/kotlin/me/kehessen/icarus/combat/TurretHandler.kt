@@ -1,5 +1,8 @@
-package me.kehessen.icarus
+package me.kehessen.icarus.combat
 
+import me.kehessen.icarus.util.CustomItem
+import me.kehessen.icarus.util.InvHolder
+import me.kehessen.icarus.util.MenuHandler
 import org.bukkit.*
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor

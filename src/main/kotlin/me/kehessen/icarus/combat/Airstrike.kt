@@ -1,5 +1,7 @@
-package me.kehessen.icarus
+package me.kehessen.icarus.combat
 
+import me.kehessen.icarus.util.CustomItem
+import me.kehessen.icarus.util.Utils
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.NamespacedKey

@@ -41,7 +41,7 @@ _Many features are configurable in the config.yml file._
   ![img.png](Images/SmallBombRecipe.png)
 - 100kg bomb crafting recipe (normal TNT and Ammonium Nitrate): \
   ![img.png](Images/MediumBombRecipe.png)
-- Hydrogen bomb crafting recipe (100kg Bombs and Plutonium core): \
+- Hydrogen bomb crafting recipe (50kg Bombs and Plutonium core): \
   ![img.png](Images/HydrogenBombRecipe.png)
 - It is generally suggested not to craft Hydrogen Bombs in your base, as something might happen rarely
 
@@ -76,7 +76,9 @@ _Many features are configurable in the config.yml file._
 
 ### Napalm
 
-- 
+- Use napalm to burn down enemy bases
+- Crafting recipe: \
+![img.png](Images/img.png)
 
 ### Player Mounting
 

@@ -1,4 +1,4 @@
-package me.kehessen.icarus
+package me.kehessen.icarus.misc
 
 import org.bukkit.Bukkit
 import org.bukkit.Material

@@ -1,4 +1,4 @@
-package me.kehessen.icarus
+package me.kehessen.icarus.misc
 
 import net.md_5.bungee.api.chat.ClickEvent
 import net.md_5.bungee.api.chat.HoverEvent
@@ -19,7 +19,7 @@ import java.util.*
 @Suppress("unused")
 class TpaHandler(private val combatTime: CombatTime, config: FileConfiguration) : CommandExecutor, TabCompleter {
     private var map = hashMapOf<UUID, UUID>()
-    private val canTeleportInCombat = config.getBoolean("Combat.can-teleport-in-combat")
+    private val canTeleportInCombat = config.getBoolean("combat.can-teleport-in-combat")
 
     // uses the creator as "owner" of the tpa request
     private var creationTime = hashMapOf<UUID, Time>()

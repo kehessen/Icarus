@@ -1,4 +1,4 @@
-package me.kehessen.icarus
+package me.kehessen.icarus.misc
 
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
@@ -14,7 +14,7 @@ import java.util.*
 
 @Suppress("unused")
 class CombatTime(private val plugin: JavaPlugin, config: FileConfiguration) : Listener, CommandExecutor {
-    private val combatTime = config.getInt("Combat.combat-time")
+    private val combatTime = config.getInt("combat.combat-time")
     private var combatTimeMap = hashMapOf<UUID, Int>()
     private var currentlyInCombat = hashMapOf<UUID, UUID>()
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {

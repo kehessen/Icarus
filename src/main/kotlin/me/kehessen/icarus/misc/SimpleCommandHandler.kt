@@ -1,5 +1,6 @@
-package me.kehessen.icarus
+package me.kehessen.icarus.misc
 
+import me.kehessen.icarus.combat.TurretHandler
 import net.md_5.bungee.api.chat.ClickEvent
 import net.md_5.bungee.api.chat.TextComponent
 import org.bukkit.Bukkit

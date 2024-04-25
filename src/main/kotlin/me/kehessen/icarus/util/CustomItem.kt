@@ -1,4 +1,4 @@
-package me.kehessen.icarus
+package me.kehessen.icarus.util
 
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack

@@ -1,5 +1,6 @@
-package me.kehessen.icarus
+package me.kehessen.icarus.combat
 
+import me.kehessen.icarus.util.CustomItem
 import net.md_5.bungee.api.chat.HoverEvent
 import net.md_5.bungee.api.chat.TextComponent
 import net.md_5.bungee.api.chat.hover.content.Text
