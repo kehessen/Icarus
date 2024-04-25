@@ -11,10 +11,11 @@ arrows will start to group up instead of constantly firing.
 
 _Many features are configurable in the config.yml file._
 
-### TPA and Spawn
+### Quality of Life features
 
-- Quality-of-life features such as _**/spawn**_ or _**/tpa**_
+- _**/spawn**_, _**/tpa**_
 - Spawn can be set with **_/spawn set_**
+- _**/togglebeaconbeams**_ to toggle the beacon beams
 
 ### Timed Server Opening
 
@@ -72,6 +73,10 @@ _Many features are configurable in the config.yml file._
 - Call an airstrike on the marked location
 - Crafting recipe: \
 ![img.png](Images/img.png)
+
+### Napalm
+
+- 
 
 ### Player Mounting
 

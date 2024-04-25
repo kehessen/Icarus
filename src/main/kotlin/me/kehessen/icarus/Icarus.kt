@@ -26,6 +26,8 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
     private val smokeGrenade = SmokeGrenade(config)
     private val airstrike = Airstrike(config)
     private val timedAccess = TimedAccess(config)
+    private val noBeam = DisableBeaconBeam()
+    private val napalm = Napalm(config)
 
     private var sb: Scoreboard? = null
 
@@ -56,6 +58,8 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
         smokeGrenade.start()
         airstrike.start()
         timedAccess.start()
+        noBeam.start()
+        napalm.start()
     }
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
@@ -73,20 +77,21 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
                 val amount = if (args.size == 2) args[1].toInt() else 1
                 val item: ItemStack?
                 when (args[0]) {
-                    "turret" -> item = turretHandler.customItem
-                    "customenderpearl" -> item = turretHandler.customEnderPearl
-                    "smokegrenade" -> item = smokeGrenade.smokeGrenade
-                    "smallbomb" -> item = bomb.smallBombItem
-                    "mediumbomb" -> item = bomb.mediumBombItem
-                    "largebomb" -> item = bomb.largeBombItem
-                    "mountinggun" -> item = playerMounting.customWeapon
-                    "mountingammo" -> item = playerMounting.customAmmo
-                    "rocketlauncher" -> item = bomb.rocketLauncherItem
-                    "rocketlauncherammo" -> item = bomb.rocketLauncherAmmo
-                    "ammonium" -> item = bomb.ammoniumNitrate
-                    "plutonium" -> item = bomb.plutoniumCore
-                    "flares" -> item = turretHandler.flares
-                    "airstrike" -> item = airstrike.item
+                    "turret" -> item = turretHandler.customItem.clone()
+                    "customenderpearl" -> item = turretHandler.customEnderPearl.clone()
+                    "smokegrenade" -> item = smokeGrenade.smokeGrenade.clone()
+                    "smallbomb" -> item = bomb.smallBombItem.clone()
+                    "mediumbomb" -> item = bomb.mediumBombItem.clone()
+                    "largebomb" -> item = bomb.largeBombItem.clone()
+                    "mountinggun" -> item = playerMounting.customWeapon.clone()
+                    "mountingammo" -> item = playerMounting.customAmmo.clone()
+                    "rocketlauncher" -> item = bomb.rocketLauncherItem.clone()
+                    "rocketlauncherammo" -> item = bomb.rocketLauncherAmmo.clone()
+                    "ammonium" -> item = bomb.ammoniumNitrate.clone()
+                    "plutonium" -> item = bomb.plutoniumCore.clone()
+                    "flares" -> item = turretHandler.flares.clone()
+                    "airstrike" -> item = airstrike.item.clone()
+                    "napalm" -> item = napalm.item.clone()
 
                     else -> {
                         sender.sendMessage("§cInvalid arguments")
@@ -119,7 +124,8 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
                     "ammonium",
                     "plutonium",
                     "flares",
-                    "airstrike"
+                    "airstrike",
+                    "napalm"
                 )
                 else mutableListOf("")
             }

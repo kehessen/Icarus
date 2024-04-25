@@ -45,7 +45,12 @@ class Airstrike(config: FileConfiguration) : Listener {
         if (event.entity !is Arrow) return
         if (event.entity.shooter !is Player) return
         val player = event.entity.shooter as Player
+
         if (player.inventory.itemInMainHand.itemMeta!!.displayName == item.itemMeta!!.displayName || player.inventory.itemInOffHand.itemMeta!!.displayName == item.itemMeta!!.displayName) {
+            if (player.isGliding) {
+                player.sendMessage("§cYou can't call an airstrike while flying.")
+                return
+            }
             val arrow = event.entity as Arrow
             arrow.addScoreboardTag("airstrikeArrow")
             arrow.color = org.bukkit.Color.RED

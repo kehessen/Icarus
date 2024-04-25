@@ -80,10 +80,10 @@ class CombatTime(private val plugin: JavaPlugin, config: FileConfiguration) : Li
         }
     }
 
-    fun getCombatTime(playerUUID: UUID): Int? {
+    fun getCombatTime(playerUUID: UUID): Int {
         return if (combatTimeMap[playerUUID] == null) {
             0
-        } else combatTimeMap[playerUUID]
+        } else combatTimeMap[playerUUID]!!
     }
 
     fun getOpponentUUID(playerUUID: UUID): UUID? {

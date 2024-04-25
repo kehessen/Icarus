@@ -16,7 +16,7 @@ import org.bukkit.scoreboard.Team
 @Suppress("unused")
 class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: TurretHandler) : CommandExecutor,
     TabCompleter {
-    private var forbiddenCombatCommands = listOf("spawn", "tpa")
+    private var disabledCombatCommands = listOf("spawn", "tpa")
 
     private var sb: Scoreboard? = null
     private val pendingInvites = hashMapOf<Player, Team>()
@@ -189,7 +189,7 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
     fun blockCMDs(event: PlayerCommandPreprocessEvent) {
         if (event.message.startsWith("/")) {
             val command = event.message.split(" ")[0].substring(1).lowercase()
-            if (forbiddenCombatCommands.contains(command) && combatTime.getCombatTime(event.player.uniqueId) != null) {
+            if (disabledCombatCommands.contains(command) && combatTime.getCombatTime(event.player.uniqueId) != 0) {
                 event.player.sendMessage("§cYou can't use this command while in combat")
                 event.isCancelled = true
             }

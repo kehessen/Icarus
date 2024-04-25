@@ -14,7 +14,6 @@ import org.bukkit.event.block.Action
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.EntityDeathEvent
-import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.player.PlayerInteractAtEntityEvent
@@ -115,7 +114,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     private val ammoPutSlot = 22
 
 
-    // custom sound
+    // custom sound from resource pack
     private val customSound = "minecraft:missilelock"
 
     // crafting recipe:
@@ -700,14 +699,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         }
 
         event.isCancelled = true
-    }
-
-    @EventHandler
-    private fun onDeath(event: PlayerDeathEvent) {
-        targets.remove(event.entity)
-        if (event.entity.killer as ArmorStand? == null) return
-        if (event.entity.killer == null || !turrets.contains(event.entity.killer as ArmorStand)) return
-        event.deathMessage = "§c${event.entity.name} was shot by a turret"
     }
 
     @EventHandler

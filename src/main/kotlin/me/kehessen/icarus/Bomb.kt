@@ -91,8 +91,7 @@ class Bomb(config: FileConfiguration) : CommandExecutor, TabCompleter, Listener 
 
     private val activeTasks = hashMapOf<TNTPrimed, Int>()
 
-    // both items can only be obtained form creepers, ammonium nitrate has a 5% drop chance, plutonium core has a .5% drop chance
-    // items won't drop if the player has looting
+
     internal var ammoniumNitrate = CustomItem(Material.SUGAR, "§r§cAmmonium Nitrate", "§fUsed to craft Bombs")
     internal var plutoniumCore = CustomItem(
         Material.FIREWORK_STAR,

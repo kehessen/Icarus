@@ -2,7 +2,9 @@
 # will enable the whitelist when a player joins before or after the open hours
 # using the server time format
 TimedAccess:
-  enabled: true
+  enabled: false
+  # Stop the server when closing
+  stop-on-close: true
   # Hour and minute the server will be open (24h format)
   open-hour: 19
   open-minute: 0
@@ -74,6 +76,14 @@ Bomb:
   small-speed-limit: 0.8
   medium-speed-limit: 0.6
   large-speed-limit: 0.4
+
+Napalm:
+  # The number of missiles spawned
+  amount: 20
+  # The delay in ticks between each missile
+  delay: 2
+  # The ignition radius of each missile
+  radius: 2
 
 RocketLauncher:
   range: 125.0
