@@ -58,7 +58,7 @@ class Bomb(config: FileConfiguration) : CommandExecutor, TabCompleter, Listener 
         Material.TNT,
         "§r§c§lHydrogen Bomb",
         "§fRight click while flying to drop",
-        "§7Can be used to destroy turrets, or anything else for that matter",
+        "§7Can be used to destroy turrets",
         "§7Will slow you down when flying"
     )
     internal var rocketLauncherItem = CustomItem(
@@ -206,7 +206,7 @@ class Bomb(config: FileConfiguration) : CommandExecutor, TabCompleter, Listener 
             NamespacedKey(Bukkit.getPluginManager().getPlugin("Icarus")!!, "large_bomb"), largeBombItem
         )
         recipe.shape("TTT", "TCT", "TTT")
-        recipe.setIngredient('T', RecipeChoice.ExactChoice(mediumBombItem))
+        recipe.setIngredient('T', RecipeChoice.ExactChoice(smallBombItem))
         recipe.setIngredient('C', RecipeChoice.ExactChoice(plutoniumCore))
         Bukkit.addRecipe(recipe)
 

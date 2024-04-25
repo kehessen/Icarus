@@ -21,7 +21,6 @@ class Napalm(config: FileConfiguration) : Listener {
 
     // + leaves, but checking in function, so I don't have to add every type to the set
     private val ignitableBlocks = setOf(Material.AIR, Material.SHORT_GRASS, Material.TALL_GRASS)
-    private val itemKey = NamespacedKey(Bukkit.getPluginManager().getPlugin("Icarus")!!, "napalm")
 
     fun start() {
         Bukkit.getPluginManager().registerEvents(this, Bukkit.getPluginManager().getPlugin("Icarus")!!)
@@ -29,7 +28,7 @@ class Napalm(config: FileConfiguration) : Listener {
     }
 
     private fun addRecipe() {
-        val recipe = ShapedRecipe(itemKey, item)
+        val recipe = ShapedRecipe(NamespacedKey(Bukkit.getPluginManager().getPlugin("Icarus")!!, "napalm"), item)
         recipe.shape("   ", "BGB", "CFC")
         recipe.setIngredient('B', Material.BLAZE_POWDER)
         recipe.setIngredient('G', Material.GHAST_TEAR)
@@ -98,8 +97,8 @@ class Napalm(config: FileConfiguration) : Listener {
 
     @EventHandler
     private fun onJoin(event: PlayerJoinEvent){
-        if (!event.player.hasDiscoveredRecipe(itemKey)){
-            event.player.discoverRecipe(itemKey)
+        if (!event.player.hasDiscoveredRecipe(NamespacedKey(Bukkit.getPluginManager().getPlugin("Icarus")!!, "napalm"))){
+            event.player.discoverRecipe(NamespacedKey(Bukkit.getPluginManager().getPlugin("Icarus")!!, "napalm"))
         }
     }
 }

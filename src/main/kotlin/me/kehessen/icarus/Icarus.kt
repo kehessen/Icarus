@@ -53,10 +53,10 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
         menuHandler.start()
 
         chat.start()
+        bomb.start()
         turretHandler.start()
         simpleCommandHandler.start()
         tpaHandler.start()
-        bomb.start()
         playerMounting.start()
         smokeGrenade.start()
         airstrike.start()
