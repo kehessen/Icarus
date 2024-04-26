@@ -19,6 +19,21 @@ Combat:
   combat-time: 5
   can-teleport-in-combat: false
 
+Base:
+  # radius of the base
+  range: 100
+  # Whether to disable bombs dropped in the base
+  # Also includes airstrikes
+  bomb-protection: true
+  protect-from-napalm: false
+  # Maximum amount of bases a team can have
+  max-bases: 1
+  # Whether to disable block breaking for other teams in the base
+  disable-block-breaking: false
+  # Whether to disable block placing for other teams in the base
+  disable-block-placing: false
+
+
 Turret:
   # Default value for the shot delay when places, can be changed to 1-5 ticks in the turret menu
   shot-delay: 3

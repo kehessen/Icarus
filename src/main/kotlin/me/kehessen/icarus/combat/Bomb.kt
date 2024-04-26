@@ -23,6 +23,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockPlaceEvent
 import org.bukkit.event.entity.EntityDeathEvent
+import org.bukkit.event.entity.EntityExplodeEvent
 import org.bukkit.event.entity.EntityToggleGlideEvent
 import org.bukkit.event.entity.ProjectileHitEvent
 import org.bukkit.event.inventory.CraftItemEvent
@@ -38,7 +39,7 @@ import kotlin.random.Random
 // anything over yield 5 can destroy turrets
 // wanted to do a custom advancement, but it would require a dependency which is annoying
 @Suppress("Duplicates", "unused")
-class Bomb(config: FileConfiguration) : CommandExecutor, TabCompleter, Listener {
+class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor, TabCompleter, Listener {
 
     internal var smallBombItem = CustomItem(
         Material.TNT,
@@ -423,6 +424,16 @@ class Bomb(config: FileConfiguration) : CommandExecutor, TabCompleter, Listener 
                 if (event.player.gameMode != org.bukkit.GameMode.CREATIVE)
                     event.player.inventory.itemInMainHand.amount -= 1
                 checkItems(event.player)
+            }
+        }
+    }
+
+    @EventHandler
+    private fun onBombExplode(event: EntityExplodeEvent) {
+        if (event.entity.scoreboardTags.contains("bomb")) {
+            if (base.isProtected(event.entity.location)) {
+                event.isCancelled = true
+                return
             }
         }
     }

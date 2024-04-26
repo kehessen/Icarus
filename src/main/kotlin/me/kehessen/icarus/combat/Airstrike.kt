@@ -20,7 +20,7 @@ import org.bukkit.util.Vector
 import kotlin.math.cos
 import kotlin.math.sin
 
-class Airstrike(config: FileConfiguration) : Listener {
+class Airstrike(config: FileConfiguration, private val base: Base) : Listener {
     private val missileAmount = config.getInt("Airstrike.missile-amount")
     private val missileDelay = config.getInt("Airstrike.missile-delay").toLong()
     private val missileYield = config.getDouble("Airstrike.missile-yield").toFloat()
@@ -94,8 +94,10 @@ class Airstrike(config: FileConfiguration) : Listener {
             val missile = event.entity
             val location = missile.location
             val world = missile.world
-            Utils.drawLine(location, location.clone().add(0.0, 100.0, 0.0), Particle.LAVA, 300)
-            world.createExplosion(location, missileYield, true, true)
+            if (!base.isProtected(location)) {
+                Utils.drawLine(location, location.clone().add(0.0, 100.0, 0.0), Particle.LAVA, 300)
+                world.createExplosion(location, missileYield, true, true)
+            }
             missile.remove()
         }
 

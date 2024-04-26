@@ -7,6 +7,7 @@ import org.bukkit.NamespacedKey
 import org.bukkit.Particle
 import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.entity.LivingEntity
+import org.bukkit.entity.Player
 import org.bukkit.entity.Snowball
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -67,6 +68,7 @@ class SmokeGrenade(val config: FileConfiguration) : Listener {
             val proj = event.player.launchProjectile(Snowball::class.java)
             proj.scoreboardTags.add("smoke_grenade")
             proj.velocity = event.player.location.direction.multiply(5)
+            proj.shooter = event.player
             if (event.player.gameMode != org.bukkit.GameMode.CREATIVE) {
                 event.item!!.amount -= 1
                 event.player.setCooldown(smokeGrenade.type, cooldown.toInt())
@@ -86,8 +88,8 @@ class SmokeGrenade(val config: FileConfiguration) : Listener {
                 if (it !is LivingEntity) return@forEach
                 it.addPotionEffect(PotionEffect(PotionEffectType.BLINDNESS, 50, 1, true, false))
                 it.addPotionEffect(PotionEffect(PotionEffectType.INVISIBILITY, 50, 1, true, false))
-                it.addPotionEffect(PotionEffect(PotionEffectType.SPEED, 50, 1, true, false))
             }
+            (event.entity.shooter as Player).addPotionEffect(PotionEffect(PotionEffectType.SPEED, 50, 1, true, false))
         }
     }
 }

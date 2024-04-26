@@ -26,10 +26,19 @@ _Many features are configurable in the config.yml file._
 
 - You can join teams by using _/join [teamName]_
 - Any player in the team can accept or deny join requests
-- Teams have to be created by operators using _**/team add [teamName]**_ and the first player has to be added using _**/team
+- By default, all players are in the "Default" team
+- Teams have to be created by operators using _**/team add [teamName]**_ and the first player has to be added using
+  _**/team
   join [teamName] [playerName]**_
 - There will be "random" UUIDs in the team list, these belong to the turrets as they can only be used by the team that
   created them
+
+### Bases
+
+- By default, every team can have one base
+- Bombs and Airstrikes will not explode in bases (Napalm will still work by default)
+- Crafting recipe: \
+  ![img.png](Images/BaseRecipe.png)
 
 ### Bombs
 
@@ -72,13 +81,13 @@ _Many features are configurable in the config.yml file._
 
 - Call an airstrike on the marked location
 - Crafting recipe: \
-![img.png](Images/AirstrikeRecipe.png)
+  ![img.png](Images/AirstrikeRecipe.png)
 
 ### Napalm
 
 - Use napalm to burn down enemy bases
 - Crafting recipe: \
-![img.png](Images/NapalmRecipe.png)
+  ![img.png](Images/NapalmRecipe.png)
 
 ### Player Mounting
 

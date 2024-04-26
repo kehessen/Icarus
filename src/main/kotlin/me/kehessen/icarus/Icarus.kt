@@ -19,18 +19,19 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
     // used for other classes, so they need to be initialized first
     private val menuHandler = MenuHandler(this)
     private val combatTime = CombatTime(this, config)
+    private val base = Base(config)
 
     private val chat = Chat()
     private val turretHandler = TurretHandler(this, config, menuHandler)
     private val simpleCommandHandler = SimpleCommandHandler(combatTime, turretHandler)
     private val tpaHandler = TpaHandler(combatTime, config)
-    private val bomb = Bomb(config)
+    private val bomb = Bomb(config, base)
     private val playerMounting = PlayerMounting(config)
     private val smokeGrenade = SmokeGrenade(config)
-    private val airstrike = Airstrike(config)
+    private val airstrike = Airstrike(config, base)
     private val timedAccess = TimedAccess(config)
     private val noBeam = DisableBeaconBeam()
-    private val napalm = Napalm(config)
+    private val napalm = Napalm(config, base)
 
     private var sb: Scoreboard? = null
 
@@ -49,8 +50,15 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
             sb!!.registerNewTeam("Default")
         }
 
+        if (Bukkit.getWorld("world") == null) {
+            logger.severe("[Icarus] World 'world' not found, this plugin will not work as intended.")
+            logger.severe("[Icarus] Disabling plugin")
+            Bukkit.getPluginManager().disablePlugin(this)
+        }
+
         combatTime.start()
         menuHandler.start()
+        base.start()
 
         chat.start()
         bomb.start()
@@ -80,7 +88,7 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
                 val amount = if (args.size == 2) args[1].toInt() else 1
                 val item: ItemStack?
                 when (args[0]) {
-                    "turret" -> item = turretHandler.customItem.clone()
+                    "turret" -> item = turretHandler.turretItem.clone()
                     "customenderpearl" -> item = turretHandler.customEnderPearl.clone()
                     "smokegrenade" -> item = smokeGrenade.smokeGrenade.clone()
                     "smallbomb" -> item = bomb.smallBombItem.clone()
@@ -95,6 +103,7 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
                     "flares" -> item = turretHandler.flares.clone()
                     "airstrike" -> item = airstrike.item.clone()
                     "napalm" -> item = napalm.item.clone()
+                    "base" -> item = base.baseItem.clone()
 
                     else -> {
                         sender.sendMessage("§cInvalid arguments")
@@ -128,7 +137,8 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
                     "plutonium",
                     "flares",
                     "airstrike",
-                    "napalm"
+                    "napalm",
+                    "base"
                 )
                 else mutableListOf("")
             }

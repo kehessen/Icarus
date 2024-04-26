@@ -126,7 +126,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     // 3 obsidian as base
     internal val customEnderPearl =
         CustomItem(Material.ENDER_PEARL, "§r§lEnder Pearl", "§r§7Can be used to craft turrets")
-    internal val customItem = CustomItem(Material.ARMOR_STAND, "§r§lTurret", "§r§7Right click to place")
+    internal val turretItem = CustomItem(Material.ARMOR_STAND, "§r§lTurret", "§r§7Right click to place")
     internal val flares = CustomItem(
         Material.BLAZE_ROD,
         "§r§lFlares",
@@ -256,7 +256,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                     sender.sendMessage("§cInvalid sender")
                     return false
                 }
-                sender.inventory.addItem(customItem)
+                sender.inventory.addItem(turretItem)
                 return true
             }
 
@@ -489,7 +489,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     }
 
     private fun addRecipes() {
-        var recipe = ShapedRecipe(NamespacedKey(plugin, "turret"), customItem)
+        var recipe = ShapedRecipe(NamespacedKey(plugin, "turret"), turretItem)
         recipe.shape(" P ", "NCB", "OOO")
         recipe.setIngredient('P', RecipeChoice.ExactChoice(customEnderPearl))
         recipe.setIngredient('N', Material.NETHER_STAR)
@@ -749,42 +749,42 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             event.player.sendMessage("§cYou can't interact with this turret")
             return
         }
-        if (event.rightClicked is ArmorStand && event.rightClicked.scoreboardTags.contains("Turret")) {
-            val turret = event.rightClicked as ArmorStand
-            val ammo = turret.persistentDataContainer.get(ammoKey, PersistentDataType.INTEGER)!!
-            val shotDelay = turret.persistentDataContainer.get(shotDelayKey, PersistentDataType.LONG)!!
-            val holder = InvHolder()
-            val inv = menu.createInventory(invRows, "§lTurret", holder)
-            openInvs[holder] = turret
-            playersInInv[event.player] = turret
 
-            if (turret.persistentDataContainer.get(activeKey, PersistentDataType.BOOLEAN) == false) {
-                menu.createItem(
-                    inactiveDisplayMaterial, inv, 10, "Inactive", "§r§7Turret is inactive. Click to activate"
-                )
-            } else {
-                menu.createItem(activeDisplayMaterial, inv, 10, "Active", "§r§7Turret is active. Click to deactivate")
-            }
+        val turret = event.rightClicked as ArmorStand
+        val ammo = turret.persistentDataContainer.get(ammoKey, PersistentDataType.INTEGER)!!
+        val shotDelay = turret.persistentDataContainer.get(shotDelayKey, PersistentDataType.LONG)!!
+        val holder = InvHolder()
+        val inv = menu.createInventory(invRows, "§lTurret", holder)
+        openInvs[holder] = turret
+        playersInInv[event.player] = turret
 
+        if (turret.persistentDataContainer.get(activeKey, PersistentDataType.BOOLEAN) == false) {
             menu.createItem(
-                ammoDisplayMaterial, inv, 13, "Ammo", "§r§7Turret ammo: $ammo", "§r§7Add ammo by clicking on arrows"
+                inactiveDisplayMaterial, inv, 10, "Inactive", "§r§7Turret is inactive. Click to activate"
             )
-            menu.createItem(
-                shotDelayMaterial,
-                inv,
-                16,
-                "Shot Delay",
-                "§r§7Turret shot delay: $shotDelay ticks",
-                "§r§7Left click to increase",
-                "§r§7Right click to decrease"
-            )
-            menu.createItem(pickUpMaterial, inv, 35, "Pick up", "§r§7Pick up turret")
-
-            menu.fillWithoutName(inv, Material.LIGHT_GRAY_STAINED_GLASS_PANE, ammoPutSlot)
-
-            event.player.openInventory(inv)
-            event.isCancelled = true
+        } else {
+            menu.createItem(activeDisplayMaterial, inv, 10, "Active", "§r§7Turret is active. Click to deactivate")
         }
+
+        menu.createItem(
+            ammoDisplayMaterial, inv, 13, "Ammo", "§r§7Turret ammo: $ammo", "§r§7Add ammo by clicking on arrows"
+        )
+        menu.createItem(
+            shotDelayMaterial,
+            inv,
+            16,
+            "Shot Delay",
+            "§r§7Turret shot delay: $shotDelay ticks",
+            "§r§7Left click to increase",
+            "§r§7Right click to decrease"
+        )
+        menu.createItem(pickUpMaterial, inv, 35, "Pick up", "§r§7Pick up turret")
+
+        menu.fillWithoutName(inv, Material.LIGHT_GRAY_STAINED_GLASS_PANE, ammoPutSlot)
+
+        event.player.openInventory(inv)
+        event.isCancelled = true
+
     }
 
     @EventHandler
@@ -880,7 +880,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
             pickUpMaterial -> {
                 val player = event.whoClicked as Player
-                player.inventory.addItem(customItem)
+                player.inventory.addItem(turretItem)
                 turret!!.remove()
                 player.closeInventory()
                 activeTurrets.remove(turret)
@@ -938,7 +938,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     @EventHandler
     private fun onArmorStandPlace(event: PlayerInteractEvent) {
         if (event.item == null) return
-        if (event.item!!.itemMeta!!.displayName == ("§lTurret") && event.action == Action.RIGHT_CLICK_BLOCK) {
+        if (event.item!!.itemMeta!!.lore == turretItem.itemMeta!!.lore && event.action == Action.RIGHT_CLICK_BLOCK) {
             turrets.forEach { turret ->
                 if (event.clickedBlock!!.location.add(0.5, 1.0, 0.5).distance(turret.location) < 0.5) {
                     event.isCancelled = true
