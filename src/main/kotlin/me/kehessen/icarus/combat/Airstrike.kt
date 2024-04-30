@@ -47,8 +47,9 @@ class Airstrike(config: FileConfiguration, private val base: Base) : Listener {
         if (event.entity !is Arrow) return
         if (event.entity.shooter !is Player) return
         val player = event.entity.shooter as Player
+        if (player.inventory.itemInMainHand.itemMeta == null && player.inventory.itemInOffHand.itemMeta == null) return
 
-        if (player.inventory.itemInMainHand.itemMeta!!.displayName == item.itemMeta!!.displayName || player.inventory.itemInOffHand.itemMeta!!.displayName == item.itemMeta!!.displayName) {
+        if (player.inventory.itemInMainHand.itemMeta?.lore == item.itemMeta!!.lore || player.inventory.itemInOffHand.itemMeta?.lore == item.itemMeta!!.lore) {
             if (player.isGliding) {
                 player.sendMessage("§cYou can't call an airstrike while flying.")
                 return

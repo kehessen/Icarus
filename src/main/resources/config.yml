@@ -32,6 +32,10 @@ Base:
   disable-block-breaking: false
   # Whether to disable block placing for other teams in the base
   disable-block-placing: false
+  # Whether to prevent all entities from spawning in the base
+  prevent-entity-spawn: false
+  # Whether to disable creepers spawning in the base
+  prevent-creeper-spawn: true
 
 
 Turret:

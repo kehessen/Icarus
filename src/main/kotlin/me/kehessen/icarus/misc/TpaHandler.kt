@@ -18,20 +18,18 @@ import java.util.*
 
 @Suppress("unused")
 class TpaHandler(private val combatTime: CombatTime, config: FileConfiguration) : CommandExecutor, TabCompleter {
-    private var map = hashMapOf<UUID, UUID>()
+    private var map = hashMapOf<Player, Player>()
     private val canTeleportInCombat = config.getBoolean("combat.can-teleport-in-combat")
 
     // uses the creator as "owner" of the tpa request
-    private var creationTime = hashMapOf<UUID, Time>()
+    private var creationTime = hashMapOf<Player, Time>()
     var scheduler = Bukkit.getPluginManager().getPlugin("Icarus")?.let {
         Bukkit.getScheduler().scheduleSyncDelayedTask(it, {
             map.forEach { (key, value) ->
                 // 20*60?
                 if (creationTime[key]?.time!! + 2 < System.currentTimeMillis()) {
-                    Bukkit.getPlayer(key)
-                        ?.sendMessage("§cYour teleport request to ${Bukkit.getPlayer(value)?.name} has expired")
-                    Bukkit.getPlayer(value)
-                        ?.sendMessage("§cThe teleport request from ${Bukkit.getPlayer(key)?.name} has expired")
+                    key.sendMessage("§cYour teleport request to ${Bukkit.getPlayer(value.uniqueId)?.name} has expired")
+                    value.sendMessage("§cThe teleport request from ${Bukkit.getPlayer(key.uniqueId)?.name} has expired")
                     map.remove(key)
                 }
             }
@@ -50,11 +48,10 @@ class TpaHandler(private val combatTime: CombatTime, config: FileConfiguration) 
             return false
         }
 
-        if (command.name == "tpa" && args.size == 1 && args[0] == "cancel" && map.containsKey(sender.uniqueId)) {
-            sender.sendMessage("§cCancelled the teleport request to ${Bukkit.getPlayer(map[sender.uniqueId]!!)!!.name}")
-            Bukkit.getPlayer(map[sender.uniqueId]!!)!!
-                .sendMessage("§c${sender.name} has cancelled the teleport request")
-            map.remove(sender.uniqueId)
+        if (command.name == "tpa" && args.size == 1 && args[0] == "cancel" && map.containsKey(sender)) {
+            sender.sendMessage("§cCancelled the teleport request to ${map[sender]!!.name}")
+            map[sender]!!.sendMessage("§c${sender.name} has cancelled the teleport request")
+            map.remove(sender)
             return true
         }
 
@@ -85,44 +82,43 @@ class TpaHandler(private val combatTime: CombatTime, config: FileConfiguration) 
 
         // should work, but can't check yet
         // value is automatically updated when the same key is used again
-        if (map.containsKey(sender.uniqueId)) {
-            sender.sendMessage("§cCancelled the teleport request to ${Bukkit.getPlayer(map[sender.uniqueId]!!)!!.name}")
-            Bukkit.getPlayer(map[sender.uniqueId]!!)!!
-                .sendMessage("§c${sender.name} has cancelled the teleport request")
+        if (map.containsKey(sender)) {
+            sender.sendMessage("§cCancelled the teleport request to ${map[sender]!!.name}")
+            map[sender]!!.sendMessage("§c${sender.name} has cancelled the teleport request")
         }
 
 
         // check if both sender and receiver are players and if the command parameters are valid and sends the request
         if (command.name == "tpa") {
             if (args[0] == "cancel") {
-                if (!map.containsKey(sender.uniqueId)) {
+                if (!map.containsKey(sender)) {
                     sender.sendMessage("§cYou don't have a pending request")
                     return false
                 }
                 receiver.sendMessage("§c${sender.name} has cancelled the teleport request")
                 sender.sendMessage("§cCancelled the teleport request to ${receiver.name}")
-                map.remove(sender.uniqueId)
+                map.remove(sender)
                 return true
             }
             val component = TextComponent("§a§l[Click here to accept]")
             component.clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, "/tpaccept ${sender.name}")
             component.hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, Text("§aAccept the teleport request"))
-            map[sender.uniqueId] = receiver.uniqueId
-            creationTime[sender.uniqueId] = Time(System.currentTimeMillis())
+            map[sender] = receiver
+            creationTime[sender] = Time(System.currentTimeMillis())
             receiver.sendMessage("§a${sender.name} wants to teleport to you")
             receiver.spigot().sendMessage(component)
             Bukkit.getPlayer(sender.name)?.sendMessage("§aTeleport request sent to ${receiver.name}")
         }
         // sender is now tpa receiver
         else if (command.name == "tpaccept" && receiver in Bukkit.getOnlinePlayers()) {
-            if (!map.containsKey(receiver.uniqueId)) {
+            if (!map.containsKey(receiver)) {
                 sender.sendMessage("§cYou don't have a pending request")
                 return false
             }
             receiver.teleport(Bukkit.getPlayer(sender.name)!!.location)
             receiver.sendMessage("§aTeleported to ${sender.name}")
             Bukkit.getPlayer(sender.name)?.sendMessage("§aTeleported ${receiver.name} to you")
-            map.remove(receiver.uniqueId)
+            map.remove(receiver)
         }
         return true
     }
@@ -132,29 +128,29 @@ class TpaHandler(private val combatTime: CombatTime, config: FileConfiguration) 
     ): MutableList<String>? {
         when (command.name) {
             "tpa" -> {
-                if (map.containsKey(Bukkit.getPlayer(sender.name)!!.uniqueId)) return mutableListOf("cancel")
+                if (map.containsKey(sender)) return mutableListOf("cancel")
                 val list = Bukkit.getOnlinePlayers().map { it.name }.toMutableList()
                 list.remove(sender.name)
                 // not entirely sure how it behaves if the sender is not a player, but shouldn't crash
                 // also who else would send a tpa
                 // CIA after hearing someone invented a cure for cancer
-                if (map.containsKey(Bukkit.getPlayer(sender.name)!!.uniqueId)) list.add("cancel")
+                if (map.containsKey(sender)) list.add("cancel")
                 return list
             }
 
-            "tpaccept" -> return map.keys.map { Bukkit.getPlayer(it)?.name!! }.toMutableList()
+            "tpaccept" -> return map.keys.map { it.name }.toMutableList()
         }
         return null
     }
 
     @EventHandler
     fun onPlayerQuit(event: PlayerQuitEvent) {
-        if (map.containsKey(event.player.uniqueId)) {
-            Bukkit.getPlayer(map[event.player.uniqueId]!!)?.sendMessage("§c${event.player.name} has logged out")
-            map.remove(event.player.uniqueId)
+        if (map.containsKey(event.player)) {
+            map[event.player]!!.sendMessage("§c${event.player.name} has logged out")
+            map.remove(event.player)
         }
-        if (map.containsValue(event.player.uniqueId)) {
-            map.remove(map.filterValues { it == event.player.uniqueId }.keys.first())
+        if (map.containsValue(event.player)) {
+            map.remove(map.filterValues { it == event.player }.keys.first())
         }
     }
 }

@@ -12,6 +12,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockPlaceEvent
+import org.bukkit.event.entity.EntitySpawnEvent
 import org.bukkit.event.player.PlayerInteractAtEntityEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerJoinEvent
@@ -27,6 +28,8 @@ class Base(config: FileConfiguration) : Listener {
     private val maxBases = config.getInt("Base.max-bases")
     private val disableBlockBreaking = config.getBoolean("Base.disable-block-breaking")
     private val disableBlockPlacing = config.getBoolean("Base.disable-block-placing")
+    private val preventEntity = config.getBoolean("Base.prevent-entity-spawn")
+    private val preventCreeper = config.getBoolean("Base.prevent-creeper-spawn")
 
     internal val baseItem =
         CustomItem(Material.ARMOR_STAND, "§aBase", "§7Place to create a base", "§7Max bases per team: $maxBases")
@@ -82,9 +85,9 @@ class Base(config: FileConfiguration) : Listener {
 
     @EventHandler
     private fun onPlace(event: PlayerInteractEvent) {
-        if (event.item == null || event.item!!.itemMeta == null) return
-        if (event.item!!.itemMeta!!.lore != baseItem.itemMeta!!.lore) return
         if (event.action != Action.RIGHT_CLICK_BLOCK) return
+        if (event.item == null || event.item!!.itemMeta == null) return
+        if (event.item != baseItem) return
 
         val team = sb!!.getEntryTeam(event.player.name)!!
         bases.forEach {
@@ -126,6 +129,7 @@ class Base(config: FileConfiguration) : Listener {
     private fun onPickup(event: PlayerInteractAtEntityEvent) {
         if (!event.rightClicked.scoreboardTags.contains("BaseMarker")) return
         if (event.rightClicked !is ArmorStand) return
+        if (!event.player.isSneaking) return
         if (sb!!.getEntryTeam(event.player.name) != sb!!.getEntryTeam(event.rightClicked.uniqueId.toString())) {
             event.player.sendMessage("§cYou can't interact with this base Marker.")
             return
@@ -139,7 +143,7 @@ class Base(config: FileConfiguration) : Listener {
     }
 
     @EventHandler
-    private fun onPlayerJoin(event: PlayerJoinEvent){
+    private fun onPlayerJoin(event: PlayerJoinEvent) {
         if (!event.player.hasDiscoveredRecipe(NamespacedKey(Bukkit.getPluginManager().getPlugin("Icarus")!!, "base"))) {
             event.player.discoverRecipe(NamespacedKey(Bukkit.getPluginManager().getPlugin("Icarus")!!, "base"))
         }
@@ -159,5 +163,15 @@ class Base(config: FileConfiguration) : Listener {
         if (isBase(event.block.location) && baseTeam(event.block.location) != sb!!.getEntryTeam(event.player.name)!!) {
             event.isCancelled = true
         }
+    }
+
+    @EventHandler
+    private fun onEntitySpawn(event: EntitySpawnEvent) {
+        if (preventEntity && isProtected(event.location)) {
+            event.isCancelled = true
+            return
+        }
+        if (preventCreeper && isProtected(event.location))
+            event.isCancelled = true
     }
 }
