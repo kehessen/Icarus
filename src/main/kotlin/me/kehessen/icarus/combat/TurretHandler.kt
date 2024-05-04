@@ -928,7 +928,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
     @EventHandler
     private fun onInvClose(event: InventoryCloseEvent) {
-        if (event.inventory.holder == null || event.inventory.holder !is InvHolder) return
+        if (event.inventory.holder == null) return // || event.inventory.holder !is InvHolder this is probably causing an error
         if (event.inventory.holder in openInvs.keys) {
             openInvs.remove(event.inventory.holder)
             playersInInv.remove(event.player)

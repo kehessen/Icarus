@@ -7,11 +7,13 @@ import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.entity.ArmorStand
+import org.bukkit.entity.EntityType
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockPlaceEvent
+import org.bukkit.event.entity.EntityExplodeEvent
 import org.bukkit.event.entity.EntitySpawnEvent
 import org.bukkit.event.player.PlayerInteractAtEntityEvent
 import org.bukkit.event.player.PlayerInteractEvent
@@ -28,7 +30,6 @@ class Base(config: FileConfiguration) : Listener {
     private val maxBases = config.getInt("Base.max-bases")
     private val disableBlockBreaking = config.getBoolean("Base.disable-block-breaking")
     private val disableBlockPlacing = config.getBoolean("Base.disable-block-placing")
-    private val preventEntity = config.getBoolean("Base.prevent-entity-spawn")
     private val preventCreeper = config.getBoolean("Base.prevent-creeper-spawn")
 
     internal val baseItem =
@@ -50,7 +51,7 @@ class Base(config: FileConfiguration) : Listener {
 
     fun isProtected(location: Location): Boolean {
         if (!bombProtection) return false
-        return bases.any { it.location.distance(location) <= range.toDouble() }
+        return bases.any { it.location.world == location.world && it.location.distance(location) <= range.toDouble() }
     }
 
     fun isBase(loc: Location): Boolean {
@@ -87,7 +88,7 @@ class Base(config: FileConfiguration) : Listener {
     private fun onPlace(event: PlayerInteractEvent) {
         if (event.action != Action.RIGHT_CLICK_BLOCK) return
         if (event.item == null || event.item!!.itemMeta == null) return
-        if (event.item != baseItem) return
+        if (event.item!!.itemMeta!!.displayName != baseItem.itemMeta!!.displayName) return
 
         val team = sb!!.getEntryTeam(event.player.name)!!
         bases.forEach {
@@ -167,11 +168,17 @@ class Base(config: FileConfiguration) : Listener {
 
     @EventHandler
     private fun onEntitySpawn(event: EntitySpawnEvent) {
-        if (preventEntity && isProtected(event.location)) {
+        if (event.entityType == EntityType.CREEPER && preventCreeper && isProtected(event.location)) {
             event.isCancelled = true
-            return
         }
-        if (preventCreeper && isProtected(event.location))
+    }
+
+    @EventHandler
+    private fun onCreeperExplode(event: EntityExplodeEvent) {
+        if (event.entity.type == EntityType.CREEPER && isProtected(event.location)) {
+            // just to be sure
+            event.yield = 0f
             event.isCancelled = true
+        }
     }
 }

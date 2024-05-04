@@ -36,7 +36,8 @@ _Many features are configurable in the config.yml file._
 ### Bases
 
 - By default, every team can have one base
-- Bombs and Airstrikes will not explode in bases (Napalm will still work by default)
+- Bombs and Airstrikes will (by default) not explode in bases (Napalm will still work)
+- Creepers will not explode in bases
 - Crafting recipe: \
   ![img.png](Images/BaseRecipe.png)
 
