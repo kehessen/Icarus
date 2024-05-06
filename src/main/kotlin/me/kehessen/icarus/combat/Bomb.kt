@@ -286,7 +286,6 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
 
             val block = bomb.location.subtract(0.0, 1.0, 0.0).block.type
             if (block != Material.AIR && block != Material.CAVE_AIR && block != Material.VOID_AIR) {
-                Bukkit.getLogger().info(block.toString())
                 Bukkit.getScheduler().cancelTask(activeTasks[bomb]!!)
                 bomb.world.spawnParticle(org.bukkit.Particle.FLAME, bomb.location, 300, 1.0, 1.0, 1.0, 0.5)
                 bomb.fuseTicks = 0
