@@ -78,6 +78,8 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
     private var mediumBombYield = config.getInt("Bomb.medium-yield")
     private var largeBombYield = config.getInt("Bomb.large-yield")
 
+    private var fuseTicks = config.getInt("Bomb.fuse-ticks")
+
     private var launcherRange = config.getDouble("RocketLauncher.range")
     private var rocketYield = config.getDouble("RocketLauncher.yield").toFloat()
     private var rockets = hashMapOf<SpectralArrow, Location>()
@@ -112,7 +114,7 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
                 }
                 val player = Bukkit.getPlayer(sender.name)
                 val tnt = player!!.world.spawn(player.location, org.bukkit.entity.TNTPrimed::class.java)
-                tnt.fuseTicks = 100
+                tnt.fuseTicks = fuseTicks
                 tnt.yield = args[1].toFloat()
                 return true
             }
@@ -232,19 +234,22 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
     }
 
     private fun checkItems(player: Player, sendMessage: Boolean = false) {
+        var sentMessage = false
         if (player.inventory.containsAtLeast(smallBombItem, 1)) {
             playersWithSmallBomb.add(player)
             if (sendMessage) player.sendMessage("§cYou are carrying a bomb. This will slow you down when flying.")
+            sentMessage = true
         } else playersWithSmallBomb.remove(player)
 
         if (player.inventory.containsAtLeast(mediumBombItem, 1)) {
             playersWithMediumBomb.add(player)
-            if (sendMessage) player.sendMessage("§cYou are carrying a bomb. This will slow you down when flying.")
+            if (sendMessage && !sentMessage) player.sendMessage("§cYou are carrying a bomb. This will slow you down when flying.")
+            sentMessage = true
         } else playersWithMediumBomb.remove(player)
 
         if (player.inventory.containsAtLeast(largeBombItem, 1)) {
             playersWithLargeBomb.add(player)
-            if (sendMessage) player.sendMessage("§cYou are carrying a bomb. This will slow you down when flying.")
+            if (sendMessage && !sentMessage) player.sendMessage("§cYou are carrying a bomb. This will slow you down when flying.")
         } else playersWithLargeBomb.remove(player)
     }
 
@@ -280,7 +285,8 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
         val task = Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("Icarus")!!, {
 
             val block = bomb.location.subtract(0.0, 1.0, 0.0).block.type
-            if (block != Material.AIR && block != Material.WATER && block != Material.LAVA) {
+            if (block != Material.AIR && block != Material.CAVE_AIR && block != Material.VOID_AIR) {
+                Bukkit.getLogger().info(block.toString())
                 Bukkit.getScheduler().cancelTask(activeTasks[bomb]!!)
                 bomb.world.spawnParticle(org.bukkit.Particle.FLAME, bomb.location, 300, 1.0, 1.0, 1.0, 0.5)
                 bomb.fuseTicks = 0
@@ -339,6 +345,14 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
         rocketCheckID = null
     }
 
+    private fun spawnBomb(player: Player, yield: Float, fuseTime: Int) {
+        val bomb = player.world.spawn(player.location, TNTPrimed::class.java)
+        bomb.addScoreboardTag("bomb")
+        bomb.fuseTicks = fuseTime
+        bomb.yield = yield
+        explosionCheck(bomb)
+    }
+
     @EventHandler
     private fun onPlayerGlide(event: PlayerMoveEvent) {
         checkSpeedOf(event.player)
@@ -390,41 +404,20 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
 
     @EventHandler
     private fun onBombDrop(event: PlayerInteractEvent) {
-
-        if (!event.player.isGliding || event.action != Action.RIGHT_CLICK_AIR || event.item == null || event.item!!.itemMeta == null) return
-        when (event.item!!.itemMeta!!.displayName) {
-            smallBombItem.itemMeta!!.displayName -> {
-                val bmb = event.player.world.spawn(event.player.location, TNTPrimed::class.java)
-                bmb.addScoreboardTag("bomb")
-                bmb.fuseTicks = 100
-                bmb.yield = smallBombYield.toFloat()
-                explosionCheck(bmb)
-                if (event.player.gameMode != org.bukkit.GameMode.CREATIVE)
-                    event.player.inventory.itemInMainHand.amount -= 1
-                checkItems(event.player)
-            }
-
-            mediumBombItem.itemMeta!!.displayName -> {
-                val bmb = event.player.world.spawn(event.player.location, TNTPrimed::class.java)
-                bmb.addScoreboardTag("bomb")
-                bmb.fuseTicks = 100
-                bmb.yield = mediumBombYield.toFloat()
-                explosionCheck(bmb)
-                if (event.player.gameMode != org.bukkit.GameMode.CREATIVE)
-                    event.player.inventory.itemInMainHand.amount -= 1
-                checkItems(event.player)
-            }
-
-            largeBombItem.itemMeta!!.displayName -> {
-                val bmb = event.player.world.spawn(event.player.location, TNTPrimed::class.java)
-                bmb.addScoreboardTag("bomb")
-                bmb.fuseTicks = 100
-                bmb.yield = largeBombYield.toFloat()
-                explosionCheck(bmb)
-                if (event.player.gameMode != org.bukkit.GameMode.CREATIVE)
-                    event.player.inventory.itemInMainHand.amount -= 1
-                checkItems(event.player)
-            }
+        if (!event.player.isGliding || event.action != Action.RIGHT_CLICK_AIR || event.item?.itemMeta == null) return
+        val item = event.item!!
+        if (event.item!!.itemMeta == smallBombItem.itemMeta) {
+            spawnBomb(event.player, smallBombYield.toFloat(), fuseTicks)
+            if (event.player.gameMode != org.bukkit.GameMode.CREATIVE) event.player.inventory.remove(item)
+            checkItems(event.player)
+        } else if (event.item!!.itemMeta == mediumBombItem.itemMeta) {
+            spawnBomb(event.player, mediumBombYield.toFloat(), fuseTicks)
+            if (event.player.gameMode != org.bukkit.GameMode.CREATIVE) event.player.inventory.remove(item)
+            checkItems(event.player)
+        } else if (event.item!!.itemMeta == largeBombItem.itemMeta) {
+            spawnBomb(event.player, largeBombYield.toFloat(), fuseTicks)
+            if (event.player.gameMode != org.bukkit.GameMode.CREATIVE) event.player.inventory.remove(item)
+            checkItems(event.player)
         }
     }
 

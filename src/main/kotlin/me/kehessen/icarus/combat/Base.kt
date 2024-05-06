@@ -18,6 +18,7 @@ import org.bukkit.event.entity.EntitySpawnEvent
 import org.bukkit.event.player.PlayerInteractAtEntityEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.event.world.ChunkLoadEvent
 import org.bukkit.inventory.ShapedRecipe
 import org.bukkit.scoreboard.Scoreboard
 import org.bukkit.scoreboard.Team
@@ -113,6 +114,7 @@ class Base(config: FileConfiguration) : Listener {
         armorStand.setGravity(false)
         armorStand.customName = "Base"
         armorStand.isCustomNameVisible = true
+        armorStand.removeWhenFarAway = false
 
         event.item!!.amount--
 
@@ -176,9 +178,16 @@ class Base(config: FileConfiguration) : Listener {
     @EventHandler
     private fun onCreeperExplode(event: EntityExplodeEvent) {
         if (event.entity.type == EntityType.CREEPER && isProtected(event.location)) {
-            // just to be sure
-            event.yield = 0f
             event.isCancelled = true
+        }
+    }
+
+    @EventHandler
+    private fun onChunkLoad(event: ChunkLoadEvent) {
+        event.chunk.entities.forEach {
+            if (it is ArmorStand && it.scoreboardTags.contains("BaseMarker")) {
+                bases.add(it)
+            }
         }
     }
 }

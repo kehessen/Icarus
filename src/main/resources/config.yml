@@ -94,6 +94,9 @@ Bomb:
   medium-speed-limit: 0.6
   large-speed-limit: 0.4
 
+  # Time in ticks before the bomb explodes after being dropped
+  fuse-ticks: 100
+
 Napalm:
   # The number of missiles spawned
   amount: 20

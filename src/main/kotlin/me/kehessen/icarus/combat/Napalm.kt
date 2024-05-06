@@ -7,6 +7,7 @@ import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
+import org.bukkit.event.block.Action
 import org.bukkit.event.entity.ProjectileHitEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerJoinEvent
@@ -69,8 +70,8 @@ class Napalm(config: FileConfiguration, private val base: Base) : Listener {
 
     @EventHandler
     private fun onRightClick(event: PlayerInteractEvent) {
-        if (event.item == null) return
-        if (event.action.name.contains("RIGHT")) {
+        if (event.item?.itemMeta?.lore == null) return
+        if (event.action == Action.RIGHT_CLICK_AIR) {
 
             if (event.item!!.itemMeta!!.lore == item.itemMeta!!.lore) {
                 if (!event.player.isGliding){
