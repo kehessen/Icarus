@@ -31,6 +31,7 @@ class Base(config: FileConfiguration) : Listener {
     private val maxBases = config.getInt("Base.max-bases")
     private val disableBlockBreaking = config.getBoolean("Base.disable-block-breaking")
     private val disableBlockPlacing = config.getBoolean("Base.disable-block-placing")
+    private val disableInteract = config.getBoolean("Base.disable-block-interacting")
     private val preventCreeper = config.getBoolean("Base.prevent-creeper-spawn")
 
     internal val baseItem =
@@ -164,6 +165,16 @@ class Base(config: FileConfiguration) : Listener {
     private fun onBlockPlace(event: BlockPlaceEvent) {
         if (!disableBlockPlacing) return
         if (isBase(event.block.location) && baseTeam(event.block.location) != sb!!.getEntryTeam(event.player.name)!!) {
+            event.isCancelled = true
+        }
+    }
+
+    @EventHandler
+    private fun onBlockInteract(event: PlayerInteractEvent) {
+        if (event.action != Action.RIGHT_CLICK_BLOCK) return
+        if (event.clickedBlock == null) return
+        if (!disableInteract) return
+        if (isBase(event.clickedBlock!!.location) && baseTeam(event.clickedBlock!!.location) != sb!!.getEntryTeam(event.player.name)!!) {
             event.isCancelled = true
         }
     }

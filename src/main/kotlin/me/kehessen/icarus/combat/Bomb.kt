@@ -34,6 +34,8 @@ import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.RecipeChoice
 import org.bukkit.inventory.ShapedRecipe
+import org.bukkit.potion.PotionEffect
+import org.bukkit.potion.PotionEffectType
 import kotlin.random.Random
 
 // anything over yield 5 can destroy turrets
@@ -98,10 +100,7 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
 
     internal var ammoniumNitrate = CustomItem(Material.SUGAR, "§r§cAmmonium Nitrate", "§fUsed to craft Bombs")
     internal var plutoniumCore = CustomItem(
-        Material.FIREWORK_STAR,
-        "§r§c§lPlutonium Core",
-        "§fUsed to craft Hydrogen Bombs",
-        "§7§oHas a 5% chance to explode when used for crafting"
+        Material.FIREWORK_STAR, "§r§c§lPlutonium Core", "§fUsed to craft Hydrogen Bombs"
     )
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
@@ -281,20 +280,25 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
         }
     }
 
-    private fun explosionCheck(bomb: TNTPrimed) {
+    private fun explosionCheck(bomb: TNTPrimed, owner: Player) {
         val task = Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("Icarus")!!, {
 
             val block = bomb.location.subtract(0.0, 1.0, 0.0).block.type
+            if (bomb.fuseTicks >= 1) {
+                owner.addPotionEffect(PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 20, 7))
+            }
+
             if (block != Material.AIR && block != Material.CAVE_AIR && block != Material.VOID_AIR) {
                 Bukkit.getScheduler().cancelTask(activeTasks[bomb]!!)
                 bomb.world.spawnParticle(org.bukkit.Particle.FLAME, bomb.location, 300, 1.0, 1.0, 1.0, 0.5)
+                owner.addPotionEffect(PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 20, 7))
                 bomb.fuseTicks = 0
             }
             if (bomb.isDead) {
                 Bukkit.getScheduler().cancelTask(activeTasks[bomb]!!)
             }
 
-        }, 0, 2)
+        }, 0, 1)
         activeTasks[bomb] = task
     }
 
@@ -349,7 +353,8 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
         bomb.addScoreboardTag("bomb")
         bomb.fuseTicks = fuseTime
         bomb.yield = yield
-        explosionCheck(bomb)
+        bomb.isGlowing = true
+        explosionCheck(bomb, player)
     }
 
     @EventHandler
@@ -364,7 +369,7 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
             )
         ) return
         val player = event.entity.killer!!
-        if (Random.nextInt(0, 20) == 19) {
+        if (java.util.Random().nextInt(0, 20) == 19) {
             event.drops.add(ammoniumNitrate)
             if (!player.hasDiscoveredRecipe(
                     NamespacedKey(
@@ -404,19 +409,24 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
     @EventHandler
     private fun onBombDrop(event: PlayerInteractEvent) {
         if (!event.player.isGliding || event.action != Action.RIGHT_CLICK_AIR || event.item?.itemMeta == null) return
-        val item = event.item!!
-        if (event.item!!.itemMeta == smallBombItem.itemMeta) {
-            spawnBomb(event.player, smallBombYield.toFloat(), fuseTicks)
-            if (event.player.gameMode != org.bukkit.GameMode.CREATIVE) event.player.inventory.remove(item)
-            checkItems(event.player)
-        } else if (event.item!!.itemMeta == mediumBombItem.itemMeta) {
-            spawnBomb(event.player, mediumBombYield.toFloat(), fuseTicks)
-            if (event.player.gameMode != org.bukkit.GameMode.CREATIVE) event.player.inventory.remove(item)
-            checkItems(event.player)
-        } else if (event.item!!.itemMeta == largeBombItem.itemMeta) {
-            spawnBomb(event.player, largeBombYield.toFloat(), fuseTicks)
-            if (event.player.gameMode != org.bukkit.GameMode.CREATIVE) event.player.inventory.remove(item)
-            checkItems(event.player)
+        when (event.item!!.itemMeta) {
+            smallBombItem.itemMeta -> {
+                spawnBomb(event.player, smallBombYield.toFloat(), fuseTicks)
+                if (event.player.gameMode != org.bukkit.GameMode.CREATIVE) event.item!!.amount--
+                checkItems(event.player)
+            }
+
+            mediumBombItem.itemMeta -> {
+                spawnBomb(event.player, mediumBombYield.toFloat(), fuseTicks)
+                if (event.player.gameMode != org.bukkit.GameMode.CREATIVE) event.item!!.amount--
+                checkItems(event.player)
+            }
+
+            largeBombItem.itemMeta -> {
+                spawnBomb(event.player, largeBombYield.toFloat(), fuseTicks)
+                if (event.player.gameMode != org.bukkit.GameMode.CREATIVE) event.item!!.amount--
+                checkItems(event.player)
+            }
         }
     }
 

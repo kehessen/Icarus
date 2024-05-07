@@ -28,13 +28,9 @@ import org.bukkit.potion.PotionEffectType
 class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, TabCompleter {
     // key: mounted player, value: flying player
     private val mountedPlayers = hashMapOf<Player, Player>()
-    internal val customWeapon: ItemStack =
-        CustomItem(
-            Material.CROSSBOW,
-            "§r§l§c12.7mm M2 Browning",
-            "§7Left click to zoom",
-            "§7Right click to shoot .50 cal bullets"
-        )
+    internal val customWeapon: ItemStack = CustomItem(
+        Material.CROSSBOW, "§r§l§c12.7mm M2 Browning", "§7Left click to zoom", "§7Right click to shoot .50 cal bullets"
+    )
     internal val customAmmo: ItemStack =
         CustomItem(Material.ARROW, "§r§l§c.50 BMG", "§7Used for the M2 Browning", "§7Armor piercing")
 
@@ -94,8 +90,8 @@ class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, Tab
         player.inventory.addItem(customWeapon)
         player.sendMessage("§aYou are now mounted on ${target.name}")
         target.sendMessage("§a${player.name} is now your gunman")
-        if (onlyAllowMountingForFlight)
-            Bukkit.getScheduler().scheduleSyncDelayedTask(Bukkit.getPluginManager().getPlugin("Icarus")!!, {
+        if (onlyAllowMountingForFlight) Bukkit.getScheduler()
+            .scheduleSyncDelayedTask(Bukkit.getPluginManager().getPlugin("Icarus")!!, {
                 if (target.passengers.contains(player) && !target.isGliding) {
                     dismount(player)
                     player.sendMessage("§cYou have been dismounted as ${target.name} hasn't taken off in time")
@@ -129,8 +125,7 @@ class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, Tab
 
     private fun addCustomRecipe() {
         val recipe = ShapedRecipe(
-            NamespacedKey(Bukkit.getPluginManager().getPlugin("Icarus")!!, "50_cal_bullet"),
-            customAmmo
+            NamespacedKey(Bukkit.getPluginManager().getPlugin("Icarus")!!, "50_cal_bullet"), customAmmo
         )
         recipe.shape("   ", "NAN", " G ")
         recipe.setIngredient('N', Material.IRON_NUGGET)
@@ -155,14 +150,11 @@ class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, Tab
             }
             val ray = event.player.rayTraceBlocks(100.0)
             val hitEntity = event.player.world.rayTraceEntities(
-                event.player.eyeLocation,
-                event.player.location.direction,
-                100.0,
-                0.0
+                event.player.eyeLocation, event.player.location.direction, 100.0, 0.0
             ) { entity ->
                 entity != event.player && entity is LivingEntity
             }
-            var distance = ray?.hitPosition?.distance(event.player.location.toVector())
+            var distance = ray?.hitBlock?.location?.distance(event.player.location)
             if (distance == null) {
                 distance = canonReach
             }
@@ -178,8 +170,7 @@ class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, Tab
             }
             event.player.inventory.removeItem(customAmmo)
 
-            if (playHurtAnimation)
-                event.player.playHurtAnimation(0f)
+            if (playHurtAnimation) event.player.playHurtAnimation(0f)
             event.player.world.playSound(event.player.location, Sound.ENTITY_ENDER_PEARL_THROW, 100f, 0.1f)
 
             event.isCancelled = true
@@ -197,12 +188,7 @@ class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, Tab
             potionEffect == null -> {
                 event.player.addPotionEffect(
                     PotionEffect(
-                        PotionEffectType.SLOW,
-                        INFINITE_DURATION,
-                        3,
-                        false,
-                        false,
-                        false
+                        PotionEffectType.SLOW, INFINITE_DURATION, 3, false, false, false
                     )
                 )
             }
@@ -210,12 +196,7 @@ class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, Tab
             potionEffect.amplifier == 3 -> {
                 event.player.addPotionEffect(
                     PotionEffect(
-                        PotionEffectType.SLOW,
-                        INFINITE_DURATION,
-                        6,
-                        false,
-                        false,
-                        false
+                        PotionEffectType.SLOW, INFINITE_DURATION, 6, false, false, false
                     )
                 )
             }
@@ -269,30 +250,24 @@ class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, Tab
     private fun onPlayerJoin(event: PlayerJoinEvent) {
         if (!event.player.hasDiscoveredRecipe(
                 NamespacedKey(
-                    Bukkit.getPluginManager().getPlugin("Icarus")!!,
-                    "50_cal_bullet"
+                    Bukkit.getPluginManager().getPlugin("Icarus")!!, "50_cal_bullet"
                 )
             )
         ) {
             event.player.discoverRecipe(
                 NamespacedKey(
-                    Bukkit.getPluginManager().getPlugin("Icarus")!!,
-                    "50_cal_bullet"
+                    Bukkit.getPluginManager().getPlugin("Icarus")!!, "50_cal_bullet"
                 )
             )
         }
     }
 
     override fun onTabComplete(
-        p0: CommandSender,
-        p1: Command,
-        p2: String,
-        p3: Array<out String>
+        p0: CommandSender, p1: Command, p2: String, p3: Array<out String>
     ): MutableList<String> {
         if (p3.size == 1) {
             val list = Bukkit.getOnlinePlayers().map { it.name }.toMutableList()
-            if (p0.isOp)
-                list.add("hurtAnimation")
+            if (p0.isOp) list.add("hurtAnimation")
             list.remove(p0.name)
             return list
         }

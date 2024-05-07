@@ -2,7 +2,7 @@ package me.kehessen.icarus
 
 import me.kehessen.icarus.combat.*
 import me.kehessen.icarus.misc.*
-import me.kehessen.icarus.util.*
+import me.kehessen.icarus.util.MenuHandler
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor

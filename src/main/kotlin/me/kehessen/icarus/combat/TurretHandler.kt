@@ -22,6 +22,7 @@ import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.player.PlayerInteractAtEntityEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.event.world.ChunkLoadEvent
 import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.RecipeChoice
@@ -128,10 +129,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         CustomItem(Material.ENDER_PEARL, "§r§lEnder Pearl", "§r§7Can be used to craft turrets")
     internal val turretItem = CustomItem(Material.ARMOR_STAND, "§r§lTurret", "§r§7Right click to place")
     internal val flares = CustomItem(
-        Material.BLAZE_ROD,
-        "§r§lFlares",
-        "§r§7Right click to use",
-        "§r§7Can be used to distract turrets"
+        Material.BLAZE_ROD, "§r§lFlares", "§r§7Right click to use", "§r§7Can be used to distract turrets"
     )
 
 
@@ -665,7 +663,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     @EventHandler
     private fun onFlareDeploy(event: PlayerInteractEvent) {
         if (event.item == null) return
-        if (event.item!!.itemMeta!!.displayName != flares.itemMeta!!.displayName) return
+        if (event.item?.itemMeta?.displayName != flares.itemMeta!!.displayName) return
         if (event.action != Action.RIGHT_CLICK_AIR) {
             event.isCancelled = true
             return
@@ -691,11 +689,9 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
         if (event.player.gameMode != GameMode.CREATIVE) {
             if (event.player.inventory.itemInMainHand.itemMeta!!.displayName == flares.itemMeta!!.displayName) {
-                if (event.player.gameMode != GameMode.CREATIVE)
-                    event.player.inventory.itemInMainHand.amount -= 1
+                if (event.player.gameMode != GameMode.CREATIVE) event.player.inventory.itemInMainHand.amount -= 1
             } else if (event.player.inventory.itemInOffHand.itemMeta!!.displayName == flares.itemMeta!!.displayName) {
-                if (event.player.gameMode != GameMode.CREATIVE)
-                    event.player.inventory.itemInOffHand.amount -= 1
+                if (event.player.gameMode != GameMode.CREATIVE) event.player.inventory.itemInOffHand.amount -= 1
             } else {
                 Bukkit.getLogger().warning("Flare item not found in ${event.player}'s hand but was activated")
             }
@@ -739,6 +735,21 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         }
         if (!event.entity.scoreboardTags.contains("Turret")) return
         event.isCancelled = true
+    }
+
+    private fun onChunkLoad(event: ChunkLoadEvent){
+        event.chunk.entities.forEach { entity ->
+            if (turrets.contains(entity))
+                return@forEach
+            if (entity is ArmorStand && entity.scoreboardTags.contains("Turret")) {
+                turrets.add(entity)
+                if (entity.persistentDataContainer.get(activeKey, PersistentDataType.BOOLEAN) == true) {
+                    activeTurrets.add(entity)
+                } else {
+                    inactiveTurrets.add(entity)
+                }
+            }
+        }
     }
 
     @EventHandler
@@ -938,7 +949,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     @EventHandler
     private fun onArmorStandPlace(event: PlayerInteractEvent) {
         if (event.item == null) return
-        if (event.item!!.itemMeta!!.lore == turretItem.itemMeta!!.lore && event.action == Action.RIGHT_CLICK_BLOCK) {
+        if (event.item?.itemMeta?.lore == turretItem.itemMeta!!.lore && event.action == Action.RIGHT_CLICK_BLOCK) {
             turrets.forEach { turret ->
                 if (event.clickedBlock!!.location.add(0.5, 1.0, 0.5).distance(turret.location) < 0.5) {
                     event.isCancelled = true

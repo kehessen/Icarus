@@ -32,6 +32,8 @@ Base:
   disable-block-breaking: false
   # Whether to disable block placing for other teams in the base
   disable-block-placing: false
+  # Whether to disable block interaction for other teams in the base
+  disable-block-interacting: true
   # Whether to disable creepers spawning in the base
   prevent-creeper-spawn: true
 
