@@ -53,16 +53,16 @@ class Base(config: FileConfiguration) : Listener {
 
     fun isProtected(location: Location): Boolean {
         if (!bombProtection) return false
-        return bases.any { it.location.world == location.world && it.location.distance(location) <= range.toDouble() }
+        return bases.any { it.world == location.world && it.location.distance(location) <= range.toDouble() }
     }
 
     fun isBase(loc: Location): Boolean {
-        return bases.any { it.location.distance(loc) <= range.toDouble() }
+        return bases.any { it.world == loc.world && it.location.distance(loc) <= range.toDouble() }
     }
 
     fun baseTeam(loc: Location): Team? {
         bases.forEach {
-            if (it.location.distance(loc) <= range.toDouble()) {
+            if (it.world == loc.world && it.location.distance(loc) <= range.toDouble()) {
                 return sb!!.getEntryTeam(it.uniqueId.toString())!!
             }
         }

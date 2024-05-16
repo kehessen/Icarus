@@ -94,7 +94,7 @@ class DisableBeaconBeam : Listener, CommandExecutor {
             .filterIsInstance<ArmorStand>()
             .firstOrNull { it.scoreboardTags.contains("beacon") } ?: return
         if (!armorStand.isValid) {
-            Bukkit.getLogger().warning("Armorstand associated with beacon at ${event.block.location} is not valid")
+            Bukkit.getLogger().warning("[Icarus] Armorstand associated with beacon at ${event.block.location} is not valid")
             return
         }
         armorStand.remove()

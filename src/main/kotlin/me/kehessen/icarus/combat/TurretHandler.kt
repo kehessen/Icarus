@@ -214,7 +214,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                 inactiveTurrets.clear()
                 turrets.clear()
                 stopReachCheckTask()
-                Bukkit.getLogger().info("Disabled turret reach checker since all turrets were removed")
+                Bukkit.getLogger().info("[Icarus] Disabled turret reach checker since all turrets were removed")
                 return true
             }
 
@@ -302,7 +302,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                                     targets.add(player)
                                     lockedOn[turret] = player
                                     if (shootTaskIDs.isEmpty()) {
-                                        Bukkit.getLogger().info("Players in range, starting turret tasks")
+                                        Bukkit.getLogger().info("[Icarus] Players in range, starting turret tasks")
                                         startTasks()
                                     }
                                 }
@@ -321,7 +321,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         targets.removeIf { player -> !shooter.containsValue(player) }
 
         if (shootTaskIDs.isNotEmpty() && targets.isEmpty()) {
-            Bukkit.getLogger().info("No players in range, stopping turret tasks")
+            Bukkit.getLogger().info("[Icarus] No players in range, stopping turret tasks")
             stopTasks()
         }
         val disabled = mutableSetOf<ArmorStand>()
@@ -338,7 +338,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                 disabled.add(turret)
                 turret.persistentDataContainer.set(activeKey, PersistentDataType.BOOLEAN, false)
                 turret.persistentDataContainer.set(ammoKey, PersistentDataType.INTEGER, 0)
-                Bukkit.getLogger().info("Turret with ID ${turret.uniqueId} out of ammo, deactivated")
+                Bukkit.getLogger().info("[Icarus] Turret with ID ${turret.uniqueId} out of ammo, deactivated")
             }
         }
         if (disabled.isNotEmpty()) {
@@ -355,12 +355,12 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                 // add hit delay if not targeted
                 if (player.maximumNoDamageTicks != 20) {
                     player.maximumNoDamageTicks = 20
-                    Bukkit.getLogger().info("Added hit delay to ${player.name}, player is not turret target")
+                    Bukkit.getLogger().info("[Icarus] Added hit delay to ${player.name}, player is not turret target")
                 }
                 // remove hit delay if targeted
             } else if (player.maximumNoDamageTicks != 0) {
                 player.maximumNoDamageTicks = 0
-                Bukkit.getLogger().info("Removed hit delay from ${player.name}, player is turret target")
+                Bukkit.getLogger().info("[Icarus] Removed hit delay from ${player.name}, player is turret target")
             }
         }
     }
@@ -419,12 +419,12 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     // THIS SHOULD ALWAYS RUN, EVEN IF NO PLAYERS ARE ONLINE
     private fun performanceChecks() {
         if (Bukkit.getOnlinePlayers().isEmpty() && reachCheckTaskID != null) {
-            Bukkit.getLogger().info("No players online, stopping tasks")
+            Bukkit.getLogger().info("[Icarus] No players online, stopping tasks")
             stopReachCheckTask()
 //            if (shootTaskID != null) stopTasks()
             if (shootTaskIDs.isNotEmpty()) stopTasks()
         } else if (activeTurrets.isEmpty() && shootTaskIDs.isNotEmpty()) {
-            Bukkit.getLogger().info("No turrets found, stopping tasks")
+            Bukkit.getLogger().info("[Icarus] No turrets found, stopping tasks")
             stopTasks()
             stopReachCheckTask()
         }
@@ -562,7 +562,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         reachCheckTaskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, {
             reachCheck()
         }, 0, distanceCheckDelay)
-        Bukkit.getLogger().info("Enabled turret reach checker")
+        Bukkit.getLogger().info("[Icarus] Enabled turret reach checker")
     }
 
     private fun stopReachCheckTask() {
@@ -693,7 +693,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             } else if (event.player.inventory.itemInOffHand.itemMeta!!.displayName == flares.itemMeta!!.displayName) {
                 if (event.player.gameMode != GameMode.CREATIVE) event.player.inventory.itemInOffHand.amount -= 1
             } else {
-                Bukkit.getLogger().warning("Flare item not found in ${event.player}'s hand but was activated")
+                Bukkit.getLogger().warning("[Icarus] Flare item not found in ${event.player}'s hand but was activated")
             }
         }
 
@@ -737,10 +737,9 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         event.isCancelled = true
     }
 
+    @EventHandler
     private fun onChunkLoad(event: ChunkLoadEvent){
         event.chunk.entities.forEach { entity ->
-            if (turrets.contains(entity))
-                return@forEach
             if (entity is ArmorStand && entity.scoreboardTags.contains("Turret")) {
                 turrets.add(entity)
                 if (entity.persistentDataContainer.get(activeKey, PersistentDataType.BOOLEAN) == true) {
@@ -821,7 +820,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                     i.itemMeta = meta
                     event.clickedInventory!!.setItem(10, i)
                     turret!!.persistentDataContainer.set(activeKey, PersistentDataType.BOOLEAN, false)
-                    Bukkit.getLogger().info("Turret with ID ${turret.uniqueId} deactivated")
+                    Bukkit.getLogger().info("[Icarus] Turret with ID ${turret.uniqueId} deactivated")
                     activeTurrets.remove(turret)
                     inactiveTurrets.add(turret)
                     event.isCancelled = true
@@ -840,7 +839,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                     i.itemMeta = meta
                     event.clickedInventory!!.setItem(10, i)
                     turret!!.persistentDataContainer.set(activeKey, PersistentDataType.BOOLEAN, true)
-                    Bukkit.getLogger().info("Turret with ID ${turret.uniqueId} activated")
+                    Bukkit.getLogger().info("[Icarus] Turret with ID ${turret.uniqueId} activated")
                     activeTurrets.add(turret)
                     inactiveTurrets.remove(turret)
                     event.isCancelled = true
@@ -897,7 +896,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                 activeTurrets.remove(turret)
                 inactiveTurrets.remove(turret)
                 turrets.remove(turret)
-                Bukkit.getLogger().info("$player picked up turret with ID ${turret.uniqueId}")
+                Bukkit.getLogger().info("[Icarus] $player picked up turret with ID ${turret.uniqueId}")
                 event.isCancelled = true
             }
 
