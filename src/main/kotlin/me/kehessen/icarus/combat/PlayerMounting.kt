@@ -183,12 +183,12 @@ class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, Tab
         if (event.action != Action.LEFT_CLICK_AIR) return
         if (event.item!!.itemMeta?.displayName != customWeapon.itemMeta!!.displayName) return
 
-        val potionEffect = event.player.getPotionEffect(PotionEffectType.SLOW)
+        val potionEffect = event.player.getPotionEffect(PotionEffectType.SLOWNESS)
         when {
             potionEffect == null -> {
                 event.player.addPotionEffect(
                     PotionEffect(
-                        PotionEffectType.SLOW, INFINITE_DURATION, 3, false, false, false
+                        PotionEffectType.SLOWNESS, INFINITE_DURATION, 3, false, false, false
                     )
                 )
             }
@@ -196,13 +196,13 @@ class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, Tab
             potionEffect.amplifier == 3 -> {
                 event.player.addPotionEffect(
                     PotionEffect(
-                        PotionEffectType.SLOW, INFINITE_DURATION, 6, false, false, false
+                        PotionEffectType.SLOWNESS, INFINITE_DURATION, 6, false, false, false
                     )
                 )
             }
 
             else -> {
-                event.player.removePotionEffect(PotionEffectType.SLOW)
+                event.player.removePotionEffect(PotionEffectType.SLOWNESS)
             }
         }
         event.isCancelled = true
@@ -217,7 +217,7 @@ class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, Tab
                 mountedPlayers.remove(player)
                 player.inventory.removeItem(customWeapon)
                 plane.sendMessage("§c${player.name} is no longer your gunman")
-                player.removePotionEffect(PotionEffectType.SLOW)
+                player.removePotionEffect(PotionEffectType.SLOWNESS)
             }
         }
     }

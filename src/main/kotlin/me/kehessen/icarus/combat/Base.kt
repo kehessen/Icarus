@@ -1,10 +1,7 @@
 package me.kehessen.icarus.combat
 
 import me.kehessen.icarus.util.CustomItem
-import org.bukkit.Bukkit
-import org.bukkit.Location
-import org.bukkit.Material
-import org.bukkit.NamespacedKey
+import org.bukkit.*
 import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.entity.ArmorStand
 import org.bukkit.entity.EntityType
@@ -33,6 +30,7 @@ class Base(config: FileConfiguration) : Listener {
     private val disableBlockPlacing = config.getBoolean("Base.disable-block-placing")
     private val disableInteract = config.getBoolean("Base.disable-block-interacting")
     private val preventCreeper = config.getBoolean("Base.prevent-creeper-spawn")
+    private val showParticles = config.getBoolean("Base.show-particles")
 
     internal val baseItem =
         CustomItem(Material.ARMOR_STAND, "§aBase", "§7Place to create a base", "§7Max bases per team: $maxBases")
@@ -49,6 +47,14 @@ class Base(config: FileConfiguration) : Listener {
         reloadBases()
 
         addRecipe()
+        
+        if(showParticles) {
+            Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("Icarus")!!, {
+                bases.forEach {
+                    displayBaseParticles(it.location)
+                }
+            }, 0, 100)
+        }
     }
 
     fun isProtected(location: Location): Boolean {
@@ -67,6 +73,15 @@ class Base(config: FileConfiguration) : Listener {
             }
         }
         return null
+    }
+    
+    private fun displayBaseParticles(loc: Location) {
+        for (i in 0 until 360 step 1) {
+            val x = cos(Math.toRadians(i.toDouble())) * range
+            val z = sin(Math.toRadians(i.toDouble())) * range
+            val startPosition = loc.clone().add(x, 0.0, z)
+            loc.world!!.spawnParticle(Particle.HAPPY_VILLAGER, startPosition, 1)
+        }
     }
 
     private fun addRecipe() {
@@ -113,7 +128,7 @@ class Base(config: FileConfiguration) : Listener {
         armorStand.scoreboardTags.add("BaseMarker")
         armorStand.isInvulnerable = true
         armorStand.setGravity(false)
-        armorStand.customName = "Base"
+        armorStand.customName = "Base of ${sb!!.getEntryTeam(event.player.name)!!.name}"
         armorStand.isCustomNameVisible = true
         armorStand.removeWhenFarAway = false
 
@@ -125,7 +140,7 @@ class Base(config: FileConfiguration) : Listener {
             val x = cos(Math.toRadians(i.toDouble())) * range
             val z = sin(Math.toRadians(i.toDouble())) * range
             val startPosition = armorStand.location.clone().add(x, 0.0, z)
-            event.player.world.spawnParticle(org.bukkit.Particle.VILLAGER_HAPPY, startPosition, 1)
+            event.player.world.spawnParticle(org.bukkit.Particle.HAPPY_VILLAGER, startPosition, 1)
         }
     }
 
@@ -174,6 +189,7 @@ class Base(config: FileConfiguration) : Listener {
         if (event.action != Action.RIGHT_CLICK_BLOCK) return
         if (event.clickedBlock == null) return
         if (!disableInteract) return
+        if (baseTeam(event.clickedBlock!!.location) == null) return
         if (isBase(event.clickedBlock!!.location) && baseTeam(event.clickedBlock!!.location) != sb!!.getEntryTeam(event.player.name)!!) {
             event.isCancelled = true
         }

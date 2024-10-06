@@ -4,10 +4,7 @@ import me.kehessen.icarus.util.CustomItem
 import net.md_5.bungee.api.chat.HoverEvent
 import net.md_5.bungee.api.chat.TextComponent
 import net.md_5.bungee.api.chat.hover.content.Text
-import org.bukkit.Bukkit
-import org.bukkit.Location
-import org.bukkit.Material
-import org.bukkit.NamespacedKey
+import org.bukkit.*
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -40,7 +37,7 @@ import kotlin.random.Random
 
 // anything over yield 5 can destroy turrets
 // wanted to do a custom advancement, but it would require a dependency which is annoying
-@Suppress("Duplicates", "unused")
+@Suppress("unused")
 class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor, TabCompleter, Listener {
 
     internal var smallBombItem = CustomItem(
@@ -90,6 +87,12 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
     private var smallSpeedLimit = config.getDouble("Bomb.small-speed-limit")
     private var mediumSpeedLimit = config.getDouble("Bomb.medium-speed-limit")
     private var largeSpeedLimit = config.getDouble("Bomb.large-speed-limit")
+    
+    private val dropAmmonium = config.getBoolean("Bomb.drop-ammonium-nitrate")
+    private val dropPlutonium = config.getBoolean("Bomb.drop-plutonium")
+    
+    private val ammoniumChance = config.getInt("Bomb.ammonium-nitrate-chance")
+    private val plutoniumChance = config.getInt("Bomb.plutonium-chance")
 
     private var playersWithSmallBomb = mutableSetOf<Player>()
     private var playersWithMediumBomb = mutableSetOf<Player>()
@@ -285,13 +288,13 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
 
             val block = bomb.location.subtract(0.0, 1.0, 0.0).block.type
             if (bomb.fuseTicks >= 1) {
-                owner.addPotionEffect(PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 20, 7))
+                owner.addPotionEffect(PotionEffect(PotionEffectType.RESISTANCE, 20, 7))
             }
 
             if (block != Material.AIR && block != Material.CAVE_AIR && block != Material.VOID_AIR) {
                 Bukkit.getScheduler().cancelTask(activeTasks[bomb]!!)
                 bomb.world.spawnParticle(org.bukkit.Particle.FLAME, bomb.location, 300, 1.0, 1.0, 1.0, 0.5)
-                owner.addPotionEffect(PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 20, 7))
+                owner.addPotionEffect(PotionEffect(PotionEffectType.RESISTANCE, 20, 7))
                 bomb.fuseTicks = 0
             }
             if (bomb.isDead) {
@@ -365,11 +368,11 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
     @EventHandler
     private fun onItemDrop(event: EntityDeathEvent) {
         if (event.entity.type != EntityType.CREEPER || event.entity.killer !is Player || event.entity.killer!!.inventory.itemInMainHand.containsEnchantment(
-                Enchantment.LOOT_BONUS_MOBS
+                Enchantment.FORTUNE
             )
         ) return
         val player = event.entity.killer!!
-        if (java.util.Random().nextInt(0, 20) == 19) {
+        if (java.util.Random().nextInt(0, ammoniumChance) == 0 && dropAmmonium) {
             event.drops.add(ammoniumNitrate)
             if (!player.hasDiscoveredRecipe(
                     NamespacedKey(
@@ -384,7 +387,7 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
                 )
             }
         }
-        if (Random.nextInt(0, 200) == 199) {
+        if (Random.nextInt(0, plutoniumChance) == 0 && dropPlutonium) {
             event.drops.add(plutoniumCore)
             if (!player.hasDiscoveredRecipe(
                     NamespacedKey(
@@ -412,19 +415,19 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
         when (event.item!!.itemMeta) {
             smallBombItem.itemMeta -> {
                 spawnBomb(event.player, smallBombYield.toFloat(), fuseTicks)
-                if (event.player.gameMode != org.bukkit.GameMode.CREATIVE) event.item!!.amount--
+                if (event.player.gameMode != GameMode.CREATIVE) event.item!!.amount--
                 checkItems(event.player)
             }
 
             mediumBombItem.itemMeta -> {
                 spawnBomb(event.player, mediumBombYield.toFloat(), fuseTicks)
-                if (event.player.gameMode != org.bukkit.GameMode.CREATIVE) event.item!!.amount--
+                if (event.player.gameMode != GameMode.CREATIVE) event.item!!.amount--
                 checkItems(event.player)
             }
 
             largeBombItem.itemMeta -> {
                 spawnBomb(event.player, largeBombYield.toFloat(), fuseTicks)
-                if (event.player.gameMode != org.bukkit.GameMode.CREATIVE) event.item!!.amount--
+                if (event.player.gameMode != GameMode.CREATIVE) event.item!!.amount--
                 checkItems(event.player)
             }
         }

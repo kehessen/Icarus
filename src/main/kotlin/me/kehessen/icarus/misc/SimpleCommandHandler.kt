@@ -25,6 +25,14 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
 
     @Suppress("DuplicatedCode")
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
+        if (command.name == "announce") {
+            if (args.isEmpty()) {
+                sender.sendMessage("§cInvalid arguments")
+                return true
+            }
+            Bukkit.broadcastMessage("§4§l${args.joinToString(" ")}")
+            return true
+        }
         if (sender !is Player) return false
         val player = Bukkit.getPlayer(sender.name)
         when (command.name) {
@@ -44,15 +52,6 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
                     val sp = Bukkit.getWorld("world")?.spawnLocation
                     sender.sendMessage("§aSpawn set to ${sp?.x} ${sp?.y} ${sp?.z}")
                 } else sender.teleport(Bukkit.getWorld("world")!!.spawnLocation)
-                return true
-            }
-
-            "announce" -> {
-                if (args.isEmpty()) {
-                    sender.sendMessage("§cInvalid arguments")
-                    return true
-                }
-                Bukkit.broadcastMessage("§4§l${args.joinToString(" ")}")
                 return true
             }
 

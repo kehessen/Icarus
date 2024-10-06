@@ -22,6 +22,8 @@ Combat:
 Base:
   # radius of the base
   range: 100
+  # Whether 
+  show-particles: true
   # Whether to disable bombs dropped in the base
   # Also includes airstrikes
   bomb-protection: true
@@ -90,7 +92,15 @@ Bomb:
   small-yield: 6
   medium-yield: 15
   large-yield: 75
-
+  
+  drop-ammonium-nitrate: true
+  drop-plutonium: true
+  
+  # The chance of a creeper dropping ammonium nitrate (1/x)
+  ammonium-nitrate-chance: 20
+  # The chance of a creeper dropping plutonium (1/x)
+  plutonium-chance: 200
+  
   # The maximum speed a player is allowed to fly if he is carrying a certain bomb
   small-speed-limit: 0.8
   medium-speed-limit: 0.6

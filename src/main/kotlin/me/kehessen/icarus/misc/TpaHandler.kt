@@ -15,7 +15,6 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.player.PlayerQuitEvent
 import java.sql.Time
 
-@Suppress("unused")
 class TpaHandler(private val combatTime: CombatTime, config: FileConfiguration) : CommandExecutor, TabCompleter {
     private var map = hashMapOf<Player, Player>()
     private val canTeleportInCombat = config.getBoolean("combat.can-teleport-in-combat")

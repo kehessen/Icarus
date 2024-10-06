@@ -416,7 +416,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         }
     }
 
-    // THIS SHOULD ALWAYS RUN, EVEN IF NO PLAYERS ARE ONLINE
+    // this should always run, even if no players are online
     private fun performanceChecks() {
         if (Bukkit.getOnlinePlayers().isEmpty() && reachCheckTaskID != null) {
             Bukkit.getLogger().info("[Icarus] No players online, stopping tasks")
@@ -593,6 +593,13 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                 turret.persistentDataContainer.set(shotDelayKey, PersistentDataType.LONG, shotDelay)
             }
             turretSpeeds[turret] = turret.persistentDataContainer.get(shotDelayKey, PersistentDataType.LONG)!!
+        }
+        turrets.forEach{ turret ->
+            if (turret.persistentDataContainer.get(activeKey, PersistentDataType.BOOLEAN) == true) {
+                turret.customName = "§cTurret"
+            } else {
+                turret.customName = "§cTurret (inactive)"
+            }
         }
         updateSettings()
     }
@@ -823,6 +830,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                     Bukkit.getLogger().info("[Icarus] Turret with ID ${turret.uniqueId} deactivated")
                     activeTurrets.remove(turret)
                     inactiveTurrets.add(turret)
+                    turret.customName = "§cTurret (inactive)"
                     event.isCancelled = true
                 }
             }
@@ -842,6 +850,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                     Bukkit.getLogger().info("[Icarus] Turret with ID ${turret.uniqueId} activated")
                     activeTurrets.add(turret)
                     inactiveTurrets.remove(turret)
+                    turret.customName = "§cTurret"
                     event.isCancelled = true
                 }
             }
@@ -970,7 +979,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     private fun onItemDrop(event: EntityDeathEvent) {
         if (event.entity.killer == null || event.entity.killer !is Player) return
         if (event.entity.type == EntityType.ENDERMAN && event.entity.world.environment == World.Environment.NORMAL && (!event.entity.killer!!.inventory.itemInMainHand.enchantments.contains(
-                Enchantment.LOOT_BONUS_MOBS
+                Enchantment.FORTUNE
             ))
         ) {
             // 50% drop chance

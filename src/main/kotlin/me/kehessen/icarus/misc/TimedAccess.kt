@@ -44,7 +44,7 @@ class TimedAccess(config: FileConfiguration) : Listener {
             Bukkit.broadcastMessage("§cServer will close in ${(close - nowMillis) / 1000 / 60 + 1} minutes")
         }
         if ((nowMillis < open || nowMillis > close) && !isClosed) {
-            Bukkit.broadcastMessage("§cServer closing...")
+            Bukkit.broadcastMessage("§cEnabling whitelist...")
             Bukkit.getServer().setWhitelist(true)
             Bukkit.getOnlinePlayers().forEach {
                 if (!it.isWhitelisted)
