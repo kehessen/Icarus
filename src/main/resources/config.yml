@@ -44,9 +44,10 @@ Turret:
   # Default value for the shot delay when places, can be changed to 1-5 ticks in the turret menu
   shot-delay: 3
   particle-delay: 0
+  glowing-arrow: true
   # The number of particles each arrow spawns per tick
-  particle-amount: 20
-  particle-spread: 0.2
+  particle-amount: 10
+  particle-spread: 0.4
   reach: 192
   damage: 0.5
   arrow-speed-multiplier: 5
@@ -55,7 +56,7 @@ Turret:
   # Tick delay between performance checks (automatically disable turret tasks if no player is online etc.)
   performance-check-delay: 600
   # whether the arrow is burning or not
-  burning-arrow: true
+  burning-arrow: false
   # whether the turret makes noise when shooting
   silenced: false
 

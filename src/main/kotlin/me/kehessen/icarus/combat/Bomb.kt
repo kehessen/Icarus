@@ -31,8 +31,6 @@ import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.RecipeChoice
 import org.bukkit.inventory.ShapedRecipe
-import org.bukkit.potion.PotionEffect
-import org.bukkit.potion.PotionEffectType
 import kotlin.random.Random
 
 // anything over yield 5 can destroy turrets
@@ -87,10 +85,10 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
     private var smallSpeedLimit = config.getDouble("Bomb.small-speed-limit")
     private var mediumSpeedLimit = config.getDouble("Bomb.medium-speed-limit")
     private var largeSpeedLimit = config.getDouble("Bomb.large-speed-limit")
-    
+
     private val dropAmmonium = config.getBoolean("Bomb.drop-ammonium-nitrate")
     private val dropPlutonium = config.getBoolean("Bomb.drop-plutonium")
-    
+
     private val ammoniumChance = config.getInt("Bomb.ammonium-nitrate-chance")
     private val plutoniumChance = config.getInt("Bomb.plutonium-chance")
 
@@ -98,7 +96,11 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
     private var playersWithMediumBomb = mutableSetOf<Player>()
     private var playersWithLargeBomb = mutableSetOf<Player>()
 
+    private var activeBombs = ArrayList<TNTPrimed>()
+
     private val activeTasks = hashMapOf<TNTPrimed, Int>()
+
+    private var explosionCheckTask: Int? = null
 
 
     internal var ammoniumNitrate = CustomItem(Material.SUGAR, "§r§cAmmonium Nitrate", "§fUsed to craft Bombs")
@@ -283,26 +285,60 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
         }
     }
 
-    private fun explosionCheck(bomb: TNTPrimed, owner: Player) {
-        val task = Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("Icarus")!!, {
+//    private fun explosionCheck(bomb: TNTPrimed, owner: Player) {
+//        val task = Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("Icarus")!!, {
+//
+//            val block = bomb.location.subtract(0.0, 1.0, 0.0).block.type
+//
+//            if (block != Material.AIR && block != Material.CAVE_AIR && block != Material.VOID_AIR) {
+//                Bukkit.getScheduler().cancelTask(activeTasks[bomb]!!)
+//                bomb.world.spawnParticle(org.bukkit.Particle.FLAME, bomb.location, 300, 1.0, 1.0, 1.0, 0.5)
+//                owner.addPotionEffect(PotionEffect(PotionEffectType.RESISTANCE, 10, 7))
+//                bomb.fuseTicks = 0
+//            }
+//            if (bomb.isDead) {
+//                Bukkit.getScheduler().cancelTask(activeTasks[bomb]!!)
+//            }
+//
+//        }, 0, 1)
+//        activeTasks[bomb] = task
+//    }
 
-            val block = bomb.location.subtract(0.0, 1.0, 0.0).block.type
-            if (bomb.fuseTicks >= 1) {
-                owner.addPotionEffect(PotionEffect(PotionEffectType.RESISTANCE, 20, 7))
-            }
-
-            if (block != Material.AIR && block != Material.CAVE_AIR && block != Material.VOID_AIR) {
-                Bukkit.getScheduler().cancelTask(activeTasks[bomb]!!)
-                bomb.world.spawnParticle(org.bukkit.Particle.FLAME, bomb.location, 300, 1.0, 1.0, 1.0, 0.5)
-                owner.addPotionEffect(PotionEffect(PotionEffectType.RESISTANCE, 20, 7))
-                bomb.fuseTicks = 0
-            }
-            if (bomb.isDead) {
-                Bukkit.getScheduler().cancelTask(activeTasks[bomb]!!)
-            }
-
-        }, 0, 1)
-        activeTasks[bomb] = task
+    private fun explosionCheck() {
+        if (explosionCheckTask != null) return
+        explosionCheckTask =
+            Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("Icarus")!!, {
+                if (activeBombs.isEmpty()) {
+                    Bukkit.getScheduler().cancelTask(explosionCheckTask!!)
+                    explosionCheckTask = null
+                    return@scheduleSyncRepeatingTask
+                }
+                val iterator = activeBombs.iterator()
+                while (iterator.hasNext()) {
+                    val bomb = iterator.next()
+                    val block = bomb.location.subtract(0.0, 1.0, 0.0).block.type
+                    if (bomb.isDead || bomb.fuseTicks < 1) {
+                        bomb.world.createExplosion(bomb.location, bomb.yield)
+                        iterator.remove()
+                        continue
+                    }
+                    if (block != Material.AIR && block != Material.CAVE_AIR && block != Material.VOID_AIR) {
+                        bomb.world.spawnParticle(
+                            org.bukkit.Particle.FLAME,
+                            bomb.location,
+                            (bomb.yield * 20).toInt(),
+                            1.0,
+                            1.0,
+                            1.0,
+                            0.5
+                        )
+                        bomb.fuseTicks = 0
+                        bomb.world.createExplosion(bomb.location, bomb.yield)
+                        bomb.remove()
+                        iterator.remove()
+                    }
+                }
+            }, 0, 1)
     }
 
     private fun reloadRockets() {
@@ -357,7 +393,9 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
         bomb.fuseTicks = fuseTime
         bomb.yield = yield
         bomb.isGlowing = true
-        explosionCheck(bomb, player)
+        bomb.velocity = player.location.direction.multiply(0.75)
+        activeBombs.add(bomb)
+        explosionCheck()
     }
 
     @EventHandler

@@ -31,24 +31,11 @@ import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.scoreboard.Scoreboard
+import org.bukkit.scoreboard.Team
 import java.util.*
 import kotlin.math.cos
 import kotlin.math.sin
 
-// entity activation range has to be set to 500 for arrows to fly correctly
-// this has to be permanent since it requires a server restart to change
-// entities this applies to:
-// - Item frames
-// - Paintings
-// - Dropped items
-// - Experience orbs
-// - Sign text
-// - Arrows
-// - Boats
-// - Minecarts (including chest minecarts and furnace minecarts)
-// - Falling sand entities
-// - Leash knots
-// - Armor stands
 @Suppress("unused")
 class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, private val menu: MenuHandler) :
     CommandExecutor, TabCompleter, Listener {
@@ -61,7 +48,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     private val particleSpread = config.getDouble("Turret.particle-spread")
     private var turretReach = config.getInt("Turret.reach")
     private var arrowDamage = config.getDouble("Turret.damage")
-    private var ammo: Int = 0
+    private var initialAmmo: Int = 0
 
     // blocks per tick
     private val speedMultiplier: Float = config.getInt("Turret.arrow-speed-multiplier").toFloat()
@@ -73,6 +60,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
     // ---options---
     private var burningArrow: Boolean = config.getBoolean("Turret.burning-arrow")
+    private var glowingArrow: Boolean = config.getBoolean("Turret.glowing-arrow")
     private var silenced: Boolean = config.getBoolean("Turret.silenced")
 
 
@@ -133,49 +121,16 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     )
 
 
-    // multiple tasks for different shot delays, up to 5 -> better than creating a new class hehehehaw
+    // multiple tasks for different shot delays, up to 5 -> better than creating a new class 
     private var shootTaskIDs: MutableSet<Int> = mutableSetOf()
     private var particleTaskID: Int? = null
     private var reachCheckTaskID: Int? = null
     private var performanceCheckTaskID: Int? = null
 
+    private lateinit var arrowTeam: Team
+
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
-        if (args[0] == "shotDelay") {
-            val newDelay = args[1].toIntOrNull()
-            if (args.size != 2 || newDelay == null) {
-                sender.sendMessage("§cInvalid arguments")
-                return true
-            }
-            if (newDelay < 1 || newDelay > 100) {
-                sender.sendMessage("§cInvalid number")
-                return true
-            }
-            shotDelay = newDelay.toLong()
-            turrets.forEach { turret ->
-                turret.persistentDataContainer.set(
-                    shotDelayKey, PersistentDataType.LONG, shotDelay
-                )
-                turretSpeeds[turret] = shotDelay
-            }
-            if (shootTaskIDs.isNotEmpty()) {
-                stopTasks()
-                startTasks()
-            }
-            sender.sendMessage("§aTurret shot delay set to $newDelay ticks")
-            return true
-        }
-        if (args[0] == "missilelock") {
-            if (args.size != 2) {
-                sender.sendMessage("§cInvalid arguments")
-                return true
-            }
-            if (sender !is Player) {
-                sender.sendMessage("§cInvalid sender")
-                return false
-            }
-            Bukkit.getPlayer(args[1])?.playSound(sender.location, customSound, 100f, 1f)
-            return true
-        }
+        args[0].lowercase()
 
         // needs to be after commands with multiple arguments
         if (args.size != 1) {
@@ -183,7 +138,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             return true
         }
         when (args[0]) {
-            "burningArrow" -> {
+            "burningarrow" -> {
                 burningArrow = !burningArrow
                 if (burningArrow) {
                     sender.sendMessage("§aTurrets now shoot burning arrows")
@@ -199,7 +154,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                 return true
             }
 
-            "remove" -> {
+            "removeall" -> {
                 turrets.forEach { turret ->
                     sender.sendMessage("§a Removed turret with ID ${turret.entityId}")
                     turret.remove()
@@ -228,33 +183,8 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                 return true
             }
 
-            "spawn" -> {
-                if (Bukkit.getPlayer(sender.name) !is Player) return false
-                startReachCheckTask()
-                spawnTurret(Bukkit.getPlayer(sender.name)!!, Bukkit.getPlayer(sender.name)!!.location)
-                return true
-            }
-
             "targets" -> {
                 sender.sendMessage("§aTargets: ${targets.joinToString { it.name }}")
-                return true
-            }
-
-            "getEnderPearl" -> {
-                if (sender !is Player) {
-                    sender.sendMessage("§cInvalid sender")
-                    return false
-                }
-                sender.inventory.addItem(customEnderPearl)
-                return true
-            }
-
-            "give" -> {
-                if (sender !is Player) {
-                    sender.sendMessage("§cInvalid sender")
-                    return false
-                }
-                sender.inventory.addItem(turretItem)
                 return true
             }
 
@@ -382,7 +312,9 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                     arrow.setGravity(false)
                     arrow.damage = arrowDamage
                     arrow.isSilent = true
-                    arrow.isVisualFire = burningArrow
+//                    arrow.isVisualFire = burningArrow
+                    arrowTeam.addEntry(arrow.uniqueId.toString())
+                    arrow.isGlowing = true
                     activeArrows[arrow] = arrowLifeTime
                     arrow.shooter = turret
 
@@ -448,7 +380,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
         sb!!.getEntryTeam(player.name)!!.addEntry(armorStand.uniqueId.toString())
 
-        armorStand.persistentDataContainer.set(ammoKey, PersistentDataType.INTEGER, ammo)
+        armorStand.persistentDataContainer.set(ammoKey, PersistentDataType.INTEGER, initialAmmo)
         armorStand.persistentDataContainer.set(activeKey, PersistentDataType.BOOLEAN, true)
         armorStand.persistentDataContainer.set(damageKey, PersistentDataType.DOUBLE, arrowDamage)
         armorStand.persistentDataContainer.set(reachKey, PersistentDataType.INTEGER, turretReach)
@@ -464,10 +396,23 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         Bukkit.getPluginCommand("turret")?.tabCompleter = this
         Bukkit.getPluginManager().registerEvents(this, plugin)
         sb = Bukkit.getScoreboardManager()!!.mainScoreboard
+        if (sb!!.getTeam("TurretArrows") == null) {
+            arrowTeam = sb!!.registerNewTeam("TurretArrows")
+            arrowTeam.color = ChatColor.RED
+        } else arrowTeam = sb!!.getTeam("TurretArrows")!!
         reloadTurrets()
         startPerformanceCheckTask()
         startReachCheckTask()
         addRecipes()
+
+        val activationRange =
+            Bukkit.getServer().spigot().config.getInt("world-settings.default.entity-activation-range.misc")
+        if (activationRange < turretReach) {
+            Bukkit.getLogger()
+                .warning("[Icarus] Entity activation range is set to $activationRange, this may cause issues with turrets shooting correctly")
+            Bukkit.getLogger()
+                .warning("[Icarus] Please set entity-activation-range at lease to $turretReach in spigot.yml to prevent issues")
+        }
     }
 
     fun disableAllTurrets() {
@@ -508,8 +453,13 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         val tasksToStart = mutableSetOf<Long>()
         activeTurrets.forEach { turret ->
             if (turretSpeeds[turret] == null) {
-                turretSpeeds[turret] = shotDelay
-                turret.persistentDataContainer.set(shotDelayKey, PersistentDataType.LONG, shotDelay)
+                val tspeed = turret.persistentDataContainer.get(shotDelayKey, PersistentDataType.LONG)
+                if (tspeed != null)
+                    turretSpeeds[turret] = tspeed
+                else {
+                    turretSpeeds[turret] = shotDelay
+                    turret.persistentDataContainer.set(shotDelayKey, PersistentDataType.LONG, shotDelay)
+                }
             }
             tasksToStart.add(turretSpeeds[turret]!!)
         }
@@ -594,7 +544,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             }
             turretSpeeds[turret] = turret.persistentDataContainer.get(shotDelayKey, PersistentDataType.LONG)!!
         }
-        turrets.forEach{ turret ->
+        turrets.forEach { turret ->
             if (turret.persistentDataContainer.get(activeKey, PersistentDataType.BOOLEAN) == true) {
                 turret.customName = "§cTurret"
             } else {
@@ -653,7 +603,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                     }
                     return@inner
                 } else when (keyName) {
-                    "ammo" -> turret.persistentDataContainer.set(key, PersistentDataType.INTEGER, ammo)
+                    "ammo" -> turret.persistentDataContainer.set(key, PersistentDataType.INTEGER, initialAmmo)
                     "active" -> {
                         turret.persistentDataContainer.set(key, PersistentDataType.BOOLEAN, true)
                         activeTurrets.add(turret)
@@ -745,7 +695,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     }
 
     @EventHandler
-    private fun onChunkLoad(event: ChunkLoadEvent){
+    private fun onChunkLoad(event: ChunkLoadEvent) {
         event.chunk.entities.forEach { entity ->
             if (entity is ArmorStand && entity.scoreboardTags.contains("Turret")) {
                 turrets.add(entity)
@@ -1002,21 +952,13 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                 "burningArrow",
                 "disableAll",
                 "enableAll",
-                "give",
                 "reload",
-                "remove",
-                "shotDelay",
+                "removeAll",
                 "silence",
-                "spawn",
                 "targets",
-                "getEnderPearl",
-                "missilelock"
             )
         }
         return when {
-            p3.size == 2 && p3[0] == "shotDelay" -> {
-                mutableListOf("1", "2", "3", "4", "5")
-            }
 
             p3.size == 2 && p3[0] == "missilelock" -> {
                 Bukkit.getOnlinePlayers().map { it.name }.toMutableList()

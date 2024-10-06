@@ -167,6 +167,7 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
                 if (args.size == 1) {
                     val team = sb!!.teams.map { it.name }.toMutableList()
                     team.remove(sb!!.getEntryTeam(sender.name)?.name)
+                    team.remove(sb!!.getTeam("TurretArrows")!!.name)
                     return team
                 } else return mutableListOf("")
             }
