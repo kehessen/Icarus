@@ -59,24 +59,15 @@ class CombatTime(private val plugin: JavaPlugin, config: FileConfiguration) : Li
     }
 
     private fun onInterval() {
-        val keysToRemoveFromCombatTimeMap = HashSet<UUID>()
-        val keysToRemoveFromCurrentlyInCombat = HashSet<UUID>()
-
-        combatTimeMap.forEach { (key, value) ->
-            if (value == 0) {
-                keysToRemoveFromCombatTimeMap.add(key)
-                keysToRemoveFromCurrentlyInCombat.add(key)
-
-            } else {
-                combatTimeMap[key] = value - 1
+        val iterator = combatTimeMap.iterator()
+        while (iterator.hasNext()) {
+            val entry = iterator.next()
+            if (entry.value == 0) {
+                iterator.remove()
+                currentlyInCombat.remove(entry.key)
+            } else if (Bukkit.getPlayer(entry.key)?.isOnline == true) {
+                combatTimeMap[entry.key] = entry.value - 1
             }
-        }
-
-        keysToRemoveFromCombatTimeMap.forEach { key ->
-            combatTimeMap.remove(key)
-        }
-        keysToRemoveFromCurrentlyInCombat.forEach { key ->
-            currentlyInCombat.remove(key)
         }
     }
 

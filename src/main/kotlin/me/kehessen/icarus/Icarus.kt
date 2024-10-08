@@ -23,7 +23,7 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
 
     private val chat = Chat()
     private val turretHandler = TurretHandler(this, config, menuHandler)
-    private val simpleCommandHandler = SimpleCommandHandler(combatTime, turretHandler)
+    private val simpleCommandHandler = SimpleCommandHandler(combatTime, turretHandler, base)
     private val tpaHandler = TpaHandler(combatTime, config)
     private val bomb = Bomb(config, base)
     private val playerMounting = PlayerMounting(config)

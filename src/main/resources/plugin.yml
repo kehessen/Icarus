@@ -16,6 +16,9 @@ commands:
   spawn:
     description: Teleport to the spawn
     usage: /spawn
+  base: 
+    description: Teleport to base
+    usage: /base
   combattime:
     description: Check someone's combat time
     usage: /combattime <player>

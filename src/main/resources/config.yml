@@ -28,8 +28,6 @@ Base:
   # Also includes airstrikes
   bomb-protection: true
   protect-from-napalm: false
-  # Maximum amount of bases a team can have
-  max-bases: 1
   # Whether to disable block breaking for other teams in the base
   disable-block-breaking: false
   # Whether to disable block placing for other teams in the base

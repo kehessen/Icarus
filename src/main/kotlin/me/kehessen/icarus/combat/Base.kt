@@ -5,6 +5,7 @@ import org.bukkit.*
 import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.entity.ArmorStand
 import org.bukkit.entity.EntityType
+import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
@@ -25,7 +26,7 @@ import kotlin.math.sin
 class Base(config: FileConfiguration) : Listener {
     private val range = config.getInt("Base.range")
     private val bombProtection = config.getBoolean("Base.bomb-protection")
-    private val maxBases = config.getInt("Base.max-bases")
+    private val maxBases = 1 // current teleport implementation doesn't support multiple bases, feel like multiple bases aren't necessary
     private val disableBlockBreaking = config.getBoolean("Base.disable-block-breaking")
     private val disableBlockPlacing = config.getBoolean("Base.disable-block-placing")
     private val disableInteract = config.getBoolean("Base.disable-block-interacting")
@@ -70,6 +71,16 @@ class Base(config: FileConfiguration) : Listener {
         bases.forEach {
             if (it.world == loc.world && it.location.distance(loc) <= range.toDouble()) {
                 return sb!!.getEntryTeam(it.uniqueId.toString())!!
+            }
+        }
+        return null
+    }
+    
+    fun getPlayerBase(player: Player): ArmorStand? {
+        Bukkit.getPluginManager().getPlugin("Icarus")!!.logger.info(bases.toString())
+        bases.forEach {
+            if (sb!!.getEntryTeam(it.uniqueId.toString()) == sb!!.getEntryTeam(player.name)) {
+                return it
             }
         }
         return null

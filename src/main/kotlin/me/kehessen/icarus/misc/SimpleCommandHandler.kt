@@ -1,5 +1,6 @@
 package me.kehessen.icarus.misc
 
+import me.kehessen.icarus.combat.Base
 import me.kehessen.icarus.combat.TurretHandler
 import net.md_5.bungee.api.chat.ClickEvent
 import net.md_5.bungee.api.chat.TextComponent
@@ -15,9 +16,9 @@ import org.bukkit.scoreboard.Scoreboard
 import org.bukkit.scoreboard.Team
 
 @Suppress("unused")
-class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: TurretHandler) : CommandExecutor,
+class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: TurretHandler, private val baseHan: Base) : CommandExecutor,
     TabCompleter {
-    private var disabledCombatCommands = listOf("spawn", "tpa")
+    private var disabledCombatCommands = listOf("spawn", "tpa", "base")
 
     private var sb: Scoreboard? = null
     private val pendingInvites = hashMapOf<Player, Team>()
@@ -34,7 +35,7 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
             return true
         }
         if (sender !is Player) return false
-        val player = Bukkit.getPlayer(sender.name)
+        val player = Bukkit.getPlayer(sender.name)!!
         when (command.name) {
             "spawn" -> {
                 if (combatTime.getCombatTime(sender.uniqueId) != 0) {
@@ -52,6 +53,21 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
                     val sp = Bukkit.getWorld("world")?.spawnLocation
                     sender.sendMessage("§aSpawn set to ${sp?.x} ${sp?.y} ${sp?.z}")
                 } else sender.teleport(Bukkit.getWorld("world")!!.spawnLocation)
+                return true
+            }
+            
+            "base" ->{
+                if (args.isNotEmpty()) {
+                    sender.sendMessage("§cInvalid arguments")
+                    return true
+                }
+                val base = baseHan.getPlayerBase(player)
+                if (base == null) {
+                    sender.sendMessage("§cYou don't have a base")
+                    return true
+                }
+                player.teleport(base.location)
+                player.sendMessage("§aTeleported to base")
                 return true
             }
 
@@ -77,7 +93,7 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
                 pendingInvites[sender] = team
                 if (teamInvites[team] == null) teamInvites[team] = mutableSetOf()
                 teamInvites[team]!!.add(sender)
-                player!!.sendMessage("§aSent request to join ${team.name}")
+                player.sendMessage("§aSent request to join ${team.name}")
                 team.entries.forEach {
                     if (Bukkit.getPlayer(it) == null) return@forEach
 
@@ -99,7 +115,7 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
                 val target = Bukkit.getPlayer(args[0])
                 val team = pendingInvites[target]
                 if (team == null || sb!!.getEntryTeam(sender.name) != pendingInvites[target]) {
-                    player!!.sendMessage("§cNo pending invites")
+                    player.sendMessage("§cNo pending invites")
                     return true
                 }
 
@@ -126,10 +142,10 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
                 val target = Bukkit.getPlayer(args[0])
                 val team = pendingInvites[target]
                 if (team == null || sb!!.getEntryTeam(sender.name) != pendingInvites[target]) {
-                    player!!.sendMessage("§cNo pending invites")
+                    player.sendMessage("§cNo pending invites")
                     return true
                 }
-                sb!!.getEntryTeam(player!!.name)!!.entries.forEach {
+                sb!!.getEntryTeam(player.name)!!.entries.forEach {
                     if (Bukkit.getPlayer(it) == null) return@forEach
                     Bukkit.getPlayer(it)!!.sendMessage("§c${player.name} has declined the invite")
                 }
@@ -148,6 +164,7 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
         Bukkit.getPluginCommand("join")?.setExecutor(this)
         Bukkit.getPluginCommand("accept")?.setExecutor(this)
         Bukkit.getPluginCommand("decline")?.setExecutor(this)
+        Bukkit.getPluginCommand("base")?.setExecutor(this)
 
         sb = Bukkit.getScoreboardManager()?.mainScoreboard
     }

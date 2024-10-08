@@ -285,25 +285,6 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
         }
     }
 
-//    private fun explosionCheck(bomb: TNTPrimed, owner: Player) {
-//        val task = Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("Icarus")!!, {
-//
-//            val block = bomb.location.subtract(0.0, 1.0, 0.0).block.type
-//
-//            if (block != Material.AIR && block != Material.CAVE_AIR && block != Material.VOID_AIR) {
-//                Bukkit.getScheduler().cancelTask(activeTasks[bomb]!!)
-//                bomb.world.spawnParticle(org.bukkit.Particle.FLAME, bomb.location, 300, 1.0, 1.0, 1.0, 0.5)
-//                owner.addPotionEffect(PotionEffect(PotionEffectType.RESISTANCE, 10, 7))
-//                bomb.fuseTicks = 0
-//            }
-//            if (bomb.isDead) {
-//                Bukkit.getScheduler().cancelTask(activeTasks[bomb]!!)
-//            }
-//
-//        }, 0, 1)
-//        activeTasks[bomb] = task
-//    }
-
     private fun explosionCheck() {
         if (explosionCheckTask != null) return
         explosionCheckTask =
