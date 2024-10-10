@@ -1,12 +1,12 @@
 # [Icarus](https://github.com/kehessen/Icarus/releases/latest)
 
-A Minecraft Plugin focused on adding some combat mechanics.\
-There is a resource pack which adds custom sounds (for now just the lock-on sound for the turret), but the plugin will
+A Minecraft Plugin focused on adding aerial combat mechanics.\
+There is a resource pack which adds custom sounds, but the plugin will
 work perfectly fine without it.
 
 Some crafting recipes are available from the start, others are discovered by crafting / obtaining certain items.
 \
-The **entity-activation-range for misc** has to be set to ~160–200 for the turret shots to look good, otherwise the
+The **entity-activation-range for misc** has to be set at least to the turret range for the turret shots to look good, otherwise the
 arrows will start to group up instead of constantly firing.
 
 _Many features are configurable in the config.yml file._
@@ -75,9 +75,16 @@ _Many features are configurable in the config.yml file._
 - Can be used to explode dropped bombs before they reach the ground
 - Crafting recipe:\
   ![img.png](Images/RocketLauncherRecipe.png)
-- don't forget to craft ammo, or your team will be mad
 - Ammo crafting recipe: \
   ![img.png](Images/RocketLauncherAmmoRecipe.png)
+
+### MANPADs (Man-portable air-defense systems)
+
+- Can be used to shoot down enemies in the air
+- Crafting recipe: \
+  ![img.png](Images/MANPADRecipe.png)
+- Ammo crafting recipe: \
+  ![img.png](Images/MANPADAmmoRecipe.png)
 
 ### Airstrikes
 

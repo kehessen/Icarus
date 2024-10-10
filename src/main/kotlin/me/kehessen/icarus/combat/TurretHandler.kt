@@ -1,5 +1,6 @@
 package me.kehessen.icarus.combat
 
+import me.kehessen.icarus.event.FlareDeployEvent
 import me.kehessen.icarus.util.CustomItem
 import me.kehessen.icarus.util.InvHolder
 import me.kehessen.icarus.util.MenuHandler
@@ -84,7 +85,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     private var maxTurretSpeed = 5L
     private var turretSpeeds = hashMapOf<ArmorStand, Long>()
 
-    private var sb: Scoreboard? = null
+    private lateinit var sb: Scoreboard
 
     // key: inventory holder, value: turret
     private var openInvs = hashMapOf<InventoryHolder, ArmorStand>()
@@ -138,22 +139,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             return true
         }
         when (args[0]) {
-            "burningarrow" -> {
-                burningArrow = !burningArrow
-                if (burningArrow) {
-                    sender.sendMessage("§aTurrets now shoot burning arrows")
-                } else {
-                    sender.sendMessage("§aTurrets now shoot normal arrows")
-                }
-                return true
-            }
-
-            "reload" -> {
-                reloadTurrets()
-                sender.sendMessage("§aReloaded ${turrets.size} turrets")
-                return true
-            }
-
             "removeall" -> {
                 turrets.forEach { turret ->
                     sender.sendMessage("§a Removed turret with ID ${turret.entityId}")
@@ -172,22 +157,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                 Bukkit.getLogger().info("[Icarus] Disabled turret reach checker since all turrets were removed")
                 return true
             }
-
-            "silence" -> {
-                silenced = !silenced
-                if (silenced) {
-                    sender.sendMessage("§aTurrets silenced")
-                } else {
-                    sender.sendMessage("§aTurrets unsilenced")
-                }
-                return true
-            }
-
-            "targets" -> {
-                sender.sendMessage("§aTargets: ${targets.joinToString { it.name }}")
-                return true
-            }
-
         }
         sender.sendMessage("§cInvalid arguments")
         return true
@@ -215,7 +184,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             turret.getNearbyEntities(turretReach.toDouble(), turretReach.toDouble(), turretReach.toDouble())
                 .forEach { player ->
                     if (player !is Player) return@forEach
-                    if (sb!!.getEntryTeam(player.name) == sb!!.getEntryTeam(turret.uniqueId.toString())) {
+                    if (sb.getEntryTeam(player.name) == sb.getEntryTeam(turret.uniqueId.toString())) {
                         return@forEach
                     }
                     // using distanceSquared for performance
@@ -378,7 +347,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
         armorStand.addScoreboardTag("Turret")
 
-        sb!!.getEntryTeam(player.name)!!.addEntry(armorStand.uniqueId.toString())
+        sb.getEntryTeam(player.name)!!.addEntry(armorStand.uniqueId.toString())
 
         armorStand.persistentDataContainer.set(ammoKey, PersistentDataType.INTEGER, initialAmmo)
         armorStand.persistentDataContainer.set(activeKey, PersistentDataType.BOOLEAN, true)
@@ -396,10 +365,10 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         Bukkit.getPluginCommand("turret")?.tabCompleter = this
         Bukkit.getPluginManager().registerEvents(this, plugin)
         sb = Bukkit.getScoreboardManager()!!.mainScoreboard
-        if (sb!!.getTeam("TurretArrows") == null) {
-            arrowTeam = sb!!.registerNewTeam("TurretArrows")
+        if (sb.getTeam("MissileRedGlow") == null) {
+            arrowTeam = sb.registerNewTeam("MissileRedGlow")
             arrowTeam.color = ChatColor.RED
-        } else arrowTeam = sb!!.getTeam("TurretArrows")!!
+        } else arrowTeam = sb.getTeam("MissileRedGlow")!!
         reloadTurrets()
         startPerformanceCheckTask()
         startReachCheckTask()
@@ -411,7 +380,8 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             Bukkit.getLogger()
                 .warning("[Icarus] Entity activation range is set to $activationRange, this may cause issues with turrets shooting correctly")
             Bukkit.getLogger()
-                .warning("[Icarus] Please set entity-activation-range at lease to $turretReach in spigot.yml to prevent issues")
+                .warning("[Icarus] Setting entity activation range to $turretReach")
+            Bukkit.getServer().spigot().config.set("world-settings.default.entity-activation-range.misc", turretReach)
         }
     }
 
@@ -626,23 +596,8 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             return
         }
 
-        var a = 0
-        val world = event.player.world
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, {
-            if (a > 15) return@scheduleSyncRepeatingTask
-            for (i in 0..360 step 10) {
-                val x = sin(i.toDouble()).times(a.toDouble())
-                val z = cos(i.toDouble()).times(a.toDouble())
-                world.spawnParticle(Particle.FLAME, event.player.location.add(x, 0.0, z), 3)
-            }
-            world.playSound(event.player.location, Sound.ENTITY_FIREWORK_ROCKET_LARGE_BLAST, 1f, 100f)
-            a++
-        }, 0, 1)
-
-        immunePlayers.add(event.player)
-        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, {
-            immunePlayers.remove(event.player)
-        }, 50)
+        val e = FlareDeployEvent(event.player)
+        Bukkit.getPluginManager().callEvent(e)
 
         if (event.player.gameMode != GameMode.CREATIVE) {
             if (event.player.inventory.itemInMainHand.itemMeta!!.displayName == flares.itemMeta!!.displayName) {
@@ -655,6 +610,28 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         }
 
         event.isCancelled = true
+    }
+
+    @EventHandler
+    private fun onFlareDeploy(event: FlareDeployEvent) {
+        val world = event.player.world
+        val loc = event.player.location
+        var a = 0
+        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, {
+            if (a > 15) return@scheduleSyncRepeatingTask
+            for (i in 0..360 step 10) {
+                val x = sin(i.toDouble()).times(a.toDouble())
+                val z = cos(i.toDouble()).times(a.toDouble())
+                world.spawnParticle(Particle.FLAME, loc.add(x, 0.0, z), 3)
+            }
+            world.playSound(loc, Sound.ENTITY_FIREWORK_ROCKET_LARGE_BLAST, 1f, 100f)
+            a++
+        }, 0, 1)
+
+        immunePlayers.add(event.player)
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, {
+            immunePlayers.remove(event.player)
+        }, 50)
     }
 
     @EventHandler
@@ -712,7 +689,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     private fun onRightClick(event: PlayerInteractAtEntityEvent) {
         if (!event.rightClicked.scoreboardTags.contains("Turret")) return
         if (event.rightClicked !is ArmorStand) return
-        if (sb!!.getEntryTeam(event.player.name) != sb!!.getEntryTeam(event.rightClicked.uniqueId.toString())) {
+        if (sb.getEntryTeam(event.player.name) != sb.getEntryTeam(event.rightClicked.uniqueId.toString())) {
             event.player.sendMessage("§cYou can't interact with this turret")
             return
         }
@@ -949,22 +926,9 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     ): MutableList<String> {
         if (p3.size == 1) {
             return mutableListOf(
-                "burningArrow",
-                "disableAll",
-                "enableAll",
-                "reload",
                 "removeAll",
-                "silence",
-                "targets",
             )
         }
-        return when {
-
-            p3.size == 2 && p3[0] == "missilelock" -> {
-                Bukkit.getOnlinePlayers().map { it.name }.toMutableList()
-            }
-
-            else -> mutableListOf("")
-        }
+        return mutableListOf()
     }
 }

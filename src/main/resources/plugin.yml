@@ -34,7 +34,7 @@ commands:
   mount:
     description: mount a player to act as a shooter
     usage: /mount <player>
-  customitem:
+  icarusitem:
     description: give a custom item
     usage: /customitem <item>
     permission: op

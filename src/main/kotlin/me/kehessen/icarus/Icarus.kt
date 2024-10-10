@@ -32,6 +32,7 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
     private val timedAccess = TimedAccess(config)
     private val noBeam = DisableBeaconBeam()
     private val napalm = Napalm(config, base)
+    private val manpad = MANPAD(config, bomb)
 
     private var sb: Scoreboard? = null
 
@@ -42,7 +43,7 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
     override fun onEnable() {
         config.options().copyDefaults(true)
         server.pluginManager.registerEvents(this, this)
-        Bukkit.getPluginCommand("customitem")?.setExecutor(this)
+        Bukkit.getPluginCommand("icarusitem")?.setExecutor(this)
 
         sb = Bukkit.getScoreboardManager()!!.mainScoreboard
 
@@ -56,6 +57,7 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
             Bukkit.getPluginManager().disablePlugin(this)
         }
 
+        // needed since it can't be initialized before onEnable
         combatTime.start()
         menuHandler.start()
         base.start()
@@ -71,6 +73,11 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
         timedAccess.start()
         noBeam.start()
         napalm.start()
+        manpad.start()
+    }
+
+    override fun onDisable() {
+        manpad.stop()
     }
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
@@ -84,7 +91,7 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
         }
         val player = Bukkit.getPlayer(sender.name)
         when (command.name) {
-            "customitem" -> {
+            "icarusitem" -> {
                 val amount = if (args.size == 2) args[1].toInt() else 1
                 val item: ItemStack?
                 when (args[0]) {
@@ -104,6 +111,8 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
                     "airstrike" -> item = airstrike.item.clone()
                     "napalm" -> item = napalm.item.clone()
                     "base" -> item = base.baseItem.clone()
+                    "manpad" -> item = manpad.item.clone()
+                    "manpadammo" -> item = manpad.ammoItem.clone()
 
                     else -> {
                         sender.sendMessage("§cInvalid arguments")
@@ -121,7 +130,7 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
         sender: CommandSender, command: Command, alias: String, args: Array<out String>
     ): MutableList<String> {
         when (command.name) {
-            "customitem" -> {
+            "icarusitem" -> {
                 return if (args.size == 1) mutableListOf(
                     "turret",
                     "customenderpearl",
@@ -138,7 +147,9 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
                     "flares",
                     "airstrike",
                     "napalm",
-                    "base"
+                    "base",
+                    "manpad",
+                    "manpadammo"
                 )
                 else mutableListOf("")
             }

@@ -71,14 +71,15 @@ class Napalm(config: FileConfiguration, private val base: Base) : Listener {
     @EventHandler
     private fun onRightClick(event: PlayerInteractEvent) {
         if (event.item?.itemMeta?.lore == null) return
+        if (event.player.hasCooldown(event.item!!.type)) return
         if (event.action == Action.RIGHT_CLICK_AIR) {
-
             if (event.item!!.itemMeta!!.lore == item.itemMeta!!.lore) {
-                if (!event.player.isGliding){
+                if (!event.player.isGliding) {
                     event.player.sendMessage("§cCan only be used while flying")
                     return
                 }
                 launchNapalm(event.player)
+                event.player.setCooldown(event.item!!.type, (delay * amount).toInt())
                 if (event.player.gameMode != GameMode.CREATIVE) {
                     event.item!!.amount--
                 }
@@ -100,8 +101,14 @@ class Napalm(config: FileConfiguration, private val base: Base) : Listener {
     }
 
     @EventHandler
-    private fun onJoin(event: PlayerJoinEvent){
-        if (!event.player.hasDiscoveredRecipe(NamespacedKey(Bukkit.getPluginManager().getPlugin("Icarus")!!, "napalm"))){
+    private fun onJoin(event: PlayerJoinEvent) {
+        if (!event.player.hasDiscoveredRecipe(
+                NamespacedKey(
+                    Bukkit.getPluginManager().getPlugin("Icarus")!!,
+                    "napalm"
+                )
+            )
+        ) {
             event.player.discoverRecipe(NamespacedKey(Bukkit.getPluginManager().getPlugin("Icarus")!!, "napalm"))
         }
     }

@@ -39,7 +39,7 @@ Base:
 
 
 Turret:
-  # Default value for the shot delay when places, can be changed to 1-5 ticks in the turret menu
+  # Default value for the shot delay when places [1-5], can be changed to 1-5 ticks in the turret menu
   shot-delay: 3
   particle-delay: 0
   glowing-arrow: true
@@ -107,6 +107,22 @@ Bomb:
 
   # Time in ticks before the bomb explodes after being dropped
   fuse-ticks: 100
+
+MANPAD:
+  # The range of the MANPAD (in blocks)
+  range: 125.0
+  # The speed of the missile
+  speed: 4.0
+  # The explosion force of the missile
+  yield: 3.0
+  # Lifetime of the missile in ticks
+  lifetime: 80
+  # The time in ticks the player has to look at the target before the missile locks on
+  lock-on-time: 35
+  # The cooldown in ticks for the MANPAD
+  cooldown: 100
+  # The angle in degrees the player's aim can be off
+  lock-angle-threshold: 10.0
 
 Napalm:
   # The number of missiles spawned
