@@ -34,6 +34,7 @@ class MANPAD(config: FileConfiguration, private val bomb: Bomb) : Listener {
     )
     val ammoItem = CustomItem(Material.FIREWORK_ROCKET, "§r§c§lMANPAD Missile", "§r§7Missile for MANPAD")
 
+    private val enabled: Boolean = config.getBoolean("MANPAD.enable")
     private val lockOnRange: Double = config.getDouble("MANPAD.range")
     private val missileSpeed: Float = config.getInt("MANPAD.speed").toFloat()
     private val yield: Float = config.getDouble("MANPAD.yield").toFloat()
@@ -62,6 +63,7 @@ class MANPAD(config: FileConfiguration, private val bomb: Bomb) : Listener {
     private lateinit var sb: Scoreboard
 
     fun start() {
+        if (!enabled) return
         itemKey = NamespacedKey(Bukkit.getPluginManager().getPlugin("Icarus")!!, "manpad")
         ammoKey = NamespacedKey(Bukkit.getPluginManager().getPlugin("Icarus")!!, "manpad_missile")
         sb = Bukkit.getScoreboardManager()!!.mainScoreboard

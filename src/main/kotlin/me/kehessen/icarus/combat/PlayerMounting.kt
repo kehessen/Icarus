@@ -34,6 +34,7 @@ class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, Tab
     internal val customAmmo: ItemStack =
         CustomItem(Material.ARROW, "§r§l§c.50 BMG", "§7Used for the M2 Browning", "§7Armor piercing")
 
+    private var enabled: Boolean = config.getBoolean("PlayerMounting.enable")
     private var canonReach: Double = config.getDouble("PlayerMounting.canon-reach")
     private var damage: Double = config.getDouble("PlayerMounting.canon-damage")
     private var onlyAllowMountingForFlight: Boolean = config.getBoolean("PlayerMounting.only-flight")
@@ -108,6 +109,7 @@ class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, Tab
     }
 
     fun start() {
+        if (!enabled) return
         val meta = customWeapon.itemMeta as CrossbowMeta
         meta.setChargedProjectiles(listOf(ItemStack(Material.ARROW)))
         customWeapon.itemMeta = meta

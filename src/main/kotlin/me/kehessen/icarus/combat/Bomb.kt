@@ -71,6 +71,10 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
         "§fUsed for the Rocket Launcher",
     )
 
+    private var smallBombEnabled = config.getBoolean("Bomb.enable-small")
+    private var mediumBombEnabled = config.getBoolean("Bomb.enable-medium")
+    private var largeBombEnabled = config.getBoolean("Bomb.enable-large")
+
     private var smallBombYield = config.getInt("Bomb.small-yield")
     private var mediumBombYield = config.getInt("Bomb.medium-yield")
     private var largeBombYield = config.getInt("Bomb.large-yield")
@@ -180,6 +184,8 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
         Bukkit.getPluginCommand("bomb")?.setExecutor(this)
         Bukkit.getPluginCommand("bomb")?.tabCompleter = this
         Bukkit.getPluginManager().registerEvents(this, Bukkit.getPluginManager().getPlugin("Icarus")!!)
+
+        if(!smallBombEnabled && !mediumBombEnabled && !largeBombEnabled) return
 
         val meta = rocketLauncherItem.itemMeta as org.bukkit.inventory.meta.CrossbowMeta
         meta.setChargedProjectiles(listOf(ItemStack(Material.FIREWORK_ROCKET)))
@@ -433,18 +439,30 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
         if (!event.player.isGliding || event.action != Action.RIGHT_CLICK_AIR || event.item?.itemMeta == null) return
         when (event.item!!.itemMeta) {
             smallBombItem.itemMeta -> {
+                if(!smallBombEnabled) {
+                    event.player.sendMessage("§cSmall bombs are disabled")
+                    return
+                }
                 spawnBomb(event.player, smallBombYield.toFloat(), fuseTicks)
                 if (event.player.gameMode != GameMode.CREATIVE) event.item!!.amount--
                 checkItems(event.player)
             }
 
             mediumBombItem.itemMeta -> {
+                if(!mediumBombEnabled) {
+                    event.player.sendMessage("§cMedium bombs are disabled")
+                    return
+                }
                 spawnBomb(event.player, mediumBombYield.toFloat(), fuseTicks)
                 if (event.player.gameMode != GameMode.CREATIVE) event.item!!.amount--
                 checkItems(event.player)
             }
 
             largeBombItem.itemMeta -> {
+                if (!largeBombEnabled) {
+                    event.player.sendMessage("§cLarge bombs are disabled")
+                    return
+                }
                 spawnBomb(event.player, largeBombYield.toFloat(), fuseTicks)
                 if (event.player.gameMode != GameMode.CREATIVE) event.item!!.amount--
                 checkItems(event.player)

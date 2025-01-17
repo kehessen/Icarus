@@ -24,6 +24,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 class Base(config: FileConfiguration) : Listener {
+    private val enabled = config.getBoolean("Base.enable")
     private val range = config.getInt("Base.range")
     private val bombProtection = config.getBoolean("Base.bomb-protection")
     private val maxBases = 1 // current teleport implementation doesn't support multiple bases, feel like multiple bases aren't necessary
@@ -44,6 +45,8 @@ class Base(config: FileConfiguration) : Listener {
         Bukkit.getPluginManager().registerEvents(this, Bukkit.getPluginManager().getPlugin("Icarus")!!)
 
         sb = Bukkit.getScoreboardManager()!!.mainScoreboard
+
+        if(!enabled) return
 
         reloadBases()
 
@@ -113,6 +116,7 @@ class Base(config: FileConfiguration) : Listener {
 
     @EventHandler
     private fun onPlace(event: PlayerInteractEvent) {
+        if(!enabled) return
         if (event.action != Action.RIGHT_CLICK_BLOCK) return
         if (event.item == null || event.item!!.itemMeta == null) return
         if (event.item!!.itemMeta!!.displayName != baseItem.itemMeta!!.displayName) return

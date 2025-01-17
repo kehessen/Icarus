@@ -24,11 +24,13 @@ class SmokeGrenade(val config: FileConfiguration) : Listener {
         Material.GRAY_DYE, "§r§l§cSmoke Grenade", "§7Right click to throw"
     )
 
-    // load from config
+    // config
+    private var enabled: Boolean = config.getBoolean("SmokeGrenade.enable")
     private var radius: Double = config.getDouble("SmokeGrenade.radius")
     private val cooldown: Long = config.getInt("SmokeGrenade.cooldown").toLong()
 
     fun start() {
+        if (!enabled) return
         Bukkit.getPluginManager().registerEvents(this, Bukkit.getPluginManager().getPlugin("Icarus")!!)
         radius = Bukkit.getPluginManager().getPlugin("Icarus")!!.config.getDouble("SmokeGrenade.radius")
         val recipe = ShapedRecipe(

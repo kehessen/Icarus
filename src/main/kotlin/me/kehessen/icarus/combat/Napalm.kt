@@ -16,15 +16,17 @@ import org.bukkit.inventory.ShapedRecipe
 class Napalm(config: FileConfiguration, private val base: Base) : Listener {
 
     internal val item = CustomItem(Material.FIRE_CHARGE, "§cNapalm", "§7Right click to launch Napalm")
-    private val radius = config.getInt("Napalm.radius")
-    private val amount = config.getInt("Napalm.amount")
-    private val delay = config.getInt("Napalm.delay").toLong()
-    private val protectBase = config.getBoolean("Base.protect-from-napalm")
+    private val enabled: Boolean = config.getBoolean("Napalm.enable")
+    private val radius: Int = config.getInt("Napalm.radius")
+    private val amount: Int = config.getInt("Napalm.amount")
+    private val delay: Long = config.getInt("Napalm.delay").toLong()
+    private val protectBase: Boolean = config.getBoolean("Base.protect-from-napalm")
 
     // + leaves, but checking in function, so I don't have to add every type to the set
     private val ignitableBlocks = setOf(Material.AIR, Material.SHORT_GRASS, Material.TALL_GRASS)
 
     fun start() {
+        if (!enabled) return
         Bukkit.getPluginManager().registerEvents(this, Bukkit.getPluginManager().getPlugin("Icarus")!!)
         addRecipe()
     }

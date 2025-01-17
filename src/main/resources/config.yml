@@ -20,6 +20,7 @@ Combat:
   can-teleport-in-combat: false
 
 Base:
+  enable: true
   # radius of the base
   range: 100
   # Whether 
@@ -39,6 +40,11 @@ Base:
 
 
 Turret:
+  # this will also enable the rocket launcher
+  enable: true
+  # whether to check team of player before shooting
+  # if false, the turret will shoot at any player and any player can interact with the turret
+  check-team: true
   # Default value for the shot delay when places [1-5], can be changed to 1-5 ticks in the turret menu
   shot-delay: 3
   particle-delay: 0
@@ -59,12 +65,14 @@ Turret:
   silenced: false
 
 SmokeGrenade:
+  enable: true
   # Particle amount will be calculated based on the radius, too high values will not look good as there is a particle limit for clients
   radius: 4.0
   # Cooldown in ticks between smoke grenade throws
   cooldown: 100
 
 PlayerMounting:
+  enable: true
   # Reach and damage of the M2 Browning the gunman gets when mounted
   canon-reach: 100.0
   canon-damage: 5.0
@@ -77,6 +85,7 @@ PlayerMounting:
   dismount-time: 100
 
 Airstrike:
+  enable: true
   missile-amount: 6
   # delay in ticks between each missile
   missile-delay: 8
@@ -86,6 +95,9 @@ Airstrike:
   initial-delay: 60
 
 Bomb:
+  enable-small: true
+  enable-medium: true
+  enable-large: true
   # The yield of the bomb explosion
   # Usually a server can handle a couple of 150 yield bombs at once, but after that it starts to lag pretty soon
   small-yield: 6
@@ -109,6 +121,7 @@ Bomb:
   fuse-ticks: 100
 
 MANPAD:
+  enable: true
   # The range of the MANPAD (in blocks)
   range: 125.0
   # The speed of the missile
@@ -125,6 +138,7 @@ MANPAD:
   lock-angle-threshold: 10.0
 
 Napalm:
+  enable: true
   # The number of missiles spawned
   amount: 20
   # The delay in ticks between each missile
@@ -133,6 +147,7 @@ Napalm:
   radius: 2
 
 RocketLauncher:
+  # is enabled and disabled together with the turret
   range: 125.0
   # Explosion force of the rocket
   yield: 2.0

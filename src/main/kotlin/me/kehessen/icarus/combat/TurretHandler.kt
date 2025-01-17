@@ -42,6 +42,8 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     CommandExecutor, TabCompleter, Listener {
 
     // ---config---
+    private var enabled = config.getBoolean("Turret.enable")
+    private var checkTeam: Boolean = config.getBoolean("Turret.check-team")
     private var shotDelay: Long = config.getLong("Turret.shot-delay")
     private val particleDelay: Long = config.getLong("Turret.particle-delay")
     private val particleAmount = config.getInt("Turret.particle-amount")
@@ -184,9 +186,8 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             turret.getNearbyEntities(turretReach.toDouble(), turretReach.toDouble(), turretReach.toDouble())
                 .forEach { player ->
                     if (player !is Player) return@forEach
-                    if (sb.getEntryTeam(player.name) == sb.getEntryTeam(turret.uniqueId.toString())) {
+                    if (checkTeam && sb.getEntryTeam(player.name) == sb.getEntryTeam(turret.uniqueId.toString()))
                         return@forEach
-                    }
                     // using distanceSquared for performance
                     if (player.isGliding && turret.hasLineOfSight(player) && turret.location.distanceSquared(player.location) < turretReach * turretReach) {
                         shooter[turret] = player
@@ -360,6 +361,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     fun start() {
         Bukkit.getPluginCommand("turret")?.setExecutor(this)
         Bukkit.getPluginCommand("turret")?.tabCompleter = this
+        if (!enabled) return
         Bukkit.getPluginManager().registerEvents(this, plugin)
         sb = Bukkit.getScoreboardManager()!!.mainScoreboard
         if (sb.getTeam("MissileRedGlow") == null) {
@@ -642,6 +644,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
     @EventHandler
     private fun onPlayerJoin(event: PlayerJoinEvent) {
+        if (!enabled) return
         startReachCheckTask()
         if (!event.player.hasDiscoveredRecipe(NamespacedKey(plugin, "flares"))) {
             event.player.discoverRecipe(NamespacedKey(plugin, "flares"))
@@ -670,6 +673,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
     @EventHandler
     private fun onChunkLoad(event: ChunkLoadEvent) {
+        if (!enabled) return
         event.chunk.entities.forEach { entity ->
             if (entity is ArmorStand && entity.scoreboardTags.contains("Turret")) {
                 turrets.add(entity)
@@ -684,9 +688,10 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
     @EventHandler
     private fun onRightClick(event: PlayerInteractAtEntityEvent) {
+        if (!enabled) return
         if (!event.rightClicked.scoreboardTags.contains("Turret")) return
         if (event.rightClicked !is ArmorStand) return
-        if (sb.getEntryTeam(event.player.name) != sb.getEntryTeam(event.rightClicked.uniqueId.toString())) {
+        if (checkTeam && sb.getEntryTeam(event.player.name) != sb.getEntryTeam(event.rightClicked.uniqueId.toString())) {
             event.player.sendMessage("§cYou can't interact with this turret")
             return
         }
@@ -730,6 +735,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
     @EventHandler
     fun onInvClick(event: InventoryClickEvent) {
+        if (!enabled) return
         if (event.clickedInventory == null) return
         if (event.view.title != "§lTurret") return
         if (event.currentItem == null) return
@@ -844,6 +850,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     // adding ammo to turret, updating inv
     @EventHandler
     fun onInvMoveItem(event: InventoryClickEvent) {
+        if (!enabled) return
         if (event.whoClicked !is Player) return
         if (event.currentItem == null) return
         if (playersInInv.isEmpty()) return
@@ -871,6 +878,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
     @EventHandler
     private fun onInvClose(event: InventoryCloseEvent) {
+        if (!enabled) return
         if (event.inventory.holder == null) return // || event.inventory.holder !is InvHolder this is probably causing an error
         if (event.inventory.holder in openInvs.keys) {
             openInvs.remove(event.inventory.holder)
@@ -880,6 +888,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
     @EventHandler
     private fun onArmorStandPlace(event: PlayerInteractEvent) {
+        if (!enabled) return
         if (event.item == null) return
         if (event.item?.itemMeta?.lore == turretItem.itemMeta!!.lore && event.action == Action.RIGHT_CLICK_BLOCK) {
             turrets.forEach { turret ->
@@ -901,6 +910,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
     @EventHandler
     private fun onItemDrop(event: EntityDeathEvent) {
+        if (!enabled) return
         if (event.entity.killer == null || event.entity.killer !is Player) return
         if (event.entity.type == EntityType.ENDERMAN && event.entity.world.environment == World.Environment.NORMAL && (!event.entity.killer!!.inventory.itemInMainHand.enchantments.contains(
                 Enchantment.FORTUNE
