@@ -56,6 +56,13 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
                 return true
             }
             
+            //TODO 
+            // x issued server command: /base
+            // [22:34:05 INFO]: [Icarus] [CraftArmorStand, CraftArmorStand, CraftArmorStand, CraftArmorStand, CraftArmorStand]
+            // [22:34:08 INFO]: x issued server command: /base
+            // [22:34:08 INFO]: [Icarus] [CraftArmorStand, CraftArmorStand, CraftArmorStand, CraftArmorStand, CraftArmorStand, CraftArmorStand]
+            // -> cause?
+            
             "base" ->{
                 if (args.isNotEmpty()) {
                     sender.sendMessage("§cInvalid arguments")
@@ -184,7 +191,8 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
                 if (args.size == 1) {
                     val team = sb!!.teams.map { it.name }.toMutableList()
                     team.remove(sb!!.getEntryTeam(sender.name)?.name)
-                    team.remove(sb!!.getTeam("TurretArrows")!!.name)
+                    team.remove(sb!!.getTeam("TurretArrows")?.name)
+                    team.remove(sb!!.getTeam("MissileRedGlow")?.name)
                     return team
                 } else return mutableListOf("")
             }

@@ -241,7 +241,7 @@ class MANPAD(config: FileConfiguration, private val bomb: Bomb) : Listener {
         if (event.player.inventory.containsAtLeast(ammoItem, 1)) {
             event.player.inventory.removeItem(ammoItem)
         } else {
-            event.player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("§c§l out of ammo"))
+            Utils.sendActionBarMessage(event.player, "§c§l out of ammo")
             return
         }
 
@@ -257,7 +257,7 @@ class MANPAD(config: FileConfiguration, private val bomb: Bomb) : Listener {
     @EventHandler
     private fun onItemSwitch(event: PlayerItemHeldEvent) {
         if (event.player.inventory.getItem(event.newSlot) == item) {
-            event.player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("left click to shoot --- right click to aim"))
+            Utils.sendActionBarMessage(event.player, "left click to shoot --- right click to aim")
             return
         }
         if (event.player.inventory.getItem(event.previousSlot) == item) {

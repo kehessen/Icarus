@@ -77,7 +77,6 @@ class Base(config: FileConfiguration) : Listener {
     }
     
     fun getPlayerBase(player: Player): ArmorStand? {
-        Bukkit.getPluginManager().getPlugin("Icarus")!!.logger.info(bases.toString())
         bases.forEach {
             if (sb!!.getEntryTeam(it.uniqueId.toString()) == sb!!.getEntryTeam(player.name)) {
                 return it
@@ -223,7 +222,7 @@ class Base(config: FileConfiguration) : Listener {
     @EventHandler
     private fun onChunkLoad(event: ChunkLoadEvent) {
         event.chunk.entities.forEach {
-            if (it is ArmorStand && it.scoreboardTags.contains("BaseMarker")) {
+            if (it is ArmorStand && it.scoreboardTags.contains("BaseMarker") && !bases.contains(it)) {
                 bases.add(it)
             }
         }

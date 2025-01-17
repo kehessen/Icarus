@@ -220,7 +220,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         targets.removeIf { player -> !shooter.containsValue(player) }
 
         if (shootTaskIDs.isNotEmpty() && targets.isEmpty()) {
-            Bukkit.getLogger().info("[Icarus] No players in range, stopping turret tasks")
             stopTasks()
         }
         val disabled = mutableSetOf<ArmorStand>()
@@ -281,7 +280,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
                     arrow.setGravity(false)
                     arrow.damage = arrowDamage
                     arrow.isSilent = true
-//                    arrow.isVisualFire = burningArrow
+                    arrow.isVisualFire = burningArrow
                     arrowTeam.addEntry(arrow.uniqueId.toString())
                     arrow.isGlowing = true
                     activeArrows[arrow] = arrowLifeTime
@@ -320,9 +319,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     // this should always run, even if no players are online
     private fun performanceChecks() {
         if (Bukkit.getOnlinePlayers().isEmpty() && reachCheckTaskID != null) {
-            Bukkit.getLogger().info("[Icarus] No players online, stopping tasks")
             stopReachCheckTask()
-//            if (shootTaskID != null) stopTasks()
             if (shootTaskIDs.isNotEmpty()) stopTasks()
         } else if (activeTurrets.isEmpty() && shootTaskIDs.isNotEmpty()) {
             Bukkit.getLogger().info("[Icarus] No turrets found, stopping tasks")
@@ -380,7 +377,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             Bukkit.getLogger()
                 .warning("[Icarus] Entity activation range is set to $activationRange, this may cause issues with turrets shooting correctly")
             Bukkit.getLogger()
-                .warning("[Icarus] Setting entity activation range to $turretReach")
+                .warning("[Icarus] Setting entity activation range to $turretReach...")
             Bukkit.getServer().spigot().config.set("world-settings.default.entity-activation-range.misc", turretReach)
         }
     }

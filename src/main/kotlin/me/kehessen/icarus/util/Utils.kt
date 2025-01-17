@@ -1,5 +1,7 @@
 package me.kehessen.icarus.util
 
+import net.md_5.bungee.api.ChatMessageType
+import net.md_5.bungee.api.chat.TextComponent
 import org.bukkit.Location
 import org.bukkit.Particle
 import org.bukkit.entity.Player
@@ -31,6 +33,10 @@ class Utils {
             val clampedDotProduct = dotProduct.coerceIn(-1.0, 1.0)
             val angle = Math.toDegrees(acos(clampedDotProduct))
             return angle
+        }
+
+        fun sendActionBarMessage(player: Player, message: String) {
+            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy(message))
         }
     }
 }
