@@ -1,6 +1,6 @@
 # [Icarus](https://github.com/kehessen/Icarus/releases/latest)
 
-A Minecraft Plugin focused on adding aerial combat mechanics.\
+A Minecraft Plugin focused on adding aerial and military-inspired combat mechanics.\
 There is a resource pack which adds custom sounds, but the plugin will
 work perfectly fine without it.
 
@@ -15,7 +15,6 @@ _Many features are configurable in the config.yml file._
 
 - _**/spawn**_, _**/tpa**_
 - Spawn can be set with **_/spawn set_**
-- _**/togglebeaconbeams**_ to toggle the beacon beams
 
 ### Timed Server Opening
 

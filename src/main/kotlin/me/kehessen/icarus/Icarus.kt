@@ -23,14 +23,12 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
 
     private val chat = Chat()
     private val turretHandler = TurretHandler(this, config, menuHandler)
-    private val simpleCommandHandler = SimpleCommandHandler(combatTime, turretHandler, base)
+    private val simpleCommandHandler = SimpleCommandHandler(config, combatTime, turretHandler, base)
     private val tpaHandler = TpaHandler(combatTime, config)
     private val bomb = Bomb(config, base)
     private val playerMounting = PlayerMounting(config)
     private val smokeGrenade = SmokeGrenade(config)
     private val airstrike = Airstrike(config, base)
-    private val timedAccess = TimedAccess(config)
-    private val noBeam = DisableBeaconBeam()
     private val napalm = Napalm(config, base)
     private val manpad = MANPAD(config, bomb)
 
@@ -70,8 +68,6 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
         playerMounting.start()
         smokeGrenade.start()
         airstrike.start()
-        timedAccess.start()
-        noBeam.start()
         napalm.start()
         manpad.start()
     }

@@ -42,8 +42,8 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     CommandExecutor, TabCompleter, Listener {
 
     // ---config---
-    private var enabled = config.getBoolean("Turret.enable")
-    private var checkTeam: Boolean = config.getBoolean("Turret.check-team")
+    private val enabled = config.getBoolean("Turret.enable")
+    private val checkTeam: Boolean = config.getBoolean("Turret.check-team")
     private var shotDelay: Long = config.getLong("Turret.shot-delay")
     private val particleDelay: Long = config.getLong("Turret.particle-delay")
     private val particleAmount = config.getInt("Turret.particle-amount")
@@ -83,8 +83,8 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
 
     // shot delay, key: turret, value: shot delay, delay is 1-5 ticks
-    private var minTurretSpeed = 1L
-    private var maxTurretSpeed = 5L
+    private var minTurretSpeed = config.getLong("Turret.min-shot-delay")
+    private var maxTurretSpeed = config.getLong("Turret.max-shot-delay")
     private var turretSpeeds = hashMapOf<ArmorStand, Long>()
 
     private lateinit var sb: Scoreboard

@@ -9,6 +9,7 @@ import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
+import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.player.PlayerCommandPreprocessEvent
@@ -16,7 +17,12 @@ import org.bukkit.scoreboard.Scoreboard
 import org.bukkit.scoreboard.Team
 
 @Suppress("unused")
-class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: TurretHandler, private val baseHan: Base) : CommandExecutor,
+class SimpleCommandHandler(
+    config: FileConfiguration,
+    private val combatTime: CombatTime,
+    val trtHan: TurretHandler,
+    private val baseHan: Base
+) : CommandExecutor,
     TabCompleter {
     private var disabledCombatCommands = listOf("spawn", "tpa", "base")
 
@@ -24,9 +30,20 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
     private val pendingInvites = hashMapOf<Player, Team>()
     private val teamInvites = hashMapOf<Team, MutableSet<Player>>()
 
+    private val tpaEnabled: Boolean = config.getBoolean("Other.enable-tpa")
+    private val spawnEnabled: Boolean = config.getBoolean("Other.enable-spawn")
+    private val baseEnabled: Boolean = config.getBoolean("Other.enable-base-tp") && config.getBoolean("Base.enable")
+    private val announceEnabled: Boolean = config.getBoolean("Other.enable-announce")
+    private val joinEnabled: Boolean = config.getBoolean("Other.enable-join")
+
+
     @Suppress("DuplicatedCode")
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         if (command.name == "announce") {
+            if (!announceEnabled) {
+                sender.sendMessage("§cThis command is disabled")
+                return false
+            }
             if (args.isEmpty()) {
                 sender.sendMessage("§cInvalid arguments")
                 return true
@@ -38,6 +55,10 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
         val player = Bukkit.getPlayer(sender.name)!!
         when (command.name) {
             "spawn" -> {
+                if (!spawnEnabled) {
+                    sender.sendMessage("§cThis command is disabled")
+                    return false
+                }
                 if (combatTime.getCombatTime(sender.uniqueId) != 0) {
                     sender.sendMessage("§cYou can't use this command while in combat")
                     return true
@@ -55,15 +76,19 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
                 } else sender.teleport(Bukkit.getWorld("world")!!.spawnLocation)
                 return true
             }
-            
+
             //TODO 
             // x issued server command: /base
             // [22:34:05 INFO]: [Icarus] [CraftArmorStand, CraftArmorStand, CraftArmorStand, CraftArmorStand, CraftArmorStand]
             // [22:34:08 INFO]: x issued server command: /base
             // [22:34:08 INFO]: [Icarus] [CraftArmorStand, CraftArmorStand, CraftArmorStand, CraftArmorStand, CraftArmorStand, CraftArmorStand]
             // -> cause?
-            
-            "base" ->{
+
+            "base" -> {
+                if (!baseEnabled) {
+                    sender.sendMessage("§cThis command is disabled")
+                    return false
+                }
                 if (args.isNotEmpty()) {
                     sender.sendMessage("§cInvalid arguments")
                     return true
@@ -79,6 +104,10 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
             }
 
             "join" -> {
+                if (!joinEnabled) {
+                    sender.sendMessage("§cThis command is disabled")
+                    return false
+                }
                 if (args.size != 1) {
                     sender.sendMessage("§cInvalid arguments")
                     return true
@@ -115,6 +144,10 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
             }
 
             "accept" -> {
+                if (!joinEnabled) {
+                    sender.sendMessage("§cThis command is disabled")
+                    return false
+                }
                 if (args.size != 1) {
                     sender.sendMessage("§cInvalid arguments")
                     return true
@@ -142,6 +175,10 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
             }
 
             "decline" -> {
+                if (!joinEnabled) {
+                    sender.sendMessage("§cThis command is disabled")
+                    return false
+                }
                 if (args.size != 1) {
                     sender.sendMessage("§cInvalid arguments")
                     return true
@@ -165,13 +202,15 @@ class SimpleCommandHandler(private val combatTime: CombatTime, val trtHan: Turre
     }
 
     fun start() {
-        Bukkit.getPluginCommand("spawn")?.setExecutor(this)
-        Bukkit.getPluginCommand("announce")?.setExecutor(this)
-        Bukkit.getPluginCommand("test")?.setExecutor(this)
-        Bukkit.getPluginCommand("join")?.setExecutor(this)
-        Bukkit.getPluginCommand("accept")?.setExecutor(this)
-        Bukkit.getPluginCommand("decline")?.setExecutor(this)
-        Bukkit.getPluginCommand("base")?.setExecutor(this)
+        if (spawnEnabled) Bukkit.getPluginCommand("spawn")?.setExecutor(this)
+        if (announceEnabled) Bukkit.getPluginCommand("announce")?.setExecutor(this)
+//        Bukkit.getPluginCommand("test")?.setExecutor(this)
+        if (joinEnabled) {
+            Bukkit.getPluginCommand("join")?.setExecutor(this)
+            Bukkit.getPluginCommand("accept")?.setExecutor(this)
+            Bukkit.getPluginCommand("decline")?.setExecutor(this)
+        }
+        if (baseEnabled) Bukkit.getPluginCommand("base")?.setExecutor(this)
 
         sb = Bukkit.getScoreboardManager()?.mainScoreboard
     }

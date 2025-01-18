@@ -47,6 +47,3 @@ commands:
   decline:
     description: decline a team invite
     usage: /decline <player>
-  togglebeaconbeam:
-    description: disable beacon beams client-side
-    usage: /disablebeaconbeams
