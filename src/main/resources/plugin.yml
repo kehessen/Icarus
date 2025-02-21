@@ -28,15 +28,15 @@ commands:
     usage: /turret <spawn/remove/reload/silence/burningArrow/targets/shotDelay/disableAll/enableAll/getEnderPearl/give>
     permission: op
   bomb:
-    description: tnt options
-    usage: /tnt <spawn> <yield>
+    description: bomb options
+    usage: /bomb <spawn> <yield>
     permission: op
   mount:
     description: mount a player to act as a shooter
     usage: /mount <player>
   icarusitem:
     description: give a custom item
-    usage: /customitem <item>
+    usage: /icarusitem <item>
     permission: op
   join:
     description: join a team

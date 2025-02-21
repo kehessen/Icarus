@@ -6,7 +6,7 @@
 
     <groupId>me.kehessen</groupId>
     <artifactId>Icarus</artifactId>
-    <version>1.2.5</version>
+    <version>1.2.6</version>
     <packaging>jar</packaging>
 
     <name>Icarus</name>
@@ -24,7 +24,8 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>2.3.1</version>
                 <configuration>
-                    <outputDirectory>C:\Users\kehes\Desktop\Minecraft\1.21.4 paper testing\plugins</outputDirectory>
+                    <outputDirectory>${env.PLUGIN_COMPILE_LOCATION}</outputDirectory>
+                    <outputDirectory>${project.build.directory}</outputDirectory>
                 </configuration>
             </plugin>
             <plugin>

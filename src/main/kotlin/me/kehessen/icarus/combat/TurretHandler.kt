@@ -381,6 +381,12 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             Bukkit.getLogger()
                 .warning("[Icarus] Setting entity activation range to $turretReach...")
             Bukkit.getServer().spigot().config.set("world-settings.default.entity-activation-range.misc", turretReach)
+            if (Bukkit.getServer()
+                    .spigot().config.getInt("world-settings.default.entity-activation-range.misc") != turretReach
+            ) {
+                Bukkit.getLogger()
+                    .severe("[Icarus] Failed to set entity activation range. Manually change it in spigot.yml to $turretReach to prevent issues")
+            }
         }
     }
 

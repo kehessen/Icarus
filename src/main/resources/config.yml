@@ -149,3 +149,6 @@ Other:
   enable-announce: true
   # enable /join command (request to join a team)
   enable-join: true
+  # enable lightbulb recipe (Torch + 4 Glass Panes)
+  enable-lightbulb: false
+  lightbulb-amount: 2

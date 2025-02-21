@@ -31,6 +31,7 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
     private val airstrike = Airstrike(config, base)
     private val napalm = Napalm(config, base)
     private val manpad = MANPAD(config, bomb)
+    private val lightBulbCrafting = LightBulbCrafting(config)
 
     private var sb: Scoreboard? = null
 
@@ -70,6 +71,7 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
         airstrike.start()
         napalm.start()
         manpad.start()
+        lightBulbCrafting.start()
     }
 
     override fun onDisable() {
