@@ -1,9 +1,6 @@
 package me.kehessen.icarus.misc
 
 import org.bukkit.Bukkit
-import org.bukkit.command.Command
-import org.bukkit.command.CommandExecutor
-import org.bukkit.command.CommandSender
 import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -13,31 +10,13 @@ import org.bukkit.plugin.java.JavaPlugin
 import java.util.*
 
 @Suppress("unused")
-class CombatTime(private val plugin: JavaPlugin, config: FileConfiguration) : Listener, CommandExecutor {
+class CombatTime(private val plugin: JavaPlugin, config: FileConfiguration) : Listener {
     private val combatTime = config.getInt("combat.combat-time")
     private var combatTimeMap = hashMapOf<UUID, Int>()
     private var currentlyInCombat = hashMapOf<UUID, UUID>()
-    override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
-        if (args.size != 1) {
-            sender.sendMessage("§cInvalid arguments :(")
-            return false
-        }
-        val playerUUID = Bukkit.getPlayer(args[0])?.uniqueId
-        if (playerUUID == null) {
-            sender.sendMessage("§cPlayer not found")
-            return false
-        }
-        if (combatTimeMap[playerUUID] == null) {
-            sender.sendMessage("§c${args[0]} is not in combat")
-            return true
-        }
-        sender.sendMessage("§c${args[0]} is in combat for ${getCombatTime(playerUUID)} seconds")
-        return true
-    }
 
     fun start() {
         startTask()
-        Bukkit.getPluginCommand("combattime")?.setExecutor(this)
         Bukkit.getPluginManager().registerEvents(this, plugin)
     }
 

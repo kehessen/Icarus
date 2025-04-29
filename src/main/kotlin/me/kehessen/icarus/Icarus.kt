@@ -1,7 +1,10 @@
 package me.kehessen.icarus
 
 import me.kehessen.icarus.combat.*
-import me.kehessen.icarus.misc.*
+import me.kehessen.icarus.misc.Chat
+import me.kehessen.icarus.misc.CombatTime
+import me.kehessen.icarus.misc.SimpleCommandHandler
+import me.kehessen.icarus.misc.TpaHandler
 import me.kehessen.icarus.util.MenuHandler
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
@@ -31,7 +34,6 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
     private val airstrike = Airstrike(config, base)
     private val napalm = Napalm(config, base)
     private val manpad = MANPAD(config, bomb)
-    private val lightBulbCrafting = LightBulbCrafting(config)
 
     private var sb: Scoreboard? = null
 
@@ -71,7 +73,6 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
         airstrike.start()
         napalm.start()
         manpad.start()
-        lightBulbCrafting.start()
     }
 
     override fun onDisable() {

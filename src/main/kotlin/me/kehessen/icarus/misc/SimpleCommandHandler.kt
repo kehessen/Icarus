@@ -33,24 +33,11 @@ class SimpleCommandHandler(
     private val tpaEnabled: Boolean = config.getBoolean("Other.enable-tpa")
     private val spawnEnabled: Boolean = config.getBoolean("Other.enable-spawn")
     private val baseEnabled: Boolean = config.getBoolean("Other.enable-base-tp") && config.getBoolean("Base.enable")
-    private val announceEnabled: Boolean = config.getBoolean("Other.enable-announce")
     private val joinEnabled: Boolean = config.getBoolean("Other.enable-join")
 
 
     @Suppress("DuplicatedCode")
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
-        if (command.name == "announce") {
-            if (!announceEnabled) {
-                sender.sendMessage("§cThis command is disabled")
-                return false
-            }
-            if (args.isEmpty()) {
-                sender.sendMessage("§cInvalid arguments")
-                return true
-            }
-            Bukkit.broadcastMessage("§4§l${args.joinToString(" ")}")
-            return true
-        }
         if (sender !is Player) return false
         val player = Bukkit.getPlayer(sender.name)!!
         when (command.name) {
@@ -203,8 +190,6 @@ class SimpleCommandHandler(
 
     fun start() {
         if (spawnEnabled) Bukkit.getPluginCommand("spawn")?.setExecutor(this)
-        if (announceEnabled) Bukkit.getPluginCommand("announce")?.setExecutor(this)
-//        Bukkit.getPluginCommand("test")?.setExecutor(this)
         if (joinEnabled) {
             Bukkit.getPluginCommand("join")?.setExecutor(this)
             Bukkit.getPluginCommand("accept")?.setExecutor(this)

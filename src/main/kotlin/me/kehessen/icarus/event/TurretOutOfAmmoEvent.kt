@@ -1,21 +1,22 @@
 package me.kehessen.icarus.event
 
-import org.bukkit.entity.Player
+import me.kehessen.icarus.combat.Turret
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
 
 /**
- * Event that gets called when a SAM missile explodes
- * @param target The player the missile was targeting
- * @param hit Whether the missile hit the target or not
+ * Event that gets called when a turret runs out of ammo
+ * @param turret The turret that ran out of ammo
  */
-class SAMExplodeEvent(val target: Player, val hit: Boolean) : Event() {
+class TurretOutOfAmmoEvent(val turret: Turret) : Event() {
     override fun getHandlers() = getHandlerList()
 
     companion object {
         @JvmStatic
         private val handlers = HandlerList()
+
         @JvmStatic
         fun getHandlerList() = handlers
     }
+
 }

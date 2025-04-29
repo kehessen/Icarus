@@ -140,15 +140,10 @@ RocketLauncher:
 
 Other:
   # enable /tpa command
-  enable-tpa: true
+  enable-tpa: false
   # enable /spawn command
-  enable-spawn: true
+  enable-spawn: false
   # enable /base command (tp to base)
   enable-base-tp: true
-  # enable /announce command (broadcast red message)
-  enable-announce: true
   # enable /join command (request to join a team)
   enable-join: true
-  # enable lightbulb recipe (Torch + 4 Glass Panes)
-  enable-lightbulb: false
-  lightbulb-amount: 2

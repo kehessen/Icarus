@@ -2,13 +2,9 @@ name: Icarus
 version: '${project.version}'
 main: me.kehessen.icarus.Icarus
 api-version: '1.21'
-author: Kenny
+author: kehessen
 website: https://github.com/kehessen/Icarus/
 commands:
-  announce:
-    description: Announce a message
-    usage: /announce <message>
-    permission: op
   tpa:
     description: Send a teleport request to a player
   tpaccept:
@@ -19,14 +15,6 @@ commands:
   base: 
     description: Teleport to base
     usage: /base
-  combattime:
-    description: Check someone's combat time
-    usage: /combattime <player>
-    permission: op
-  turret:
-    description: turret options
-    usage: /turret <spawn/remove/reload/silence/burningArrow/targets/shotDelay/disableAll/enableAll/getEnderPearl/give>
-    permission: op
   bomb:
     description: bomb options
     usage: /bomb <spawn> <yield>

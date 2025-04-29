@@ -15,7 +15,6 @@ _Many features are configurable in the config.yml file._
 
 - _**/spawn**_, _**/tpa**_
 - Spawn can be set with **_/spawn set_**
-- Lightbulb crafting recipe (disabled by default)
 
 ### Timed Server Opening
 
