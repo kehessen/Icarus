@@ -1,5 +1,6 @@
 package me.kehessen.icarus.combat
 
+import me.kehessen.icarus.event.BombDropEvent
 import me.kehessen.icarus.util.CustomItem
 import net.md_5.bungee.api.chat.HoverEvent
 import net.md_5.bungee.api.chat.TextComponent
@@ -31,6 +32,7 @@ import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.RecipeChoice
 import org.bukkit.inventory.ShapedRecipe
+import org.bukkit.persistence.PersistentDataType
 import kotlin.random.Random
 
 // anything over yield 5 can destroy turrets
@@ -112,6 +114,12 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
         Material.FIREWORK_STAR, "§r§c§lPlutonium Core", "§fUsed to craft Hydrogen Bombs"
     )
 
+    enum class Type {
+        SMALL,
+        MEDIUM,
+        LARGE,
+    }
+
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         when (args[0]) {
             "spawn" -> {
@@ -121,7 +129,7 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
                     return true
                 }
                 val player = Bukkit.getPlayer(sender.name)
-                val tnt = player!!.world.spawn(player.location, org.bukkit.entity.TNTPrimed::class.java)
+                val tnt = player!!.world.spawn(player.location, TNTPrimed::class.java)
                 tnt.fuseTicks = fuseTicks
                 tnt.yield = args[1].toFloat()
                 return true
@@ -311,7 +319,7 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
                     }
                     if (block != Material.AIR && block != Material.CAVE_AIR && block != Material.VOID_AIR) {
                         bomb.world.spawnParticle(
-                            org.bukkit.Particle.FLAME,
+                            Particle.FLAME,
                             bomb.location,
                             (bomb.yield * 20).toInt(),
                             1.0,
@@ -429,7 +437,7 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
                 component.hoverEvent = HoverEvent(
                     HoverEvent.Action.SHOW_TEXT, Text("§aDiscover a plutonium core. \nWhat could this be used for?")
                 )
-                Bukkit.spigot().broadcast(component)
+                player.server.spigot().broadcast(component)
             }
         }
     }
@@ -446,6 +454,7 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
                 spawnBomb(event.player, smallBombYield.toFloat(), fuseTicks)
                 if (event.player.gameMode != GameMode.CREATIVE) event.item!!.amount--
                 checkItems(event.player)
+                Bukkit.getPluginManager().callEvent(BombDropEvent(event.player, Type.SMALL))
             }
 
             mediumBombItem.itemMeta -> {
@@ -456,6 +465,7 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
                 spawnBomb(event.player, mediumBombYield.toFloat(), fuseTicks)
                 if (event.player.gameMode != GameMode.CREATIVE) event.item!!.amount--
                 checkItems(event.player)
+                Bukkit.getPluginManager().callEvent(BombDropEvent(event.player, Type.MEDIUM))
             }
 
             largeBombItem.itemMeta -> {
@@ -466,6 +476,16 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
                 spawnBomb(event.player, largeBombYield.toFloat(), fuseTicks)
                 if (event.player.gameMode != GameMode.CREATIVE) event.item!!.amount--
                 checkItems(event.player)
+                Bukkit.getPluginManager().callEvent(BombDropEvent(event.player, Type.LARGE))
+                val becomeDeathKey = NamespacedKey(Bukkit.getPluginManager().getPlugin("Icarus")!!, "droppedHBomb")
+                if (event.player.persistentDataContainer.get(becomeDeathKey, PersistentDataType.BOOLEAN) == null) {
+                    event.player.persistentDataContainer.set(becomeDeathKey, PersistentDataType.BOOLEAN, true)
+                    val component = TextComponent("§4${event.player.name}: Now I am become Death...")
+                    component.hoverEvent = HoverEvent(
+                        HoverEvent.Action.SHOW_TEXT, Text("§aDrop a Hydrogen Bomb. \nf...was it worth it?")
+                    )
+                    event.player.server.spigot().broadcast(component)
+                }
             }
         }
     }
@@ -483,7 +503,7 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
     @EventHandler
     private fun onRocketLaunch(event: PlayerInteractEvent) {
         if (event.item == null || event.item!!.itemMeta == null) return
-        if (event.action != Action.RIGHT_CLICK_AIR && event.action != Action.RIGHT_CLICK_BLOCK) return
+        if (event.action != Action.LEFT_CLICK_AIR && event.action != Action.LEFT_CLICK_BLOCK) return
         if (event.item!!.itemMeta!!.displayName != rocketLauncherItem.itemMeta!!.displayName) return
         if (event.player.inventory.containsAtLeast(rocketLauncherAmmo, 1)) {
             event.player.inventory.removeItem(rocketLauncherAmmo)
@@ -492,13 +512,21 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
             event.isCancelled = true
             return
         }
-        val rocket = event.player.launchProjectile(org.bukkit.entity.SpectralArrow::class.java)
+        val rocket = event.player.launchProjectile(SpectralArrow::class.java)
         rocket.velocity = event.player.location.direction.multiply(4)
         rocket.addScoreboardTag("SAM_rocket")
         rocket.isGlowing = true
         rocket.setGravity(false)
         rockets[rocket] = rocket.location
         startRocketTask()
+        event.isCancelled = true
+    }
+
+    @EventHandler
+    private fun onRightClickLauncher(event: PlayerInteractEvent) {
+        if (event.item == null || event.item!!.itemMeta == null) return
+        if (event.action != Action.RIGHT_CLICK_AIR && event.action != Action.RIGHT_CLICK_BLOCK) return
+        if (event.item!!.itemMeta!!.displayName != rocketLauncherItem.itemMeta!!.displayName) return
         event.isCancelled = true
     }
 

@@ -24,7 +24,7 @@ class Icarus : JavaPlugin(), Listener, CommandExecutor, TabCompleter {
     private val combatTime = CombatTime(this, config)
     private val base = Base(config)
 
-    private val chat = Chat()
+    private val chat = Chat(config.getBoolean("Chat.enable-custom-formatting"))
     private val turretHandler = TurretHandler(this, config, menuHandler)
     private val simpleCommandHandler = SimpleCommandHandler(config, combatTime, turretHandler, base)
     private val tpaHandler = TpaHandler(combatTime, config)

@@ -1,3 +1,7 @@
+Chat:
+  # use custom formatting for player messages instead of the minecraft default
+  enable-custom-formatting: true
+
 Combat:
   # Time in seconds a player is invulnerable after being hit, only whole seconds
   combat-time: 5
@@ -88,7 +92,7 @@ Bomb:
   # Usually a server can handle a couple of 150 yield bombs at once, but after that it starts to lag pretty soon
   small-yield: 6
   medium-yield: 15
-  large-yield: 75
+  large-yield: 100
   
   drop-ammonium-nitrate: true
   drop-plutonium: true

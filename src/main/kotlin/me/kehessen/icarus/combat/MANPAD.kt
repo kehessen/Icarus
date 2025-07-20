@@ -17,10 +17,8 @@ import org.bukkit.event.block.Action
 import org.bukkit.event.entity.EntityPickupItemEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerItemHeldEvent
-import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.RecipeChoice
 import org.bukkit.inventory.ShapedRecipe
-import org.bukkit.inventory.meta.CrossbowMeta
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import org.bukkit.scoreboard.Scoreboard
@@ -28,11 +26,14 @@ import org.bukkit.scoreboard.Team
 
 class MANPAD(config: FileConfiguration, private val bomb: Bomb) : Listener {
     val item = CustomItem(
-        Material.CROSSBOW,
+        Material.DISPENSER,
         "§r§c§lMANPAD",
-        "§r§7Man-portable air-defense system\n§r§7Shoot to launch a missile"
+        "§r§7Man-portable air-defense system against players\n§r§7Shoot to launch a missile"
     )
-    val ammoItem = CustomItem(Material.FIREWORK_ROCKET, "§r§c§lMANPAD Missile", "§r§7Missile for MANPAD")
+    val ammoItem = CustomItem(
+        Material.FIREWORK_ROCKET, "§r§c§lMANPAD Missile",
+        "§r§7Missile for MANPAD"
+    )
 
     private val enabled: Boolean = config.getBoolean("MANPAD.enable")
     private val lockOnRange: Double = config.getDouble("MANPAD.range")
@@ -56,8 +57,14 @@ class MANPAD(config: FileConfiguration, private val bomb: Bomb) : Listener {
     private lateinit var itemKey: NamespacedKey
     private lateinit var ammoKey: NamespacedKey
 
-    private val slownessEffect = PotionEffect(PotionEffectType.SLOWNESS, 20, 4, false, false, false)
-    private val glowingEffect = PotionEffect(PotionEffectType.GLOWING, 5, 0, false, false, false)
+    private val slownessEffect = PotionEffect(
+        PotionEffectType.SLOWNESS,
+        20, 4, false, false, false
+    )
+    private val glowingEffect = PotionEffect(
+        PotionEffectType.GLOWING,
+        5, 0, false, false, false
+    )
 
     private lateinit var missileTeam: Team
     private lateinit var sb: Scoreboard
@@ -73,9 +80,6 @@ class MANPAD(config: FileConfiguration, private val bomb: Bomb) : Listener {
         Bukkit.getPluginManager()
             .registerEvents(this, Bukkit.getPluginManager().getPlugin("Icarus")!!)
 
-        val meta = item.itemMeta as CrossbowMeta
-        meta.setChargedProjectiles(listOf(ItemStack(Material.FIREWORK_ROCKET)))
-        item.itemMeta = meta
 
         addRecipes()
         onIntervalTask = Bukkit.getScheduler().scheduleSyncRepeatingTask(
@@ -236,10 +240,13 @@ class MANPAD(config: FileConfiguration, private val bomb: Bomb) : Listener {
         if (event.item != item) return
         if (event.action != Action.LEFT_CLICK_AIR) return
         if (!readyToFire.contains(event.player)) {
-            event.player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy("§c§l not locked onto a target"))
+            event.player.spigot().sendMessage(
+                ChatMessageType.ACTION_BAR,
+                TextComponent.fromLegacy("§c§l not locked onto a target")
+            )
             return
         }
-        
+
         if (event.player.inventory.containsAtLeast(ammoItem, 1)) {
             event.player.inventory.removeItem(ammoItem)
         } else {

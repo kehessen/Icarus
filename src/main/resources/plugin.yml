@@ -19,9 +19,6 @@ commands:
     description: bomb options
     usage: /bomb <spawn> <yield>
     permission: op
-  mount:
-    description: mount a player to act as a shooter
-    usage: /mount <player>
   icarusitem:
     description: give a custom item
     usage: /icarusitem <item>

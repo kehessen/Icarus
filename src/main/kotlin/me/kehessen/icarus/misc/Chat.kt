@@ -8,7 +8,7 @@ import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.scoreboard.Scoreboard
 
-class Chat: Listener {
+class Chat(val enableFormatting: Boolean) : Listener {
 
     private var sb: Scoreboard? = null
 
@@ -19,7 +19,8 @@ class Chat: Listener {
 
     @EventHandler
     private fun onPlayerJoin(event: PlayerJoinEvent) {
-        event.joinMessage = "§2+ ${event.player.name}"
+        if (enableFormatting)
+            event.joinMessage = "§2+ ${event.player.name}"
         if (sb!!.getEntryTeam(event.player.name) == null) {
             sb!!.getTeam("Default")?.addEntry(event.player.name)
         }
@@ -27,11 +28,13 @@ class Chat: Listener {
 
     @EventHandler
     private fun onPlayerChat(event: AsyncPlayerChatEvent) {
-        event.format = "§7" + event.player.name + ":§f " + event.message
+        if (enableFormatting)
+            event.format = "§7" + event.player.name + ":§f " + event.message
     }
 
     @EventHandler
     private fun onPlayerLeave(event: PlayerQuitEvent) {
-        event.quitMessage = "§7- " + event.player.name
+        if (enableFormatting)
+            event.quitMessage = "§7- " + event.player.name
     }
 }

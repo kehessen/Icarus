@@ -21,9 +21,11 @@ class Utils {
             }
             return true
         }
+
         fun getNearbyPlayers(location: Location, radius: Double): List<Player> {
             return location.world!!.players.filter { it.location.distance(location) <= radius }
         }
+
         // get the amount of degrees the player is off from the target
         fun getAngleDifference(player: Player, target: Location): Double {
             val playerLocation = player.location

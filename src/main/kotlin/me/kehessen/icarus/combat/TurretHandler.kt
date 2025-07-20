@@ -482,15 +482,16 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         val loc = event.player.location
 
         for (partRadius in 0..15) {
-            Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, {
+            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, {
                 for (i in 0..360 step 10) {
                     val x = sin(i.toDouble()).times(partRadius.toDouble())
                     val z = cos(i.toDouble()).times(partRadius.toDouble())
                     world.spawnParticle(Particle.FLAME, loc.add(x, 0.0, z), 3)
                 }
                 world.playSound(loc, Sound.ENTITY_FIREWORK_ROCKET_LARGE_BLAST, 1f, 100f)
-            }, 0, 1 + partRadius.toLong())
+            }, 1 + partRadius.toLong())
         }
+
 
         givePlayerImmunity(event.player, 50)
     }
@@ -568,10 +569,14 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
 
         if (!turret.active) {
             menu.createItem(
-                INACTIVE_DISPLAY_MATERIAL, inv, 10, "Inactive", "§r§7Turret is inactive. Click to activate"
+                INACTIVE_DISPLAY_MATERIAL, inv, 10,
+                "Inactive", "§r§7Turret is inactive. Click to activate"
             )
         } else {
-            menu.createItem(ACTIVE_DISPLAY_MATERIAL, inv, 10, "Active", "§r§7Turret is active. Click to deactivate")
+            menu.createItem(
+                ACTIVE_DISPLAY_MATERIAL, inv, 10,
+                "Active", "§r§7Turret is active. Click to deactivate"
+            )
         }
 
         menu.createItem(

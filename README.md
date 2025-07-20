@@ -4,6 +4,10 @@ A Minecraft Plugin focused on adding aerial and military-inspired combat mechani
 There is a resource pack which adds custom sounds, but the plugin will
 work perfectly fine without it.
 
+You can either host it yourself or add the following into your server.properties file:
+> resource-pack=https://download.mc-packs.net/pack/25d3811d7798c58a542542c8d1159a38124633e0.zip \
+> resource-pack-sha1=25d3811d7798c58a542542c8d1159a38124633e0
+
 Some crafting recipes are available from the start, others are discovered by crafting / obtaining certain items.
 \
 The **entity-activation-range for misc** has to be set at least to the turret range for the turret shots to look good, otherwise the
@@ -15,11 +19,6 @@ _Many features are configurable in the config.yml file._
 
 - _**/spawn**_, _**/tpa**_
 - Spawn can be set with **_/spawn set_**
-
-### Timed Server Opening
-
-- configurable in config.yml
-- the server will enable / disable the whitelist at the specified times and kick all players
 
 ### Teams
 
@@ -99,7 +98,7 @@ _Many features are configurable in the config.yml file._
 
 ### Player Mounting
 
-- Mount on a player's back while they are flying to act as their gunman
+- Mount on a player's back while they are flying to act as their gunman (shift + right click)
 - shoot with a M2 Browning
 - don't forget to craft ammo before entering a fight
 - Ammo recipe:   
@@ -110,3 +109,8 @@ _Many features are configurable in the config.yml file._
 - self-explanatory, will give all entities in radius blindness and invisibility for 2.5 seconds
 - Crafting recipe: \
   ![img.png](Images/SmokeGrenadeRecipe.png)
+
+### Planned Features
+
+- stationary bomb defense
+- possibly guided rocket launcher (mainly against bombs as well)

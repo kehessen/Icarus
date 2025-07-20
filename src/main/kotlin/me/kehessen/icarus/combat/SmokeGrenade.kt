@@ -91,7 +91,13 @@ class SmokeGrenade(val config: FileConfiguration) : Listener {
                 it.addPotionEffect(PotionEffect(PotionEffectType.BLINDNESS, 50, 1, true, false))
                 it.addPotionEffect(PotionEffect(PotionEffectType.INVISIBILITY, 50, 1, true, false))
             }
-            (event.entity.shooter as Player).addPotionEffect(PotionEffect(PotionEffectType.SPEED, 50, 1, true, false))
+            (event.entity.shooter as Player).addPotionEffect(
+                PotionEffect(
+                    PotionEffectType.SPEED,
+                    50, 2, true, false
+                )
+            )
+            (event.entity.shooter as Player).removePotionEffect(PotionEffectType.BLINDNESS)
         }
     }
 }

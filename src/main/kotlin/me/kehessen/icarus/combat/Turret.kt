@@ -10,7 +10,6 @@ import org.bukkit.persistence.PersistentDataType
 import org.bukkit.scoreboard.Team
 import java.util.*
 
-//TODO refactor Turrethandler -> handle shooting etc. in Turret.kt but keep Task scheduling in TurretHandler.kt for performance
 class Turret(val armorStand: ArmorStand) : Listener {
     private val plugin = Bukkit.getPluginManager().getPlugin("Icarus")!!
     private val config = plugin.config

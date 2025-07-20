@@ -3,10 +3,6 @@ package me.kehessen.icarus.combat
 import me.kehessen.icarus.util.CustomItem
 import me.kehessen.icarus.util.Utils
 import org.bukkit.*
-import org.bukkit.command.Command
-import org.bukkit.command.CommandExecutor
-import org.bukkit.command.CommandSender
-import org.bukkit.command.TabCompleter
 import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
@@ -15,9 +11,11 @@ import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
 import org.bukkit.event.entity.EntityDismountEvent
 import org.bukkit.event.entity.EntityToggleGlideEvent
+import org.bukkit.event.player.PlayerInteractEntityEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
+import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.ShapedRecipe
 import org.bukkit.inventory.meta.CrossbowMeta
@@ -25,7 +23,7 @@ import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffect.INFINITE_DURATION
 import org.bukkit.potion.PotionEffectType
 
-class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, TabCompleter {
+class PlayerMounting(config: FileConfiguration) : Listener {
     // key: mounted player, value: flying player
     private val mountedPlayers = hashMapOf<Player, Player>()
     internal val customWeapon: ItemStack = CustomItem(
@@ -40,24 +38,6 @@ class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, Tab
     private var onlyAllowMountingForFlight: Boolean = config.getBoolean("PlayerMounting.only-flight")
     private var playHurtAnimation: Boolean = config.getBoolean("PlayerMounting.hurt-animation")
     private var dismountTime = config.getLong("PlayerMounting.dismount-time") * 20
-
-    override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
-        if (sender !is Player) return false
-        if (args.size == 1) {
-            if (args[0] == "hurtAnimation" && sender.isOp) {
-                playHurtAnimation = !playHurtAnimation
-                sender.sendMessage("§aHurt animation toggled to $playHurtAnimation")
-                return true
-            }
-            val target = Bukkit.getPlayer(args[0])
-            if (target == null) {
-                sender.sendMessage("§cPlayer not found")
-                return true
-            }
-            return mount(sender, target)
-        }
-        return false
-    }
 
     @Suppress("SameReturnValue")
     private fun mount(player: Player, target: Player): Boolean {
@@ -114,7 +94,6 @@ class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, Tab
         meta.setChargedProjectiles(listOf(ItemStack(Material.ARROW)))
         customWeapon.itemMeta = meta
 
-        Bukkit.getPluginCommand("mount")?.setExecutor(this)
         Bukkit.getPluginManager().registerEvents(this, Bukkit.getPluginManager().getPlugin("Icarus")!!)
         Bukkit.getOnlinePlayers().forEach { player ->
             if (player.isInsideVehicle && player.vehicle is Player) {
@@ -134,6 +113,28 @@ class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, Tab
         recipe.setIngredient('G', Material.GUNPOWDER)
         recipe.setIngredient('A', Material.ARROW)
         Bukkit.addRecipe(recipe)
+    }
+
+    @EventHandler
+    private fun onMount(event: PlayerInteractEntityEvent) {
+        if (event.rightClicked !is Player) return
+        if (event.hand != EquipmentSlot.HAND) return
+        if (!event.player.isSneaking) return
+        if (event.player.itemInUse != null) return
+        val scoreboard = Bukkit.getScoreboardManager()?.mainScoreboard
+        if (scoreboard!!.getEntryTeam(event.player.name) != scoreboard.getEntryTeam(event.rightClicked.name)) {
+            event.player.sendMessage("§cYou cannot mount an enemy player")
+            return
+        }
+
+        event.player.sendMessage("${ChatColor.GREEN}Mounting...")
+        Bukkit.getScheduler().scheduleSyncDelayedTask(
+            Bukkit.getPluginManager().getPlugin("Icarus")!!,
+            {
+                mount(event.player, event.rightClicked as Player)
+            }, 10
+        )
+
     }
 
     @EventHandler
@@ -262,17 +263,5 @@ class PlayerMounting(config: FileConfiguration) : Listener, CommandExecutor, Tab
                 )
             )
         }
-    }
-
-    override fun onTabComplete(
-        p0: CommandSender, p1: Command, p2: String, p3: Array<out String>
-    ): MutableList<String> {
-        if (p3.size == 1) {
-            val list = Bukkit.getOnlinePlayers().map { it.name }.toMutableList()
-            if (p0.isOp) list.add("hurtAnimation")
-            list.remove(p0.name)
-            return list
-        }
-        return mutableListOf("")
     }
 }
