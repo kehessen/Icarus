@@ -208,7 +208,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
     ): Boolean {
         if (lockedOn.containsKey(turret)) {
             val player = lockedOn[turret]!!
-            if (player.isGliding && player.isOnline &&
+            if (player.isGliding && player.isOnline && !player.isDead &&
                 turret.hasLineOfSight(player) && turret.inReach(player, turretReach.toDouble())
             ) {
                 isShooting.add(turret)

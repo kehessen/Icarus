@@ -81,6 +81,8 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
     private var mediumBombYield = config.getInt("Bomb.medium-yield")
     private var largeBombYield = config.getInt("Bomb.large-yield")
 
+    private var disableFarmDrops = config.getBoolean("Bomb.disable-drop-from-creeperfarm")
+
     private var fuseTicks = config.getInt("Bomb.fuse-ticks")
 
     private var launcherRange = config.getDouble("RocketLauncher.range")
@@ -193,7 +195,7 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
         Bukkit.getPluginCommand("bomb")?.tabCompleter = this
         Bukkit.getPluginManager().registerEvents(this, Bukkit.getPluginManager().getPlugin("Icarus")!!)
 
-        if(!smallBombEnabled && !mediumBombEnabled && !largeBombEnabled) return
+        if (!smallBombEnabled && !mediumBombEnabled && !largeBombEnabled) return
 
         val meta = rocketLauncherItem.itemMeta as org.bukkit.inventory.meta.CrossbowMeta
         meta.setChargedProjectiles(listOf(ItemStack(Material.FIREWORK_ROCKET)))
@@ -404,6 +406,11 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
                 Enchantment.FORTUNE
             )
         ) return
+        if (disableFarmDrops &&
+            (event.entity.getNearbyEntities(10.0, 10.0, 10.0).filter { it.type == EntityType.CREEPER }.size > 2
+                    || event.entity.location.subtract(0.0, 1.0, 0.0).block.type == Material.HOPPER)
+        )
+            return
         val player = event.entity.killer!!
         if (java.util.Random().nextInt(0, ammoniumChance) == 0 && dropAmmonium) {
             event.drops.add(ammoniumNitrate)
@@ -447,7 +454,7 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
         if (!event.player.isGliding || event.action != Action.RIGHT_CLICK_AIR || event.item?.itemMeta == null) return
         when (event.item!!.itemMeta) {
             smallBombItem.itemMeta -> {
-                if(!smallBombEnabled) {
+                if (!smallBombEnabled) {
                     event.player.sendMessage("§cSmall bombs are disabled")
                     return
                 }
@@ -458,7 +465,7 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
             }
 
             mediumBombItem.itemMeta -> {
-                if(!mediumBombEnabled) {
+                if (!mediumBombEnabled) {
                     event.player.sendMessage("§cMedium bombs are disabled")
                     return
                 }

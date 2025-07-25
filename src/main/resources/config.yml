@@ -92,10 +92,12 @@ Bomb:
   # Usually a server can handle a couple of 150 yield bombs at once, but after that it starts to lag pretty soon
   small-yield: 6
   medium-yield: 15
-  large-yield: 100
+  large-yield: 85
   
   drop-ammonium-nitrate: true
   drop-plutonium: true
+  # disable drops if more than 2 creepers are nearby or creeper died on a hopper
+  disable-drop-from-creeperfarm: true
   
   # The chance of a creeper dropping ammonium nitrate (1/x)
   ammonium-nitrate-chance: 20

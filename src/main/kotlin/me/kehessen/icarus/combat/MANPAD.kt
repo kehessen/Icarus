@@ -1,6 +1,5 @@
 package me.kehessen.icarus.combat
 
-import me.kehessen.icarus.event.SAMDeployEvent
 import me.kehessen.icarus.util.CustomItem
 import me.kehessen.icarus.util.Utils
 import net.md_5.bungee.api.ChatMessageType
@@ -255,8 +254,6 @@ class MANPAD(config: FileConfiguration, private val bomb: Bomb) : Listener {
         }
 
         SAM(playersLockingOn[event.player]!!, event.player, lifetime, yield, missileSpeed)
-        val e = SAMDeployEvent(event.player, playersLockingOn[event.player]!!)
-        Bukkit.getPluginManager().callEvent(e)
         if (event.player.gameMode != GameMode.CREATIVE)
             event.player.setCooldown(item.type, lockOnCooldown)
         event.player.removePotionEffect(PotionEffectType.SLOWNESS)

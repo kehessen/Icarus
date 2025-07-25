@@ -44,7 +44,8 @@ _Many features are configurable in the config.yml file._
 
 - Craft 50kg, 100kg and Hydrogen Bombs to attack enemy teams in the air
 - Ammonium Nitrate and Plutonium cores can be dropped by creepers when killed by a player without using looting
-- Ammonium Nitrate has a 5% chance to drop; the Plutonium Core has a .5% chance to drop
+- Ammonium Nitrate has a 5% chance to drop; the Plutonium Core has a .5% chance to drop (drop disabled for creeper
+  farms)
 - Can be used against enemy bases or turrets
 - 50kg bomb crafting recipe (normal TNT): \
   ![img.png](Images/SmallBombRecipe.png)

@@ -51,8 +51,15 @@ class Turret(val armorStand: ArmorStand) : Listener {
                 target = null
             }
         }
+        get() {
+            return armorStand.persistentDataContainer.get(activeKey, PersistentDataType.BOOLEAN) == true
+        }
 
     var speed = defaultShotDelay
+        set(value) {
+            armorStand.persistentDataContainer.set(shotDelayKey, PersistentDataType.LONG, value)
+            field = value
+        }
     val pos
         get() = armorStand.location
     var name: String?
@@ -248,7 +255,7 @@ class Turret(val armorStand: ArmorStand) : Listener {
         playerLocation.y -= 1.5
 
         // adding some extra time since a lot of arrows fly behind the player
-        val timeToReach = (turretLocation.distance(playerLocation) / speedMultiplier) + Random().nextFloat(0.3f, 1.5f)
+        val timeToReach = (turretLocation.distance(playerLocation) / speedMultiplier) + Random().nextFloat(0.5f, 2.5f)
 
         return playerLocation.add(player.velocity.multiply(timeToReach))
     }
