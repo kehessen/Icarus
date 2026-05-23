@@ -16,19 +16,19 @@ commands:
     description: Teleport to base
     usage: /base
   bomb:
-    description: bomb options
+    description: Bomb options
     usage: /bomb <spawn> <yield>
     permission: op
   icarusitem:
-    description: give a custom item
+    description: Give a custom item
     usage: /icarusitem <item>
     permission: op
   join:
-    description: join a team
+    description: Send a request to join a team
     usage: /join <team>
   accept:
-    description: accept a team invite
+    description: Accept a team invite
     usage: /accept <player>
   decline:
-    description: decline a team invite
+    description: Decline a team invite
     usage: /decline <player>
