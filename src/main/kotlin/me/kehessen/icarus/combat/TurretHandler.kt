@@ -114,7 +114,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         CustomItem(Material.ENDER_PEARL, "§r§lEnder Pearl", "§r§7Can be used to craft turrets")
     internal val turretItem = CustomItem(Material.ARMOR_STAND, "§r§lTurret", "§r§7Right click to place")
     internal val flares = CustomItem(
-        Material.BLAZE_ROD, "§r§lFlares", "§r§7Right click to use", "§r§7Can be used to distract turrets"
+        Material.BLAZE_POWDER, "§r§lFlares", "§r§7Right click to use", "§r§7Can be used to distract turrets"
     )
 
 

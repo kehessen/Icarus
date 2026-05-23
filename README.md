@@ -5,8 +5,8 @@ There is a resource pack which adds custom sounds, but the plugin will
 work perfectly fine without it.
 
 You can either host it yourself or add the following into your server.properties file:
-> resource-pack=https://download.mc-packs.net/pack/25d3811d7798c58a542542c8d1159a38124633e0.zip \
-> resource-pack-sha1=25d3811d7798c58a542542c8d1159a38124633e0
+> resource-pack=https\://raw.githubusercontent.com/kehessen/Icarus/main/resourcepacks/Icarus.Soundpack.zip \
+> resource-pack-sha1=31b29df6a50e4c694452377bde0355e348b12042
 
 Some crafting recipes are available from the start, others are discovered by crafting / obtaining certain items.
 \
@@ -37,8 +37,7 @@ _Many features are configurable in the config.yml file._
 - Teleport to your base by using _**/base**_
 - Bombs and Airstrikes will (by default) not explode in bases (Napalm will still work)
 - Creepers will not explode in bases
-- Crafting recipe: \
-  ![img.png](Images/BaseRecipe.png)
+  ![img.png](images/BaseRecipe.png)
 
 ### Bombs
 
@@ -48,54 +47,49 @@ _Many features are configurable in the config.yml file._
   farms)
 - Can be used against enemy bases or turrets
 - 50kg bomb crafting recipe (normal TNT): \
-  ![img.png](Images/SmallBombRecipe.png)
+  ![img.png](images/SmallBombRecipe.png)
 - 100kg bomb crafting recipe (normal TNT and Ammonium Nitrate): \
-  ![img.png](Images/MediumBombRecipe.png)
+  ![img.png](images/MediumBombRecipe.png)
 - Hydrogen bomb crafting recipe (50kg Bombs and Plutonium core): \
-  ![img.png](Images/HydrogenBombRecipe.png)
+  ![img.png](images/HydrogenBombRecipe.png)
 - It is generally suggested not to craft Hydrogen Bombs in your base, as something might happen rarely
 
 ### Turrets
 
-- craft turrets to defend against enemy bombers and other aerial attackers
-- the required ender pearl can be dropped by Endermen without using looting
-- right-click the turret to add ammo, activate / deactivate it or change the shot delay
-- Crafting recipe: \
-  ![img.png](Images/TurretRecipe.png)
+- Craft turrets to defend against enemy bombers and other aerial attackers
+- The required ender pearl can be dropped by Endermen without using looting
+- Right-click the turret to add ammo, activate / deactivate it or change the shot delay
+  ![img.png](images/TurretRecipe.png)
 
 ### Flares
 
 - Can be used to distract turrets for 2.5 seconds
-- Crafting recipe: \
-  ![img.png](Images/FlareRecipe.png)
+  ![img.png](images/FlareRecipe.png)
 
 ### Rocket Launchers
 
 - Can be used to explode dropped bombs before they reach the ground
-- Crafting recipe:\
-  ![img.png](Images/RocketLauncherRecipe.png)
+  ![img.png](images/RocketLauncherRecipe.png)
 - Ammo crafting recipe: \
-  ![img.png](Images/RocketLauncherAmmoRecipe.png)
+  ![img.png](images/RocketLauncherAmmoRecipe.png)
 
 ### MANPADs (Man-portable air-defense systems)
 
 - Can be used to shoot down enemies in the air
-- Crafting recipe: \
-  ![img.png](Images/MANPADRecipe.png)
-- Ammo crafting recipe: \
-  ![img.png](Images/MANPADAmmoRecipe.png)
+  ![img.png](images/MANPADRecipe.png)
+- Missile crafting recipe: \
+  ![img.png](images/MANPADAmmoRecipe.png)
 
 ### Airstrikes
 
 - Call an airstrike on the marked location
 - Crafting recipe: \
-  ![img.png](Images/AirstrikeRecipe.png)
+  ![img.png](images/AirstrikeRecipe.png)
 
 ### Napalm
 
 - Use napalm to burn down enemy bases
-- Crafting recipe: \
-  ![img.png](Images/NapalmRecipe.png)
+  ![img.png](images/NapalmRecipe.png)
 
 ### Player Mounting
 
@@ -103,15 +97,15 @@ _Many features are configurable in the config.yml file._
 - shoot with a M2 Browning
 - don't forget to craft ammo before entering a fight
 - Ammo recipe:   
-  ![img.png](Images/BrowningAmmoRecipe.png)
+  ![img.png](images/BrowningAmmoRecipe.png)
 
 ### Smoke Grenades
 
 - self-explanatory, will give all entities in radius blindness and invisibility for 2.5 seconds
-- Crafting recipe: \
-  ![img.png](Images/SmokeGrenadeRecipe.png)
+  ![img.png](images/SmokeGrenadeRecipe.png)
 
 ### Planned Features
 
 - stationary bomb defense
 - possibly guided rocket launcher (mainly against bombs as well)
+- use sulfur cubes for some missiles/bombs?

@@ -21,7 +21,7 @@ import org.bukkit.potion.PotionEffectType
 
 class SmokeGrenade(val config: FileConfiguration) : Listener {
     val smokeGrenade = CustomItem(
-        Material.GRAY_DYE, "§r§l§cSmoke Grenade", "§7Right click to throw"
+        Material.SILVERFISH_SPAWN_EGG, "§r§l§cSmoke Grenade", "§7Right click to throw"
     )
 
     // config
@@ -75,6 +75,7 @@ class SmokeGrenade(val config: FileConfiguration) : Listener {
                 event.item!!.amount -= 1
                 event.player.setCooldown(smokeGrenade.type, cooldown.toInt())
             }
+            event.isCancelled = true
         }
     }
 
