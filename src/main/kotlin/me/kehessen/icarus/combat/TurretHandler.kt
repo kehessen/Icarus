@@ -585,7 +585,7 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             13,
             "Ammo",
             "§r§7Turret ammo: ${turret.ammo}",
-            "§r§7Add ammo by clicking on arrows"
+            "§r§7add arrows as ammo"
         )
         menu.createItem(
             SHOT_DELAY_MATERIAL,
@@ -733,13 +733,14 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             val turret = playersInInv[event.whoClicked]!!
             val amount = event.currentItem!!.amount * 5
             turret.ammo += amount
+            turret.saveAmmo()
             event.currentItem!!.amount = 0
             val inv = event.whoClicked.openInventory.topInventory
             inv.setItem(AMMO_PUT_SLOT, ItemStack(Material.AIR))
             val i = ItemStack(AMMO_DISPLAY_MATERIAL)
             val meta = i.itemMeta!!
             meta.setDisplayName("§rAmmo")
-            meta.lore = mutableListOf("§r§7Turret ammo: ${turret.ammo + amount}", "§r§7Add ammo by clicking on arrows")
+            meta.lore = mutableListOf("§r§7Turret ammo: ${turret.ammo}", "§r§7Add arrows as ammo")
             i.itemMeta = meta
             inv.setItem(13, i)
         }

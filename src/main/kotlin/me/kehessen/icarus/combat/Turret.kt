@@ -181,16 +181,20 @@ class Turret(val armorStand: ArmorStand) : Listener {
 
     private fun updateAmmo() {
         if (shotsFired >= ammoSaveThreshold) {
-            armorStand.persistentDataContainer.set(ammoKey, PersistentDataType.INTEGER, ammo)
+            saveAmmo()
             shotsFired = 0
         }
         if (ammo <= 0) {
             active = false
             ammo = 0
             armorStand.persistentDataContainer.set(activeKey, PersistentDataType.BOOLEAN, active)
-            armorStand.persistentDataContainer.set(ammoKey, PersistentDataType.INTEGER, 0)
+            saveAmmo()
             Bukkit.getPluginManager().callEvent(TurretOutOfAmmoEvent(this))
         }
+    }
+
+    fun saveAmmo() {
+        armorStand.persistentDataContainer.set(ammoKey, PersistentDataType.INTEGER, ammo)
     }
 
     private fun playSound(player: Player?) {

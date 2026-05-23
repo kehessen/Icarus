@@ -23,6 +23,7 @@ out/
 *.nar
 *.ear
 *.zip
+!resourcepacks/*.zip
 *.tar.gz
 *.rar
 
