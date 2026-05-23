@@ -621,15 +621,14 @@ class Bomb(config: FileConfiguration, private val base: Base) : CommandExecutor,
         if (p3.size == 1) {
             return mutableListOf("spawn", "give")
         }
-        return when {
-            p3.size == 2 && p3[0] == "spawn" -> {
+        return when (p3.size) {
+            2 if p3[0] == "spawn" -> {
                 mutableListOf("50", "100", "150")
             }
 
-            p3.size == 2 && p3[0] == "give" -> {
+            2 if p3[0] == "give" -> {
                 mutableListOf("small", "medium", "large", "ammonium", "plutonium", "rocketLauncher", "launcherAmmo")
             }
-
             else -> mutableListOf()
         }
     }

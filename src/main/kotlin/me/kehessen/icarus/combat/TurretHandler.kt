@@ -32,6 +32,7 @@ import org.bukkit.scoreboard.Scoreboard
 import org.bukkit.scoreboard.Team
 import java.util.*
 import kotlin.math.cos
+import kotlin.math.floor
 import kotlin.math.sin
 
 
@@ -433,7 +434,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         return turrets.find { it.armorStand == armorStand }
     }
 
-    @Suppress("MemberVisibilityCanBePrivate")
     fun givePlayerImmunity(player: Player, ticks: Long) {
         immunePlayers.add(player)
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, {
@@ -441,7 +441,6 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
         }, ticks)
     }
 
-    @Suppress("MemberVisibilityCanBePrivate")
     internal fun isImmune(player: Player): Boolean {
         return immunePlayers.contains(player)
     }
@@ -700,11 +699,12 @@ class TurretHandler(private val plugin: JavaPlugin, config: FileConfiguration, p
             PICK_UP_MATERIAL -> {
                 val player = event.whoClicked as Player
                 player.inventory.addItem(turretItem)
-                turret.armorStand.remove()
+                player.inventory.addItem(ItemStack(Material.ARROW, floor((turret.ammo / 5).toDouble()).toInt()))
                 player.closeInventory()
                 activeTurrets.remove(turret)
                 inactiveTurrets.remove(turret)
                 turrets.remove(turret)
+                turret.destroy()
                 Bukkit.getLogger().info("[Icarus] $player picked up turret with ID ${turret.uuid}")
                 event.isCancelled = true
             }
