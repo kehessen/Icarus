@@ -127,7 +127,7 @@ class MANPAD(config: FileConfiguration, private val bomb: Bomb) : Listener {
         lockedOnTasks[player] =
             Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("Icarus")!!, {
                 val target = playersLockingOn[player] ?: return@scheduleSyncRepeatingTask
-                // task will be cancelled one tick after cancelLockOn is called
+                // task will be canceled one tick after cancelLockOn is called
                 val hasLockOn = hasLockOn(player, target)
                 if (player.isDead || !hasLockOn) {
                     cancelLockOn(player)

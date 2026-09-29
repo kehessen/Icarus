@@ -1,7 +1,7 @@
 name: Icarus
 version: '${project.version}'
 main: me.kehessen.icarus.Icarus
-api-version: '26.1'
+api-version: '26.3'
 author: kehessen
 website: https://github.com/kehessen/Icarus/
 commands:

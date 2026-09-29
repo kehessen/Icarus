@@ -154,7 +154,7 @@ class Base(config: FileConfiguration) : Listener {
             val x = cos(Math.toRadians(i.toDouble())) * range
             val z = sin(Math.toRadians(i.toDouble())) * range
             val startPosition = armorStand.location.clone().add(x, 0.0, z)
-            event.player.world.spawnParticle(org.bukkit.Particle.HAPPY_VILLAGER, startPosition, 1)
+            event.player.world.spawnParticle(Particle.HAPPY_VILLAGER, startPosition, 1)
         }
     }
 

@@ -18,13 +18,12 @@ Base:
   # Whether to disable block placing for other teams in the base
   disable-block-placing: false
   # Whether to disable block interaction for other teams in the base
-  disable-block-interacting: true
+  disable-block-interacting: false
   # Whether to disable creepers spawning in the base
   prevent-creeper-spawn: true
 
 
 Turret:
-  # this will also enable the rocket launcher
   enable: true
   # whether to check team of player before shooting
   # if false, the turret will shoot at any player and any player can interact with the turret

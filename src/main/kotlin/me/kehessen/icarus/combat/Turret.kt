@@ -112,23 +112,21 @@ class Turret(val armorStand: ArmorStand) : Listener {
     }
 
     internal fun shoot() {
-        // additional checks in case some things don't work
-        // commented out for performance
-//        if (!enabled) {
-//            Bukkit.getLogger().warning("[Icarus] Turret shooting called but turret is disabled")
-//            return
-//        }
-//        if (!active) {
-//            Bukkit.getLogger().warning("[Icarus] Turret shooting called but turret is inactive")
-//            return
-//        }
-//        if (ammo <= 0) {
-//            Bukkit.getLogger().warning("[Icarus] Turret shooting called but turret is out of ammo")
-//            return
-//        }
-//        if (target == null) {
-//            Bukkit.getLogger().warning("[Icarus] Turret target is null")
-//        }
+        if (!enabled) {
+            Bukkit.getLogger().warning("[Icarus] Turret shooting called but turret is disabled")
+            return
+        }
+        if (!active) {
+            Bukkit.getLogger().warning("[Icarus] Turret shooting called but turret is inactive")
+            return
+        }
+        if (ammo <= 0) {
+            Bukkit.getLogger().warning("[Icarus] Turret shooting called but turret is out of ammo")
+            return
+        }
+        if (target == null) {
+            Bukkit.getLogger().warning("[Icarus] Turret target is null")
+        }
 
         spawnArrow(target!!)
 
